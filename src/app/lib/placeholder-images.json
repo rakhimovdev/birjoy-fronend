@@ -1,3 +1,4 @@
+
 {
   "placeholderImages": [
     {
@@ -26,7 +27,7 @@
     },
     {
       "id": "laptop-ad",
-      "description": "MacBook Pro on a desk",
+      "description": "MacBook Pro on a dish",
       "imageUrl": "https://picsum.photos/seed/laptop1/600/400",
       "imageHint": "laptop computer"
     },
@@ -35,6 +36,12 @@
       "description": "Generic user avatar",
       "imageUrl": "https://picsum.photos/seed/user1/200/200",
       "imageHint": "person portrait"
+    },
+    {
+      "id": "app-mockup",
+      "description": "MarketNest mobile app preview",
+      "imageUrl": "https://picsum.photos/seed/appmock/400/800",
+      "imageHint": "mobile app smartphone"
     }
   ]
 }

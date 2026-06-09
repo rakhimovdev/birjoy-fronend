@@ -1,10 +1,11 @@
+
 import Image from 'next/image';
 import { Navbar } from '@/components/layout/Navbar';
 import { CategoryBar } from '@/components/ads/CategoryBar';
 import { AdCard } from '@/components/ads/AdCard';
 import { MOCK_ADS, CURRENT_USER } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles, Smartphone, Download } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function Home() {
@@ -67,6 +68,55 @@ export default function Home() {
                   isFavorite={CURRENT_USER.favorites.includes(ad.id)}
                 />
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Download App Section */}
+        <section className="py-20 bg-muted/50 overflow-hidden">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col lg:flex-row items-center gap-12">
+              <div className="flex-1 space-y-8">
+                <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-bold">
+                  <Smartphone className="h-4 w-4" />
+                  MOBILE APP AVAILABLE
+                </div>
+                <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
+                  MarketNest in Your Pocket. <br />
+                  <span className="text-primary">Download Now.</span>
+                </h2>
+                <p className="text-xl text-muted-foreground leading-relaxed">
+                  Get the best deals first! Download our app to get instant push notifications, 
+                  chat with sellers in real-time, and manage your listings from anywhere.
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 h-16 px-8 rounded-2xl flex items-center gap-4 transition-all hover:scale-105">
+                    <div className="flex flex-col items-start leading-none">
+                      <span className="text-[10px] uppercase font-bold opacity-60">Download on the</span>
+                      <span className="text-xl font-bold">App Store</span>
+                    </div>
+                  </Button>
+                  <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 h-16 px-8 rounded-2xl flex items-center gap-4 transition-all hover:scale-105">
+                    <div className="flex flex-col items-start leading-none">
+                      <span className="text-[10px] uppercase font-bold opacity-60">Get it on</span>
+                      <span className="text-xl font-bold">Google Play</span>
+                    </div>
+                  </Button>
+                </div>
+              </div>
+              <div className="flex-1 relative w-full max-w-md aspect-[4/5]">
+                {PlaceHolderImages[6] && (
+                  <div className="relative w-full h-full transform lg:rotate-6 hover:rotate-0 transition-transform duration-700">
+                    <Image
+                      src={PlaceHolderImages[6].imageUrl}
+                      alt="MarketNest App Interface"
+                      fill
+                      className="object-contain"
+                      data-ai-hint="smartphone interface app"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </section>

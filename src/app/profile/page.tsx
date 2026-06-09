@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useSearchParams } from 'next/navigation';
@@ -7,16 +8,33 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Mail, Phone, MapPin, Package, Heart, Settings } from 'lucide-react';
+import { Edit, Mail, Phone, MapPin, Package, Heart, Settings, Download } from 'lucide-react';
 import { CURRENT_USER, MOCK_ADS } from '@/lib/mock-data';
 import { AdCard } from '@/components/ads/AdCard';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ProfilePage() {
+  const { toast } = useToast();
   const searchParams = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'ads';
 
   const myAds = MOCK_ADS.filter(ad => ad.userId === CURRENT_USER.id);
   const favoriteAds = MOCK_ADS.filter(ad => CURRENT_USER.favorites.includes(ad.id));
+
+  const handleDownloadData = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(myAds, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "my_marketnest_listings.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    
+    toast({
+      title: "Data Exported",
+      description: "Your listings have been downloaded as a JSON file.",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -66,6 +84,14 @@ export default function ProfilePage() {
                 <Button variant="ghost" className="w-full justify-start text-sm h-9 gap-2">
                   <Settings className="h-4 w-4" />
                   Settings
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start text-sm h-9 gap-2"
+                  onClick={handleDownloadData}
+                >
+                  <Download className="h-4 w-4" />
+                  Download My Data
                 </Button>
                 <Button variant="ghost" className="w-full justify-start text-sm h-9 gap-2 text-destructive hover:text-destructive">
                   Delete Account
