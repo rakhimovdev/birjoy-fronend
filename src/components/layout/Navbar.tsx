@@ -32,6 +32,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { BrandLogo } from '@/components/brand/BrandLogo';
+import { InstallAppButton } from '@/components/pwa/InstallAppButton';
 import { languageMeta, languages, isLanguage, type Language } from '@/lib/i18n';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
@@ -129,6 +130,8 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <InstallAppButton compact className="shrink-0" />
+
           <div className="hidden md:block">
               <Select value={locale} onValueChange={handleLocaleChange}>
               <SelectTrigger className="h-10 w-[138px] border-white/70 bg-white/70 shadow-sm">
