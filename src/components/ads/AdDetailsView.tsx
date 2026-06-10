@@ -145,9 +145,8 @@ export function AdDetailsView({ adId }: { adId: string }) {
                   <button
                     key={`${image.slice(0, 32)}-${index}`}
                     type="button"
-                    className={`relative aspect-square overflow-hidden rounded-2xl border transition-colors ${
-                      index === selectedImageIndex ? 'border-primary ring-2 ring-primary/20' : 'border-border'
-                    }`}
+                    className={`relative aspect-square overflow-hidden rounded-2xl border transition-colors ${index === selectedImageIndex ? 'border-primary ring-2 ring-primary/20' : 'border-border'
+                      }`}
                     onClick={() => setSelectedImageIndex(index)}
                   >
                     <Image
@@ -255,7 +254,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
 
                 <div className="grid gap-3">
                   <Button asChild className="h-11">
-                    <Link href="/ads/create">{messages.adDetails.createSimilar}</Link>
+                    <Link href="api/ads/create">{messages.adDetails.createSimilar}</Link>
                   </Button>
                   <Button asChild variant="outline" className="h-11">
                     <Link href="/">{messages.adDetails.browseMore}</Link>
