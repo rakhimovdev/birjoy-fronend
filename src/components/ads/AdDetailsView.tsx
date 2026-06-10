@@ -254,7 +254,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
 
                 <div className="grid gap-3">
                   <Button asChild className="h-11">
-                    <Link href="api/ads/create">{messages.adDetails.createSimilar}</Link>
+                    <Link href="/api/ads/create">{messages.adDetails.createSimilar}</Link>
                   </Button>
                   <Button asChild variant="outline" className="h-11">
                     <Link href="/">{messages.adDetails.browseMore}</Link>
