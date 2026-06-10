@@ -1,20 +1,24 @@
+import type { LocalizedText } from './i18n';
+
 export type Category = {
   id: string;
-  name: string;
+  name: LocalizedText;
   icon: string;
   slug: string;
 };
 
 export type Ad = {
   id: string;
-  title: string;
-  description: string;
+  title: LocalizedText;
+  description: LocalizedText;
   price: number;
   category: string;
-  location: string;
+  condition: 'new' | 'like-new' | 'used' | 'needs-repair';
+  location: LocalizedText;
   images: string[];
   userId: string;
   userName: string;
+  sellerPhone: string;
   createdAt: string;
   isFeatured?: boolean;
   status: 'active' | 'pending' | 'flagged';
@@ -26,6 +30,6 @@ export type UserProfile = {
   email: string;
   photoUrl?: string;
   phone?: string;
-  location?: string;
+  location?: LocalizedText;
   favorites: string[]; // Ad IDs
 };

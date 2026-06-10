@@ -25,6 +25,24 @@ const SmartAdDescriptionToolOutputSchema = z.object({
 });
 export type SmartAdDescriptionToolOutput = z.infer<typeof SmartAdDescriptionToolOutputSchema>;
 
+function fallbackKeywords(input: SmartAdDescriptionToolInput) {
+  const source = `${input.title} ${input.category} ${input.description || ''}`
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, ' ')
+    .split(/\s+/)
+    .filter((word) => word.length > 2);
+
+  return Array.from(new Set(source)).slice(0, 8);
+}
+
+function fallbackDescription(input: SmartAdDescriptionToolInput) {
+  if (input.description?.trim()) {
+    return input.description.trim();
+  }
+
+  return `${input.title} ${input.category} kategoriyasida joylashtirildi. Holati yaxshi, qo'shimcha ma'lumot uchun sotuvchi bilan bog'laning.`;
+}
+
 const smartAdDescriptionPrompt = ai.definePrompt({
   name: 'smartAdDescriptionPrompt',
   input: {schema: SmartAdDescriptionToolInputSchema},
@@ -59,5 +77,20 @@ const smartAdDescriptionToolFlow = ai.defineFlow(
 );
 
 export async function smartAdDescriptionTool(input: SmartAdDescriptionToolInput): Promise<SmartAdDescriptionToolOutput> {
-  return smartAdDescriptionToolFlow(input);
+  if (!process.env.GEMINI_API_KEY?.trim()) {
+    return {
+      suggestedDescriptionImprovements: fallbackDescription(input),
+      relevantKeywords: fallbackKeywords(input),
+    };
+  }
+
+  try {
+    return await smartAdDescriptionToolFlow(input);
+  } catch (error) {
+    console.error('Smart description fallback activated:', error);
+    return {
+      suggestedDescriptionImprovements: fallbackDescription(input),
+      relevantKeywords: fallbackKeywords(input),
+    };
+  }
 }

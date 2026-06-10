@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ['"Avenir Next"', '"Segoe UI"', '"Trebuchet MS"', 'sans-serif'],
+        headline: ['"Gill Sans"', '"Avenir Next"', '"Trebuchet MS"', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {

@@ -1,6 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import Image from 'next/image';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,38 +11,70 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CATEGORIES } from '@/lib/mock-data';
-import { Wand2, ImagePlus, Loader2, Languages, ShieldCheck, AlertCircle } from 'lucide-react';
+import { CATEGORIES, getCategoryBySlug } from '@/lib/mock-data';
+import { Wand2, ImagePlus, Loader2, Languages, ShieldCheck, AlertCircle, X } from 'lucide-react';
 import { smartAdDescriptionTool } from '@/ai/flows/smart-ad-description-tool';
-import { adTitleCategorySuggestion } from '@/ai/flows/ad-title-category-suggestion';
 import { translateAdDescription } from '@/ai/flows/ad-description-translation';
 import { automateAdContentModeration } from '@/ai/flows/automated-ad-content-moderation';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { formatMessage, getLocalizedText, languageMeta } from '@/lib/i18n';
+import { useI18n } from '@/components/providers/LocaleProvider';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { AD_CONDITIONS, createAd } from '@/lib/ads';
+import { syncStoredUser } from '@/lib/auth';
 
 export default function CreateAdPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <CreateAdPageContent />
+    </Suspense>
+  );
+}
+
+function CreateAdPageContent() {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const router = useRouter();
   const { toast } = useToast();
+  const { locale, messages } = useI18n();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [moderationResult, setModerationResult] = useState<{ flagged: boolean; reason: string } | null>(null);
-  
   const [formData, setFormData] = useState({
     title: '',
     category: '',
+    condition: '',
     price: '',
     description: '',
     location: '',
+    contactPhone: '',
   });
-
   const [keywords, setKeywords] = useState<string[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    setFormData((previous) => ({
+      ...previous,
+      location:
+        previous.location || (user.location ? getLocalizedText(user.location, locale) : ''),
+      contactPhone: previous.contactPhone || user.phone || '',
+    }));
+  }, [locale, user]);
 
   const handleSmartImprove = async () => {
-    if (!formData.title || !formData.category) {
+    const selectedCategory = getCategoryBySlug(formData.category);
+
+    if (!formData.title || !selectedCategory) {
       toast({
-        title: "Missing Information",
-        description: "Please enter a title and category first to get AI suggestions.",
-        variant: "destructive"
+        title: messages.createAd.missingInfoTitle,
+        description: messages.createAd.missingInfoDescription,
+        variant: 'destructive',
       });
       return;
     }
@@ -48,72 +83,188 @@ export default function CreateAdPage() {
     try {
       const result = await smartAdDescriptionTool({
         title: formData.title,
-        category: formData.category,
-        description: formData.description
+        category: selectedCategory.name.en,
+        description: formData.description,
       });
-      
-      setFormData(prev => ({ ...prev, description: result.suggestedDescriptionImprovements }));
+
+      setFormData((previous) => ({
+        ...previous,
+        description: result.suggestedDescriptionImprovements,
+      }));
       setKeywords(result.relevantKeywords);
-      
+
       toast({
-        title: "AI Suggestions Applied",
-        description: "We've enhanced your description and added relevant keywords.",
+        title: messages.createAd.improveSuccessTitle,
+        description: messages.createAd.improveSuccessDescription,
       });
-    } catch (error) {
+    } catch {
       toast({
-        title: "AI Error",
-        description: "Could not generate suggestions at this time.",
-        variant: "destructive"
+        title: messages.createAd.aiErrorTitle,
+        description: messages.createAd.aiErrorDescription,
+        variant: 'destructive',
       });
     } finally {
       setAiLoading(false);
     }
   };
 
-  const handleTranslateToUzbek = async () => {
-    if (!formData.description) return;
+  const handleTranslateDescription = async () => {
+    if (!formData.description) {
+      return;
+    }
+
     setAiLoading(true);
     try {
       const result = await translateAdDescription({
         description: formData.description,
-        targetLanguage: "Uzbek"
+        targetLanguage: languageMeta[locale].aiLanguageName,
       });
-      setFormData(prev => ({ ...prev, description: `${prev.description}\n\n[UZ]: ${result.translatedDescription}` }));
-    } catch (error) {
-      toast({ title: "Translation Failed", variant: "destructive" });
+
+      setFormData((previous) => ({
+        ...previous,
+        description: `${previous.description}\n\n[${languageMeta[locale].label}]: ${result.translatedDescription}`,
+      }));
+    } catch {
+      toast({
+        title: messages.createAd.translationError,
+        variant: 'destructive',
+      });
     } finally {
       setAiLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      // Automatic Moderation Check
-      const mod = await automateAdContentModeration({
-        title: formData.title,
-        description: formData.description
-      });
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files || []);
 
-      if (mod.flagged) {
-        setModerationResult(mod);
+    if (selectedFiles.length === 0) {
+      return;
+    }
+
+    const availableSlots = 10 - uploadedImages.length;
+
+    if (availableSlots <= 0) {
+      toast({
+        title: messages.createAd.imageLimitTitle,
+        description: messages.createAd.imageLimitDescription,
+        variant: 'destructive',
+      });
+      event.target.value = '';
+      return;
+    }
+
+    const filesToProcess = selectedFiles.slice(0, availableSlots);
+
+    try {
+      const nextImages = await Promise.all(
+        filesToProcess.map(
+          (file) =>
+            new Promise<string>((resolve, reject) => {
+              if (!file.type.startsWith('image/')) {
+                reject(new Error(messages.createAd.imageFormatError));
+                return;
+              }
+
+              if (file.size > 800 * 1024) {
+                reject(new Error(messages.createAd.imageSizeError));
+                return;
+              }
+
+              const reader = new FileReader();
+
+              reader.onload = () => {
+                if (typeof reader.result === 'string') {
+                  resolve(reader.result);
+                  return;
+                }
+
+                reject(new Error(messages.createAd.imageReadError));
+              };
+
+              reader.onerror = () => reject(new Error(messages.createAd.imageReadError));
+              reader.readAsDataURL(file);
+            })
+        )
+      );
+
+      setUploadedImages((previous) => [...previous, ...nextImages]);
+
+      if (selectedFiles.length > availableSlots) {
         toast({
-          title: "Moderation Notice",
-          description: "Your ad content needs revision before publishing.",
-          variant: "destructive"
+          title: messages.createAd.imageLimitTitle,
+          description: messages.createAd.imageLimitDescription,
+          variant: 'destructive',
         });
-      } else {
-        setModerationResult(null);
-        toast({
-          title: "Ad Submitted!",
-          description: "Your listing is now being processed and will be live shortly.",
-        });
-        // Redirect or clear form
       }
     } catch (error) {
-      toast({ title: "Error submitting ad", variant: "destructive" });
+      toast({
+        title: messages.createAd.imageUploadErrorTitle,
+        description: error instanceof Error ? error.message : messages.createAd.imageReadError,
+        variant: 'destructive',
+      });
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const removeImage = (imageIndex: number) => {
+    setUploadedImages((previous) => previous.filter((_, index) => index !== imageIndex));
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+
+    try {
+      const moderation = await automateAdContentModeration({
+        title: formData.title,
+        description: formData.description,
+      });
+
+      if (moderation.flagged) {
+        setModerationResult(moderation);
+        toast({
+          title: messages.createAd.moderationToastTitle,
+          description: messages.createAd.moderationToastDescription,
+          variant: 'destructive',
+        });
+      } else {
+        await createAd({
+          title: formData.title.trim(),
+          category: formData.category.trim(),
+          condition: formData.condition as 'new' | 'like-new' | 'used' | 'needs-repair',
+          price: Number(formData.price),
+          description: formData.description.trim(),
+          location: formData.location.trim(),
+          contactPhone: formData.contactPhone.trim(),
+          images: uploadedImages,
+        });
+
+        if (user) {
+          syncStoredUser({
+            ...user,
+            phone: formData.contactPhone.trim(),
+            location: {
+              uz: formData.location.trim(),
+              ru: formData.location.trim(),
+              en: formData.location.trim(),
+            },
+          });
+        }
+
+        setModerationResult(null);
+        toast({
+          title: messages.createAd.submitSuccessTitle,
+          description: messages.createAd.submitSuccessDescription,
+        });
+        router.push('/');
+      }
+    } catch (error) {
+      toast({
+        title: messages.createAd.submitError,
+        description: error instanceof Error ? error.message : messages.createAd.submitError,
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -122,172 +273,264 @@ export default function CreateAdPage() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <Navbar />
-      
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-2 text-primary">Post a New Ad</h1>
-          <p className="text-muted-foreground">Fill in the details below to reach thousands of potential buyers.</p>
-        </div>
 
-        {moderationResult?.flagged && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Content Flagged</AlertTitle>
-            <AlertDescription>
-              Our automated system detected issues: {moderationResult.reason}. Please revise your title or description.
-            </AlertDescription>
-          </Alert>
-        )}
+      <ProtectedRoute>
+        <main className="container mx-auto max-w-4xl px-4 py-8">
+          <div className="mb-8">
+            <h1 className="mb-2 text-3xl font-bold tracking-tight text-primary">{messages.createAd.title}</h1>
+            <p className="text-muted-foreground">{messages.createAd.description}</p>
+          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-2 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Basic Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Title</Label>
-                    <Input 
-                      id="title" 
-                      placeholder="e.g. iPhone 15 Pro Max, Brand New" 
-                      value={formData.title}
-                      onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {moderationResult?.flagged ? (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>{messages.createAd.moderationTitle}</AlertTitle>
+              <AlertDescription>
+                {formatMessage(messages.createAd.moderationDescription, {
+                  reason: moderationResult.reason,
+                })}
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+              <div className="space-y-6 md:col-span-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{messages.createAd.basicInfo}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="category">Category</Label>
-                      <Select 
-                        value={formData.category} 
-                        onValueChange={v => setFormData(prev => ({ ...prev, category: v }))}
-                      >
-                        <SelectTrigger id="category">
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CATEGORIES.map(c => (
-                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Price ($)</Label>
-                      <Input 
-                        id="price" 
-                        type="number" 
-                        placeholder="0.00" 
-                        value={formData.price}
-                        onChange={e => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                      <Label htmlFor="title">{messages.createAd.adTitle}</Label>
+                      <Input
+                        id="title"
+                        placeholder={messages.createAd.adTitlePlaceholder}
+                        value={formData.title}
+                        onChange={(event) =>
+                          setFormData((previous) => ({ ...previous, title: event.target.value }))
+                        }
                         required
                       />
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                  <div className="space-y-1">
-                    <CardTitle>Description</CardTitle>
-                    <CardDescription>Tell buyers more about what you're selling</CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      className="gap-1 text-primary border-primary/20 hover:bg-primary/5"
-                      onClick={handleSmartImprove}
-                      disabled={aiLoading}
-                    >
-                      {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
-                      Smart Improve
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      className="gap-1"
-                      onClick={handleTranslateToUzbek}
-                      disabled={aiLoading || !formData.description}
-                    >
-                      <Languages className="h-3 w-3" />
-                      Add Uzbek
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Textarea 
-                    placeholder="Describe your item in detail..." 
-                    className="min-h-[200px]"
-                    value={formData.description}
-                    onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    required
-                  />
-                  {keywords.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      <span className="text-sm font-medium text-muted-foreground mr-2">Keywords:</span>
-                      {keywords.map((kw, i) => (
-                        <Badge key={i} variant="secondary">{kw}</Badge>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="category">{messages.createAd.category}</Label>
+                        <Select
+                          value={formData.category}
+                          onValueChange={(value) =>
+                            setFormData((previous) => ({ ...previous, category: value }))
+                          }
+                        >
+                          <SelectTrigger id="category">
+                            <SelectValue placeholder={messages.createAd.selectCategory} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CATEGORIES.map((category) => (
+                              <SelectItem key={category.id} value={category.slug}>
+                                {getLocalizedText(category.name, locale)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="price">{messages.createAd.price}</Label>
+                        <Input
+                          id="price"
+                          type="number"
+                          placeholder="0.00"
+                          value={formData.price}
+                          onChange={(event) =>
+                            setFormData((previous) => ({ ...previous, price: event.target.value }))
+                          }
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="condition">{messages.createAd.condition}</Label>
+                        <Select
+                          value={formData.condition}
+                          onValueChange={(value) =>
+                            setFormData((previous) => ({ ...previous, condition: value }))
+                          }
+                        >
+                          <SelectTrigger id="condition">
+                            <SelectValue placeholder={messages.createAd.selectCondition} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {AD_CONDITIONS.map((condition) => (
+                              <SelectItem key={condition.value} value={condition.value}>
+                                {getLocalizedText(condition.label, locale)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                    <div className="space-y-1">
+                      <CardTitle>{messages.createAd.descriptionTitle}</CardTitle>
+                      <CardDescription>{messages.createAd.descriptionHelp}</CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-1 border-primary/20 text-primary hover:bg-primary/5"
+                        onClick={handleSmartImprove}
+                        disabled={aiLoading}
+                      >
+                        {aiLoading ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wand2 className="h-3 w-3" />
+                        )}
+                        {messages.createAd.smartImprove}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        onClick={handleTranslateDescription}
+                        disabled={aiLoading || !formData.description}
+                      >
+                        <Languages className="h-3 w-3" />
+                        {messages.createAd.translateDescription}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Textarea
+                      placeholder={messages.createAd.descriptionPlaceholder}
+                      className="min-h-[200px]"
+                      value={formData.description}
+                      onChange={(event) =>
+                        setFormData((previous) => ({ ...previous, description: event.target.value }))
+                      }
+                      required
+                    />
+                    {keywords.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        <span className="mr-2 text-sm font-medium text-muted-foreground">
+                          {messages.createAd.keywords}
+                        </span>
+                        {keywords.map((keyword) => (
+                          <Badge key={keyword} variant="secondary">
+                            {keyword}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : null}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{messages.createAd.location}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="location">{messages.createAd.location}</Label>
+                      <Input
+                        id="location"
+                        placeholder={messages.createAd.locationPlaceholder}
+                        value={formData.location}
+                        onChange={(event) =>
+                          setFormData((previous) => ({ ...previous, location: event.target.value }))
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contactPhone">{messages.auth.phoneLabel}</Label>
+                      <Input
+                        id="contactPhone"
+                        placeholder={messages.auth.phonePlaceholder}
+                        value={formData.contactPhone}
+                        onChange={(event) =>
+                          setFormData((previous) => ({ ...previous, contactPhone: event.target.value }))
+                        }
+                        required
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{messages.createAd.media}</CardTitle>
+                    <CardDescription>{messages.createAd.mediaDescription}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleImageUpload}
+                      />
+                      <button
+                        type="button"
+                        className="flex aspect-square flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:bg-muted/50"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <ImagePlus className="h-6 w-6" />
+                        <span className="text-xs">{messages.createAd.addPhoto}</span>
+                      </button>
+                      {uploadedImages.map((image, index) => (
+                        <div key={`${image.slice(0, 32)}-${index}`} className="relative aspect-square overflow-hidden rounded-lg border bg-muted/30">
+                          <Image
+                            src={image}
+                            alt={`${messages.createAd.addPhoto} ${index + 1}`}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                          <button
+                            type="button"
+                            className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white transition-colors hover:bg-black/75"
+                            onClick={() => removeImage(index)}
+                            aria-label={messages.createAd.removePhoto}
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       ))}
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      {messages.createAd.imageUploadHint.replace('{count}', String(uploadedImages.length))}
+                    </p>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Location</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Input 
-                    placeholder="e.g. Tashkent, Mirabad District" 
-                    value={formData.location}
-                    onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                    required
-                  />
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Media</CardTitle>
-                  <CardDescription>Add up to 10 photos</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button type="button" className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 text-muted-foreground hover:bg-muted/50 transition-colors">
-                      <ImagePlus className="h-6 w-6" />
-                      <span className="text-xs">Add Photo</span>
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="sticky top-24 space-y-4">
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 text-lg font-bold gap-2" 
-                  disabled={loading}
-                >
-                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-5 w-5" />}
-                  Publish Listing
-                </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  By publishing, you agree to our Terms of Service and Safety Rules.
-                </p>
+                <div className="sticky top-24 space-y-4">
+                  <Button type="submit" className="h-12 w-full gap-2 text-lg font-bold" disabled={loading}>
+                    {loading ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <ShieldCheck className="h-5 w-5" />
+                    )}
+                    {messages.createAd.publish}
+                  </Button>
+                  <p className="text-center text-xs text-muted-foreground">{messages.createAd.terms}</p>
+                </div>
               </div>
             </div>
-          </div>
-        </form>
-      </main>
+          </form>
+        </main>
+      </ProtectedRoute>
     </div>
   );
 }

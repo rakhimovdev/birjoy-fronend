@@ -1,10 +1,16 @@
 import type {Metadata} from 'next';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toaster";
+import { LocaleProvider } from '@/components/providers/LocaleProvider';
+import { AuthProvider } from '@/components/providers/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'MarketNest | Best Classifieds in Uzbekistan',
-  description: 'The most reliable multi-category classifieds marketplace for buying and selling in Uzbekistan.',
+  title: 'BirJoy | Hammasi Bir Joyda',
+  description: 'BirJoy is a multilingual marketplace for buying and selling across Uzbekistan.',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
@@ -13,15 +19,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-      </head>
+    <html lang="uz">
       <body className="font-body antialiased bg-background">
-        {children}
-        <Toaster />
+        <AuthProvider>
+          <LocaleProvider>
+            {children}
+            <Toaster />
+          </LocaleProvider>
+        </AuthProvider>
       </body>
     </html>
   );

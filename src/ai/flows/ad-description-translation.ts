@@ -22,7 +22,20 @@ const AdDescriptionTranslationOutputSchema = z.object({
 export type AdDescriptionTranslationOutput = z.infer<typeof AdDescriptionTranslationOutputSchema>;
 
 export async function translateAdDescription(input: AdDescriptionTranslationInput): Promise<AdDescriptionTranslationOutput> {
-  return adDescriptionTranslationFlow(input);
+  if (!process.env.GEMINI_API_KEY?.trim()) {
+    return {
+      translatedDescription: input.description,
+    };
+  }
+
+  try {
+    return await adDescriptionTranslationFlow(input);
+  } catch (error) {
+    console.error('Translation fallback activated:', error);
+    return {
+      translatedDescription: input.description,
+    };
+  }
 }
 
 const adDescriptionTranslationPrompt = ai.definePrompt({

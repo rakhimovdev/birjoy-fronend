@@ -1,7 +1,9 @@
 import type {NextConfig} from 'next';
 
+const isProductionBuild = process.env.NODE_ENV === 'production';
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  distDir: isProductionBuild ? '.next-build' : '.next',
   typescript: {
     ignoreBuildErrors: true,
   },

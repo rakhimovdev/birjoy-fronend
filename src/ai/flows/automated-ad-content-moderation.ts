@@ -22,11 +22,35 @@ const AutomatedAdContentModerationOutputSchema = z.object({
 });
 export type AutomatedAdContentModerationOutput = z.infer<typeof AutomatedAdContentModerationOutputSchema>;
 
+const fallbackFlaggedPatterns = [
+  /porn|sex xizmat|escort|nude/i,
+  /hate|terror|bomb|weapon|qurol/i,
+  /drug|giyohvand|kokain|heroin/i,
+  /fake passport|soxta pasport|fake id/i,
+];
+
+function fallbackModeration(input: AutomatedAdContentModerationInput): AutomatedAdContentModerationOutput {
+  const combinedText = `${input.title} ${input.description}`;
+  const matchedPattern = fallbackFlaggedPatterns.find((pattern) => pattern.test(combinedText));
+
+  if (matchedPattern) {
+    return {
+      flagged: true,
+      reason: 'Content matched local safety checks.',
+    };
+  }
+
+  return {
+    flagged: false,
+    reason: 'N/A',
+  };
+}
+
 const moderationPrompt = ai.definePrompt({
   name: 'adContentModerationPrompt',
   input: {schema: AutomatedAdContentModerationInputSchema},
   output: {schema: AutomatedAdContentModerationOutputSchema},
-  prompt: `You are an expert content moderator for an online classifieds marketplace named MarketNest. Your task is to evaluate user-submitted advertisement content for appropriateness and potential harm.
+  prompt: `You are an expert content moderator for an online classifieds marketplace named BirJoy. Your task is to evaluate user-submitted advertisement content for appropriateness and potential harm.
 
 Analyze the following ad title and description for any content that falls into categories such as:
 - Hate speech
@@ -78,5 +102,14 @@ const automateAdContentModerationFlow = ai.defineFlow(
 );
 
 export async function automateAdContentModeration(input: AutomatedAdContentModerationInput): Promise<AutomatedAdContentModerationOutput> {
-  return automateAdContentModerationFlow(input);
+  if (!process.env.GEMINI_API_KEY?.trim()) {
+    return fallbackModeration(input);
+  }
+
+  try {
+    return await automateAdContentModerationFlow(input);
+  } catch (error) {
+    console.error('Ad moderation fallback activated:', error);
+    return fallbackModeration(input);
+  }
 }
