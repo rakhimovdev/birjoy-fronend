@@ -99,6 +99,7 @@ function HomeContent() {
   const featuredAds = matchingAds.filter((ad) => ad.isFeatured);
   const latestAds = matchingAds.filter((ad) => !ad.isFeatured);
   const hasFilters = Boolean(query || selectedCategory);
+  const shouldShowHero = !selectedCategory;
   const selectedCategoryLabel = selectedCategoryObject
     ? getLocalizedText(selectedCategoryObject.name, locale)
     : null;
@@ -111,60 +112,62 @@ function HomeContent() {
       </div>
 
       <main className="flex-1">
-        <section className="relative overflow-hidden border-b border-white/20 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_46%,_#ff730a_108%)] py-16 text-white md:py-20">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.14),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.12),_transparent_28%)]" />
-          <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[linear-gradient(180deg,_rgba(255,255,255,0.05),_transparent)] lg:block" />
-          <div className="relative z-10 container mx-auto grid items-center gap-12 px-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-            <div className="max-w-3xl">
-              <div className="mb-5 inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold text-white/90 backdrop-blur">
-                BirJoy Marketplace
+        {shouldShowHero ? (
+          <section className="relative overflow-hidden border-b border-white/20 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_46%,_#ff730a_108%)] py-16 text-white md:py-20">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.14),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.12),_transparent_28%)]" />
+            <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[linear-gradient(180deg,_rgba(255,255,255,0.05),_transparent)] lg:block" />
+            <div className="relative z-10 container mx-auto grid items-center gap-12 px-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+              <div className="max-w-3xl">
+                <div className="mb-5 inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold text-white/90 backdrop-blur">
+                  BirJoy Marketplace
+                </div>
+                <h1 className="mb-4 font-headline text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">
+                  {messages.home.heroTitlePrefix}{' '}
+                  <span className="text-[#ffd7b5]">{messages.home.heroTitleAccent}</span>
+                  {messages.home.heroTitleSuffix ? ` ${messages.home.heroTitleSuffix}` : ''}
+                </h1>
+                <p className="mb-8 max-w-2xl text-lg font-medium leading-8 text-white/82 md:text-xl">
+                  {messages.home.heroDescription}
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="bg-accent px-8 font-bold text-accent-foreground shadow-[0_18px_36px_rgba(255,115,10,0.28)] hover:bg-accent/90"
+                  >
+                    <Link href="/ads/create">{messages.home.startSelling}</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="border-white/25 bg-white/10 text-white backdrop-blur-md hover:bg-white/18"
+                  >
+                    <Link href="#browse-categories">{messages.home.exploreCategories}</Link>
+                  </Button>
+                </div>
               </div>
-              <h1 className="mb-4 font-headline text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">
-                {messages.home.heroTitlePrefix}{' '}
-                <span className="text-[#ffd7b5]">{messages.home.heroTitleAccent}</span>
-                {messages.home.heroTitleSuffix ? ` ${messages.home.heroTitleSuffix}` : ''}
-              </h1>
-              <p className="mb-8 max-w-2xl text-lg font-medium leading-8 text-white/82 md:text-xl">
-                {messages.home.heroDescription}
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-accent px-8 font-bold text-accent-foreground shadow-[0_18px_36px_rgba(255,115,10,0.28)] hover:bg-accent/90"
-                >
-                  <Link href="/ads/create">{messages.home.startSelling}</Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="border-white/25 bg-white/10 text-white backdrop-blur-md hover:bg-white/18"
-                >
-                  <Link href="#browse-categories">{messages.home.exploreCategories}</Link>
-                </Button>
-              </div>
-            </div>
 
-            <div className="relative mx-auto w-full max-w-xl">
-              <div className="absolute -left-6 top-8 h-28 w-28 rounded-full bg-white/12 blur-2xl" />
-              <div className="absolute -bottom-8 right-4 h-32 w-32 rounded-full bg-[#ffb26d]/25 blur-3xl" />
-              <div className="relative rounded-[2rem] border border-white/15 bg-white/10 p-6 shadow-[0_30px_80px_rgba(4,18,58,0.35)] backdrop-blur-2xl">
-                <BrandLogo size="hero" showTagline className="justify-center text-center" />
-                <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/65">BirJoy</p>
-                    <p className="mt-2 text-sm leading-6 text-white/85">Ko‘k va to‘q sariq brend bilan ishonchli, tez va zamonaviy marketplace tajribasi.</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-[#fff7ef]/90 p-4 text-[#071c55]">
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#ff730a]">Brand Focus</p>
-                    <p className="mt-2 text-sm leading-6 text-[#20305f]">Kirishdan e’lon ko‘rishgacha butun interfeys endi BirJoy logotipidagi kayfiyatga moslandi.</p>
+              <div className="relative mx-auto w-full max-w-xl">
+                <div className="absolute -left-6 top-8 h-28 w-28 rounded-full bg-white/12 blur-2xl" />
+                <div className="absolute -bottom-8 right-4 h-32 w-32 rounded-full bg-[#ffb26d]/25 blur-3xl" />
+                <div className="relative rounded-[2rem] border border-white/15 bg-white/10 p-6 shadow-[0_30px_80px_rgba(4,18,58,0.35)] backdrop-blur-2xl">
+                  <BrandLogo size="hero" showTagline className="justify-center text-center" />
+                  <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/65">BirJoy</p>
+                      <p className="mt-2 text-sm leading-6 text-white/85">Biz bilan hammasi bir joyda</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-[#fff7ef]/90 p-4 text-[#071c55]">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#ff730a]">Brand Focus</p>
+                      <p className="mt-2 text-sm leading-6 text-[#20305f]">Kirishdan e’lon ko‘rishgacha butun interfeys endi BirJoy logotipidagi kayfiyatga moslandi.</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
         {hasFilters ? (
           <section className="border-b bg-background/70 py-6">
