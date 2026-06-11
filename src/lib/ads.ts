@@ -1,6 +1,6 @@
 'use client';
 
-import { authTokenStorageKey } from '@/lib/auth';
+import { authTokenStorageKey, signOutUser } from '@/lib/auth';
 import { backendApiBaseUrl } from '@/lib/api';
 import type { LocalizedText, Language } from '@/lib/i18n';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -171,6 +171,10 @@ async function requestAdsApi(path: string, init?: RequestInit) {
   });
 
   const data = (await response.json().catch(() => ({}))) as AdsApiResponse;
+
+  if (response.status === 401) {
+    signOutUser();
+  }
 
   if (!response.ok) {
     throw new Error(data.message || 'Request failed.');
