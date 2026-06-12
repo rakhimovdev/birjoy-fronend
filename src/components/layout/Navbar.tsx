@@ -220,6 +220,13 @@ export function Navbar() {
             </>
           ) : null}
 
+          <a
+            href="tel:+998332580404"
+            className="hidden whitespace-nowrap text-sm font-semibold text-[#071c55] transition-colors hover:text-primary lg:inline-flex"
+          >
+            +998 33 258 04 04
+          </a>
+
           <Sheet>
             <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="md:hidden">
@@ -327,6 +334,13 @@ export function Navbar() {
                     </>
                   ) : null}
                 </div>
+
+                <a
+                  href="tel:+998332580404"
+                  className="block rounded-lg border px-4 py-3 text-sm font-semibold text-[#071c55] transition-colors hover:bg-muted"
+                >
+                  +998 33 258 04 04
+                </a>
               </div>
             </SheetContent>
           </Sheet>

@@ -348,7 +348,7 @@ function HomeContent() {
 
       <footer className="border-t border-white/70 bg-[rgba(255,250,242,0.82)] py-12 backdrop-blur">
         <div className="container mx-auto px-4">
-          <div className="mb-8 grid grid-cols-2 gap-8 md:grid-cols-4">
+          <div className="mb-8 grid grid-cols-2 gap-8 md:grid-cols-5">
             <div className="col-span-2 md:col-span-1">
               <BrandLogo size="md" showTagline className="mb-4" />
               <p className="text-sm text-muted-foreground">{messages.home.footerDescription}</p>
@@ -375,6 +375,31 @@ function HomeContent() {
                 {messages.home.footerCompanyItems.map((item) => (
                   <li key={item}>{item}</li>
                 ))}
+              </ul>
+            </div>
+            <div className="col-span-2 md:col-span-1">
+              <h4 className="mb-4 font-bold">{messages.home.footerContact}</h4>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                <li>
+                  <a
+                    href="https://t.me/startap_loyxalar"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="transition-colors hover:text-primary"
+                  >
+                    Telegram: @startap_loyxalar
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://www.instagram.com/halilulloh_s?igsh=ODg4ZG9tNHpqZTYx"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="break-all transition-colors hover:text-primary"
+                  >
+                    Instagram: @halilulloh_s
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
