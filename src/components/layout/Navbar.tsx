@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Search, PlusCircle, User, Heart, Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,19 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { useToast } from '@/hooks/use-toast';
 
-export function Navbar() {
+function NavbarFallback() {
+  return (
+    <nav className="sticky top-0 z-50 w-full border-b border-white/60 bg-[rgba(255,250,242,0.78)] shadow-[0_8px_30px_rgba(7,28,85,0.06)] backdrop-blur-xl supports-[backdrop-filter]:bg-[rgba(255,250,242,0.72)]">
+      <div className="container mx-auto flex h-16 items-center justify-between gap-3 px-4">
+        <Link href="/" className="flex items-center">
+          <BrandLogo size="sm" />
+        </Link>
+      </div>
+    </nav>
+  );
+}
+
+function NavbarContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -347,5 +359,13 @@ export function Navbar() {
         </div>
       </div>
     </nav>
+  );
+}
+
+export function Navbar() {
+  return (
+    <Suspense fallback={<NavbarFallback />}>
+      <NavbarContent />
+    </Suspense>
   );
 }
