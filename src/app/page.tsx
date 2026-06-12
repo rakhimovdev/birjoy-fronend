@@ -152,11 +152,16 @@ function HomeContent() {
                 <div className="absolute -left-6 top-8 h-28 w-28 rounded-full bg-white/12 blur-2xl" />
                 <div className="absolute -bottom-8 right-4 h-32 w-32 rounded-full bg-[#ffb26d]/25 blur-3xl" />
                 <div className="relative rounded-[2rem] border border-white/15 bg-white/10 p-6 shadow-[0_30px_80px_rgba(4,18,58,0.35)] backdrop-blur-2xl">
-                  <BrandLogo size="hero" showTagline className="justify-center text-center" />
+                  <BrandLogo
+                    size="hero"
+                    showTagline
+                    tagline="Online Platforma"
+                    className="justify-center text-center"
+                  />
                   <div className="mt-8 grid gap-3 sm:grid-cols-2">
                     <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/65">BirJoy</p>
-                      <p className="mt-2 text-sm leading-6 text-white/85">Biz bilan hammasi bir joyda</p>
+                      <p className="mt-2 text-sm leading-6 text-white/85">Online Platforma</p>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-[#fff7ef]/90 p-4 text-[#071c55]">
                       <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#ff730a]">Brand Focus</p>
@@ -372,8 +377,16 @@ function HomeContent() {
             <div>
               <h4 className="mb-4 font-bold">{messages.home.footerCompany}</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                {messages.home.footerCompanyItems.map((item) => (
-                  <li key={item}>{item}</li>
+                {messages.home.footerCompanyItems.map((item, index) => (
+                  <li key={`${item}-${index}`}>
+                    {index === 0 ? (
+                      <Link href="/about" className="transition-colors hover:text-primary">
+                        {item}
+                      </Link>
+                    ) : (
+                      item
+                    )}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -382,22 +395,22 @@ function HomeContent() {
               <ul className="space-y-3 text-sm text-muted-foreground">
                 <li>
                   <a
-                    href="https://t.me/startap_loyxalar"
+                    href="https://t.me/bir_joyuz"
                     target="_blank"
                     rel="noreferrer"
                     className="transition-colors hover:text-primary"
                   >
-                    Telegram: @startap_loyxalar
+                    Telegram: @bir_joyuz
                   </a>
                 </li>
                 <li>
                   <a
-                    href="https://www.instagram.com/halilulloh_s?igsh=ODg4ZG9tNHpqZTYx"
+                    href="https://www.instagram.com/1birjoy?igsh=MWZpeDNvdzcwNTRrdQ=="
                     target="_blank"
                     rel="noreferrer"
                     className="break-all transition-colors hover:text-primary"
                   >
-                    Instagram: @halilulloh_s
+                    Instagram: @1birjoy
                   </a>
                 </li>
               </ul>

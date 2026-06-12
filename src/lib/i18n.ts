@@ -108,6 +108,21 @@ export const dictionaries = {
       noResultsDescription:
         "Qidiruv so‘zini o‘zgartirib ko‘ring yoki kategoriyani tozalang. Yangi e'lon joylash orqali birinchi bo‘lishingiz ham mumkin.",
     },
+    about: {
+      title: 'Biz haqimizda',
+      description: "Sifatli mahsulotlar va ishonchli ta'minot xizmatlarini bir joyga jamlagan zamonaviy online platforma.",
+      paragraphOne:
+        "Hammasi Bir Joyda — mijozlarga sifatli mahsulotlar va ishonchli ta'minot xizmatlarini taqdim etuvchi zamonaviy online magazin. Biz turli toifadagi mahsulotlarni qulay narxlarda yetkazib berish hamda korxona va tashkilotlarni uzluksiz ta'minlash bilan shug‘ullanamiz.",
+      paragraphTwo:
+        "Maqsadimiz — xaridorlar va hamkorlar uchun barcha ehtiyojlarni bir joyda jamlagan qulay, tezkor va ishonchli xizmatni taqdim etish. Sifat, mas'uliyat va mijozlar mamnunligi bizning asosiy qadriyatlarimizdir.",
+      valuesTitle: 'Asosiy qadriyatlar',
+      valuesItems: ['Sifat', "Mas'uliyat", 'Mijozlar mamnunligi'],
+      contactTitle: "Biz bilan bog'laning",
+      contactDescription: "Buyurtma, hamkorlik yoki ta'minot bo'yicha savollar uchun qulay kanal orqali murojaat qiling.",
+      backHome: 'Bosh sahifaga qaytish',
+      phoneLabel: 'Telefon',
+      telegramLabel: 'Telegram',
+    },
     categoryBar: {
       all: 'Barchasi',
     },
@@ -335,6 +350,21 @@ export const dictionaries = {
       noResultsDescription:
         'Попробуйте изменить поисковый запрос или снять фильтр по категории. Либо разместите своё объявление первым.',
     },
+    about: {
+      title: 'О нас',
+      description: 'Современная онлайн-платформа, объединяющая качественные товары и надежные услуги снабжения.',
+      paragraphOne:
+        'Hammasi Bir Joyda — современный онлайн-магазин, который предлагает клиентам качественные товары и надежные услуги снабжения. Мы занимаемся доставкой товаров разных категорий по удобным ценам, а также обеспечиваем бесперебойное снабжение предприятий и организаций.',
+      paragraphTwo:
+        'Наша цель — предоставить покупателям и партнерам удобный, быстрый и надежный сервис, который объединяет все потребности в одном месте. Качество, ответственность и удовлетворенность клиентов являются нашими главными ценностями.',
+      valuesTitle: 'Ключевые ценности',
+      valuesItems: ['Качество', 'Ответственность', 'Удовлетворенность клиентов'],
+      contactTitle: 'Связаться с нами',
+      contactDescription: 'По вопросам заказов, сотрудничества и снабжения свяжитесь с нами через удобный канал.',
+      backHome: 'Вернуться на главную',
+      phoneLabel: 'Телефон',
+      telegramLabel: 'Telegram',
+    },
     categoryBar: {
       all: 'Все',
     },
@@ -561,6 +591,21 @@ export const dictionaries = {
       noResultsTitle: 'No matching listings found',
       noResultsDescription:
         'Try another search term or clear the category filter. You can also be the first to post a new listing.',
+    },
+    about: {
+      title: 'About Us',
+      description: 'A modern online platform bringing together quality products and reliable supply services.',
+      paragraphOne:
+        'Hammasi Bir Joyda is a modern online store that delivers quality products and dependable supply services to customers. We provide goods from different categories at convenient prices and help companies and organizations maintain steady procurement.',
+      paragraphTwo:
+        'Our goal is to offer buyers and partners a convenient, fast, and trustworthy service that brings every key need together in one place. Quality, responsibility, and customer satisfaction are our core values.',
+      valuesTitle: 'Core Values',
+      valuesItems: ['Quality', 'Responsibility', 'Customer Satisfaction'],
+      contactTitle: 'Get in Touch',
+      contactDescription: 'Reach out through the most convenient channel for orders, partnerships, or supply requests.',
+      backHome: 'Back to Home',
+      phoneLabel: 'Phone',
+      telegramLabel: 'Telegram',
     },
     categoryBar: {
       all: 'All',

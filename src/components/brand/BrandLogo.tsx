@@ -7,6 +7,7 @@ type BrandLogoProps = {
   markClassName?: string;
   size?: 'sm' | 'md' | 'lg' | 'hero';
   showTagline?: boolean;
+  tagline?: string;
 };
 
 const sizeStyles = {
@@ -78,6 +79,7 @@ export function BrandLogo({
   markClassName,
   size = 'md',
   showTagline = false,
+  tagline = 'Hammasi bir joyda',
 }: BrandLogoProps) {
   const styles = sizeStyles[size];
 
@@ -94,7 +96,7 @@ export function BrandLogo({
         {showTagline ? (
           <div className="mt-2 flex items-center gap-3 text-[#20305F]/78">
             <span className={cn('h-px rounded-full bg-[#AEB8CE]', styles.line)} />
-            <span className={cn('font-body uppercase', styles.tagline)}>Hammasi bir joyda</span>
+            <span className={cn('font-body uppercase', styles.tagline)}>{tagline}</span>
             <span className={cn('h-px rounded-full bg-[#AEB8CE]', styles.line)} />
           </div>
         ) : null}
