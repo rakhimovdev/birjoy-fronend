@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, UserPlus } from 'lucide-react';
 import { AuthPageShell } from '@/components/auth/AuthPageShell';
+import { GoogleAuthSection } from '@/components/auth/GoogleAuthSection';
 import { Navbar } from '@/components/layout/Navbar';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
@@ -118,6 +119,7 @@ function SignUpPageContent() {
         footerActionLabel={messages.auth.signInAction}
         footerActionHref="/sign-in"
       >
+        <GoogleAuthSection redirectTo={redirect} />
         <form onSubmit={(event) => void handleSubmit(event)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">{messages.auth.nameLabel}</Label>

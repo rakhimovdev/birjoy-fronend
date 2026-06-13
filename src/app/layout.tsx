@@ -1,13 +1,19 @@
-import type {Metadata, Viewport} from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from '@/components/ui/toaster';
 import { LocaleProvider } from '@/components/providers/LocaleProvider';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.bir-joy.uz';
+
 export const metadata: Metadata = {
   applicationName: 'BirJoy',
+  metadataBase: new URL(siteUrl),
   title: 'BirJoy | Hammasi Bir Joyda',
   description: 'BirJoy is a multilingual marketplace for buying and selling across Uzbekistan.',
+  alternates: {
+    canonical: '/',
+  },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,

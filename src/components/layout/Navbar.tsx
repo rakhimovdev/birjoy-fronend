@@ -145,7 +145,7 @@ function NavbarContent() {
           <InstallAppButton compact className="shrink-0" />
 
           <div className="hidden md:block">
-              <Select value={locale} onValueChange={handleLocaleChange}>
+            <Select value={locale} onValueChange={handleLocaleChange}>
               <SelectTrigger className="h-10 w-[138px] border-white/70 bg-white/70 shadow-sm">
                 <SelectValue placeholder={messages.navbar.language} />
               </SelectTrigger>
@@ -241,7 +241,7 @@ function NavbarContent() {
 
           <Sheet>
             <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="md:hidden">
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>

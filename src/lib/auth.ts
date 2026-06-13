@@ -19,6 +19,7 @@ type RemoteAuthUser = {
   _id?: string;
   name: string;
   email: string;
+  photoUrl?: string;
   phone?: string;
   location?: string | LocalizedText;
   favorites?: string[];
@@ -42,6 +43,10 @@ export type SignUpInput = {
   password: string;
   phone?: string;
   location?: string;
+};
+
+type GoogleAuthInput = {
+  credential: string;
 };
 
 export type AuthResult =
@@ -105,8 +110,8 @@ function normalizeRemoteUser(user: RemoteAuthUser): UserProfile {
     id: user.id || user._id || createUserId(),
     name: user.name.trim(),
     email: normalizeEmail(user.email),
+    photoUrl: user.photoUrl?.trim() || undefined,
     phone: user.phone?.trim() || undefined,
-    photoUrl: undefined,
     location: normalizedLocation,
     favorites: Array.isArray(user.favorites) ? user.favorites : [],
   };
@@ -230,8 +235,8 @@ function signInUserLocally(input: SignInInput): AuthResult {
 }
 
 async function callAuthEndpoint(
-  endpoint: 'register' | 'login',
-  payload: SignUpInput | SignInInput
+  endpoint: 'register' | 'login' | 'google',
+  payload: SignUpInput | SignInInput | GoogleAuthInput
 ): Promise<AuthResult> {
   try {
     const response = await fetch(`${backendApiBaseUrl}/auth/${endpoint}`, {
@@ -251,6 +256,14 @@ async function callAuthEndpoint(
 
       if (response.status === 401 || data.code === 'INVALID_CREDENTIALS') {
         return { ok: false, error: 'invalid_credentials', message: data.message };
+      }
+
+      if (response.status >= 500) {
+        return {
+          ok: false,
+          error: 'server_unavailable',
+          message: data.message,
+        };
       }
 
       return {
@@ -294,6 +307,17 @@ export async function signInUser(input: SignInInput): Promise<AuthResult> {
   }
 
   return callAuthEndpoint('login', input);
+}
+
+export async function signInWithGoogleUser(credential: string): Promise<AuthResult> {
+  if (!backendApiBaseUrl) {
+    return {
+      ok: false,
+      error: 'server_unavailable',
+    };
+  }
+
+  return callAuthEndpoint('google', { credential });
 }
 
 export function signOutUser() {

@@ -7,6 +7,7 @@ import {
   authUsersStorageKey,
   getStoredSessionUser,
   signInUser,
+  signInWithGoogleUser,
   signOutUser,
   signUpUser,
   syncStoredUser,
@@ -19,6 +20,7 @@ type AuthContextValue = {
   user: UserProfile | null;
   isReady: boolean;
   signIn: (input: SignInInput) => Promise<Awaited<ReturnType<typeof signInUser>>>;
+  signInWithGoogle: (credential: string) => Promise<Awaited<ReturnType<typeof signInWithGoogleUser>>>;
   signUp: (input: SignUpInput) => Promise<Awaited<ReturnType<typeof signUpUser>>>;
   signOut: () => void;
   isFavorite: (adId: string) => boolean;
@@ -62,6 +64,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (input: SignInInput) => {
     const result = await signInUser(input);
+
+    if (result.ok) {
+      setUser(result.user);
+    }
+
+    return result;
+  };
+
+  const signInWithGoogle = async (credential: string) => {
+    const result = await signInWithGoogleUser(credential);
 
     if (result.ok) {
       setUser(result.user);
@@ -115,6 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isReady,
         signIn,
+        signInWithGoogle,
         signUp,
         signOut,
         isFavorite,
