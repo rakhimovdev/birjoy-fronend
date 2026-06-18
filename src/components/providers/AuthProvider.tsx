@@ -6,6 +6,7 @@ import {
   authSyncEventName,
   authUsersStorageKey,
   getStoredSessionUser,
+  restoreAuthSession,
   signInUser,
   signInWithGoogleUser,
   signOutUser,
@@ -34,8 +35,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    let isActive = true;
+
     setUser(getStoredSessionUser());
-    setIsReady(true);
+
+    void (async () => {
+      const restoredUser = await restoreAuthSession();
+
+      if (!isActive) {
+        return;
+      }
+
+      setUser(restoredUser);
+      setIsReady(true);
+    })();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   useEffect(() => {

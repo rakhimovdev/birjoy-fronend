@@ -24,6 +24,8 @@ type NavigatorWithStandalone = Navigator & {
   standalone?: boolean;
 };
 
+const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
+
 function detectIosDevice() {
   if (typeof navigator === 'undefined') {
     return false;
@@ -46,6 +48,31 @@ function isStandaloneMode() {
   );
 }
 
+function isLocalDevelopmentHost() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const { hostname } = window.location;
+  return LOCAL_HOSTNAMES.has(hostname) || hostname.endsWith('.local');
+}
+
+async function cleanupLocalServiceWorker() {
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  await Promise.all(registrations.map((registration) => registration.unregister()));
+
+  if (!('caches' in window)) {
+    return;
+  }
+
+  const cacheKeys = await caches.keys();
+  await Promise.all(
+    cacheKeys
+      .filter((key) => key.startsWith('birjoy-pwa-'))
+      .map((key) => caches.delete(key))
+  );
+}
+
 export function InstallAppButton({
   className,
   compact = false,
@@ -63,9 +90,15 @@ export function InstallAppButton({
     setIsStandalone(isStandaloneMode());
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {
-        // The browser may still allow manual installation through its own menu.
-      });
+      if (process.env.NODE_ENV === 'production' && !isLocalDevelopmentHost()) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+          // The browser may still allow manual installation through its own menu.
+        });
+      } else {
+        void cleanupLocalServiceWorker().catch(() => {
+          // Dev sessions should continue even if the browser refuses cache cleanup.
+        });
+      }
     }
 
     const standaloneMediaQuery = window.matchMedia('(display-mode: standalone)');

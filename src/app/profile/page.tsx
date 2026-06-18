@@ -123,7 +123,7 @@ function ProfilePageContent() {
               <Card>
                 <CardContent className="flex flex-col items-center pt-8 text-center">
                   <Avatar className="mb-4 h-24 w-24 border-4 border-primary/10">
-                    <AvatarImage src={user.photoUrl} alt={user.name} />
+                    <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <h2 className="text-xl font-bold">{user.name}</h2>

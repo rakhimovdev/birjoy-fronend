@@ -129,7 +129,9 @@ export const CURRENT_USER: UserProfile = {
   id: 'u1',
   name: 'Akmal Rahimov',
   email: 'akmal@example.com',
-  photoUrl: PlaceHolderImages[5].imageUrl,
+  avatar: PlaceHolderImages[5].imageUrl,
+  role: 'user',
+  createdAt: '2024-03-01T00:00:00Z',
   phone: '+998 90 123 45 67',
   location: {
     uz: 'Toshkent',

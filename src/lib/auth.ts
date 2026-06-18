@@ -19,7 +19,12 @@ type RemoteAuthUser = {
   _id?: string;
   name: string;
   email: string;
+  avatar?: string;
   photoUrl?: string;
+  googleId?: string;
+  role?: 'user';
+  createdAt?: string;
+  updatedAt?: string;
   phone?: string;
   location?: string | LocalizedText;
   favorites?: string[];
@@ -94,7 +99,7 @@ function createUserId() {
 }
 
 function sanitizeUser(user: StoredAuthUser): UserProfile {
-  const { password, createdAt, ...safeUser } = user;
+  const { password, ...safeUser } = user;
   return safeUser;
 }
 
@@ -110,7 +115,11 @@ function normalizeRemoteUser(user: RemoteAuthUser): UserProfile {
     id: user.id || user._id || createUserId(),
     name: user.name.trim(),
     email: normalizeEmail(user.email),
-    photoUrl: user.photoUrl?.trim() || undefined,
+    avatar: user.avatar?.trim() || user.photoUrl?.trim() || undefined,
+    googleId: user.googleId?.trim() || undefined,
+    role: user.role || 'user',
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
     phone: user.phone?.trim() || undefined,
     location: normalizedLocation,
     favorites: Array.isArray(user.favorites) ? user.favorites : [],
@@ -161,6 +170,14 @@ function writeStoredToken(token: string | null) {
   window.localStorage.setItem(authTokenStorageKey, token);
 }
 
+export function getStoredAuthToken() {
+  if (!isBrowser()) {
+    return '';
+  }
+
+  return window.localStorage.getItem(authTokenStorageKey) || '';
+}
+
 export function getStoredSessionUser() {
   if (!isBrowser()) {
     return null as UserProfile | null;
@@ -198,8 +215,10 @@ function signUpUserLocally(input: SignUpInput): AuthResult {
     name: input.name.trim(),
     email: normalizedEmail,
     password: input.password,
+    role: 'user',
+    googleId: undefined,
     phone: input.phone?.trim() || undefined,
-    photoUrl: undefined,
+    avatar: undefined,
     location: input.location?.trim()
       ? toLocalizedText(input.location.trim())
       : undefined,
@@ -211,7 +230,9 @@ function signUpUserLocally(input: SignUpInput): AuthResult {
   writeStoredUsers(users);
 
   const user = sanitizeUser(storedUser);
+  writeStoredToken(null);
   writeStoredSessionUser(user);
+  notifyAuthSync();
 
   return { ok: true, user };
 }
@@ -229,7 +250,9 @@ function signInUserLocally(input: SignInInput): AuthResult {
   }
 
   const user = sanitizeUser(matchedUser);
+  writeStoredToken(null);
   writeStoredSessionUser(user);
+  notifyAuthSync();
 
   return { ok: true, user };
 }
@@ -241,6 +264,8 @@ async function callAuthEndpoint(
   try {
     const response = await fetch(`${backendApiBaseUrl}/auth/${endpoint}`, {
       method: 'POST',
+      credentials: 'include',
+      cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -273,7 +298,7 @@ async function callAuthEndpoint(
       };
     }
 
-    if (!data.user) {
+    if (!data.user || !data.token) {
       return {
         ok: false,
         error: 'server_unavailable',
@@ -281,8 +306,9 @@ async function callAuthEndpoint(
     }
 
     const user = normalizeRemoteUser(data.user);
+    writeStoredToken(data.token);
     writeStoredSessionUser(user);
-    writeStoredToken(data.token || null);
+    notifyAuthSync();
 
     return { ok: true, user };
   } catch {
@@ -320,7 +346,61 @@ export async function signInWithGoogleUser(credential: string): Promise<AuthResu
   return callAuthEndpoint('google', { credential });
 }
 
+export async function restoreAuthSession() {
+  const storedUser = getStoredSessionUser();
+  const token = getStoredAuthToken();
+
+  if (!backendApiBaseUrl || !token) {
+    return storedUser;
+  }
+
+  try {
+    const response = await fetch(`${backendApiBaseUrl}/auth/me`, {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.status === 401) {
+      signOutUser();
+      return null;
+    }
+
+    if (!response.ok) {
+      return storedUser;
+    }
+
+    const data = (await response.json().catch(() => ({}))) as RemoteAuthResponse;
+
+    if (!data.user) {
+      return storedUser;
+    }
+
+    const user = normalizeRemoteUser(data.user);
+    writeStoredSessionUser(user);
+    notifyAuthSync();
+    return user;
+  } catch {
+    return storedUser;
+  }
+}
+
 export function signOutUser() {
+  const token = getStoredAuthToken();
+
+  if (backendApiBaseUrl && token) {
+    void fetch(`${backendApiBaseUrl}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }).catch(() => undefined);
+  }
+
   writeStoredToken(null);
   writeStoredSessionUser(null);
   notifyAuthSync();

@@ -1,7 +1,7 @@
 'use client';
 
 import Script from 'next/script';
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -60,45 +60,6 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
   const [scriptState, setScriptState] = useState<'idle' | 'ready' | 'error'>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCredentialResponse = useEffectEvent(async (response: GoogleCredentialResponse) => {
-    if (!response.credential) {
-      toast({
-        title: messages.auth.requestFailedTitle,
-        description: messages.auth.requestFailedDescription,
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    const result = await signInWithGoogle(response.credential);
-
-    if (!result.ok) {
-      toast({
-        title:
-          result.error === 'server_unavailable'
-            ? messages.auth.serverUnavailableTitle
-            : messages.auth.requestFailedTitle,
-        description:
-          result.error === 'server_unavailable'
-            ? result.message || messages.auth.serverUnavailableDescription
-            : result.message || messages.auth.requestFailedDescription,
-        variant: 'destructive',
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
-    toast({
-      title: messages.auth.googleSuccessTitle,
-      description: messages.auth.googleSuccessDescription,
-    });
-
-    window.google?.accounts.id.cancel();
-    router.replace(redirectTo);
-  });
-
   useEffect(() => {
     if (!googleClientId || scriptState !== 'ready' || !window.google || !buttonRef.current) {
       return;
@@ -113,7 +74,44 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
       ux_mode: 'popup',
       cancel_on_tap_outside: true,
       callback: (response) => {
-        void handleCredentialResponse(response);
+        void (async () => {
+          if (!response.credential) {
+            toast({
+              title: messages.auth.requestFailedTitle,
+              description: messages.auth.requestFailedDescription,
+              variant: 'destructive',
+            });
+            return;
+          }
+
+          setIsSubmitting(true);
+
+          const result = await signInWithGoogle(response.credential);
+
+          if (!result.ok) {
+            toast({
+              title:
+                result.error === 'server_unavailable'
+                  ? messages.auth.serverUnavailableTitle
+                  : messages.auth.requestFailedTitle,
+              description:
+                result.error === 'server_unavailable'
+                  ? result.message || messages.auth.serverUnavailableDescription
+                  : result.message || messages.auth.requestFailedDescription,
+              variant: 'destructive',
+            });
+            setIsSubmitting(false);
+            return;
+          }
+
+          toast({
+            title: messages.auth.googleSuccessTitle,
+            description: messages.auth.googleSuccessDescription,
+          });
+
+          window.google?.accounts.id.cancel();
+          router.replace(redirectTo);
+        })();
       },
     });
     window.google.accounts.id.renderButton(container, {
@@ -124,7 +122,7 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
       logo_alignment: 'left',
       width: buttonWidth,
     });
-  }, [googleClientId, scriptState]);
+  }, [googleClientId, messages, redirectTo, router, scriptState, signInWithGoogle, toast]);
 
   return (
     <div className="space-y-4">

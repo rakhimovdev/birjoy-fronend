@@ -28,7 +28,11 @@ export type UserProfile = {
   id: string;
   name: string;
   email: string;
-  photoUrl?: string;
+  avatar?: string;
+  googleId?: string;
+  role: 'user';
+  createdAt?: string;
+  updatedAt?: string;
   phone?: string;
   location?: LocalizedText;
   favorites: string[]; // Ad IDs

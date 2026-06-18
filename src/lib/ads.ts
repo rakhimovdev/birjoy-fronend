@@ -1,6 +1,6 @@
 'use client';
 
-import { authTokenStorageKey, signOutUser } from '@/lib/auth';
+import { getStoredAuthToken, signOutUser } from '@/lib/auth';
 import { backendApiBaseUrl } from '@/lib/api';
 import type { LocalizedText, Language } from '@/lib/i18n';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -144,16 +144,8 @@ function normalizeRemoteAd(ad: RemoteAd): Ad {
   };
 }
 
-function getStoredToken() {
-  if (typeof window === 'undefined') {
-    return '';
-  }
-
-  return window.localStorage.getItem(authTokenStorageKey) || '';
-}
-
 async function requestAdsApi(path: string, init?: RequestInit) {
-  const token = getStoredToken();
+  const token = getStoredAuthToken();
   const headers = new Headers(init?.headers);
 
   if (init?.body && !headers.has('Content-Type')) {
@@ -166,6 +158,7 @@ async function requestAdsApi(path: string, init?: RequestInit) {
 
   const response = await fetch(`${backendApiBaseUrl}${path}`, {
     ...init,
+    credentials: 'include',
     headers,
     cache: 'no-store',
   });
