@@ -4,6 +4,7 @@ import Script from 'next/script';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { backendApiBaseUrl } from '@/lib/api';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,11 @@ import { cn } from '@/lib/utils';
 
 type GoogleCredentialResponse = {
   credential?: string;
+};
+
+type PublicConfigResponse = {
+  googleAuthEnabled?: boolean;
+  googleClientId?: string;
 };
 
 type GoogleIdConfiguration = {
@@ -51,14 +57,67 @@ type GoogleAuthSectionProps = {
 };
 
 export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() || '';
+  const embeddedGoogleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() || '';
   const { signInWithGoogle } = useAuth();
   const { messages } = useI18n();
   const { toast } = useToast();
   const router = useRouter();
   const buttonRef = useRef<HTMLDivElement | null>(null);
+  const [googleClientId, setGoogleClientId] = useState(embeddedGoogleClientId);
+  const [configState, setConfigState] = useState<'idle' | 'loading' | 'ready' | 'error'>(
+    embeddedGoogleClientId ? 'ready' : 'idle'
+  );
   const [scriptState, setScriptState] = useState<'idle' | 'ready' | 'error'>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (embeddedGoogleClientId) {
+      setGoogleClientId(embeddedGoogleClientId);
+      setConfigState('ready');
+      return;
+    }
+
+    if (!backendApiBaseUrl) {
+      setConfigState('error');
+      return;
+    }
+
+    let isActive = true;
+    setConfigState('loading');
+
+    void fetch(`${backendApiBaseUrl}/config/public`, {
+      cache: 'no-store',
+      credentials: 'include',
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error('Failed to load public config.');
+        }
+
+        const data = (await response.json().catch(() => ({}))) as PublicConfigResponse;
+        const runtimeGoogleClientId =
+          typeof data.googleClientId === 'string' ? data.googleClientId.trim() : '';
+
+        if (!isActive) {
+          return;
+        }
+
+        setGoogleClientId(runtimeGoogleClientId);
+        setConfigState(runtimeGoogleClientId ? 'ready' : 'error');
+      })
+      .catch(() => {
+        if (!isActive) {
+          return;
+        }
+
+        setGoogleClientId('');
+        setConfigState('error');
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [embeddedGoogleClientId]);
 
   useEffect(() => {
     if (!googleClientId || scriptState !== 'ready' || !window.google || !buttonRef.current) {
@@ -124,14 +183,19 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
     });
   }, [googleClientId, messages, redirectTo, router, scriptState, signInWithGoogle, toast]);
 
+  const isGoogleUnavailable = configState === 'error' || scriptState === 'error';
+  const isLoadingGoogle = configState !== 'ready' || scriptState !== 'ready';
+
   return (
     <div className="space-y-4">
-      <Script
-        src="https://accounts.google.com/gsi/client"
-        strategy="afterInteractive"
-        onLoad={() => setScriptState('ready')}
-        onError={() => setScriptState('error')}
-      />
+      {googleClientId ? (
+        <Script
+          src="https://accounts.google.com/gsi/client"
+          strategy="afterInteractive"
+          onLoad={() => setScriptState('ready')}
+          onError={() => setScriptState('error')}
+        />
+      ) : null}
 
       <div className="flex items-center gap-3 text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-muted-foreground/80">
         <span className="h-px flex-1 bg-border" />
@@ -139,7 +203,7 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
         <span className="h-px flex-1 bg-border" />
       </div>
 
-      {!googleClientId || scriptState === 'error' ? (
+      {isGoogleUnavailable ? (
         <div className="rounded-2xl border border-dashed bg-muted/40 p-4 text-sm text-muted-foreground">
           {messages.auth.googleUnavailableDescription}
         </div>
@@ -152,7 +216,7 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
               isSubmitting && 'pointer-events-none opacity-60'
             )}
           />
-          {scriptState !== 'ready' || isSubmitting ? (
+          {isLoadingGoogle || isSubmitting ? (
             <div className="absolute inset-0 flex items-center justify-center rounded-full border bg-background/80 backdrop-blur-sm">
               <Button type="button" variant="outline" className="w-full rounded-full" disabled>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
