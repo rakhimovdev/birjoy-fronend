@@ -1,14 +1,54 @@
 import type { NextConfig } from 'next';
 
-const frontendUrl =
-  process.env.FRONTEND_URL ||
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  'http://localhost:9002';
-const backendUrl =
+const isDevelopment = process.env.NODE_ENV !== 'production';
+const productionFrontendUrl = 'https://www.bir-joy.uz';
+const productionBackendUrl = 'https://birjoy-backend.onrender.com';
+
+function normalizeUrl(value: string | undefined) {
+  return String(value || '').trim().replace(/\/$/, '');
+}
+
+function isLocalHostName(hostname: string) {
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '[::1]' ||
+    hostname.endsWith('.local')
+  );
+}
+
+function isLocalUrl(value: string) {
+  try {
+    return isLocalHostName(new URL(value).hostname);
+  } catch {
+    return false;
+  }
+}
+
+function pickPublicUrl(value: string | undefined, fallback: string) {
+  const normalized = normalizeUrl(value);
+
+  if (!normalized) {
+    return fallback;
+  }
+
+  if (!isDevelopment && isLocalUrl(normalized)) {
+    return fallback;
+  }
+
+  return normalized;
+}
+
+const frontendUrl = pickPublicUrl(
+  process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_SITE_URL,
+  isDevelopment ? 'http://localhost:9002' : productionFrontendUrl
+);
+const backendUrl = pickPublicUrl(
   process.env.BACKEND_URL ||
-  process.env.NEXT_PUBLIC_BACKEND_URL ||
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  'http://localhost:5000';
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL,
+  isDevelopment ? 'http://localhost:5000' : productionBackendUrl
+);
 const googleClientId =
   process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
