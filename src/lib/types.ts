@@ -37,3 +37,28 @@ export type UserProfile = {
   location?: LocalizedText;
   favorites: string[]; // Ad IDs
 };
+
+export type OrderRequestStatus = 'new' | 'contacted' | 'completed';
+
+export type OrderRequest = {
+  id: string;
+  adId: string;
+  adTitle: string;
+  adPrice: number;
+  sellerName: string;
+  sellerPhone: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  customerUserId: string;
+  message: string;
+  status: OrderRequestStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminProfile = {
+  login: string;
+  name: string;
+  role: 'admin';
+};

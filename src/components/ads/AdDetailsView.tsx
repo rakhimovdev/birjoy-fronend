@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Clock, MapPin, Phone, Tag, User } from 'lucide-react';
+import { Clock, Loader2, MapPin, Phone, Tag, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
@@ -10,21 +10,34 @@ import { AdCard } from '@/components/ads/AdCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { getCategoryBySlug } from '@/lib/mock-data';
 import { Ad } from '@/lib/types';
 import { getLocalizedText, languageMeta } from '@/lib/i18n';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
+import { useToast } from '@/hooks/use-toast';
 import { fetchAdById, fetchAds, getConditionLabel } from '@/lib/ads';
+import { createOrderRequest } from '@/lib/orders';
 
 export function AdDetailsView({ adId }: { adId: string }) {
-  const { isFavorite } = useAuth();
+  const { isFavorite, user } = useAuth();
   const { locale, messages } = useI18n();
+  const { toast } = useToast();
   const [ad, setAd] = useState<Ad | null>(null);
   const [relatedAds, setRelatedAds] = useState<Ad[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isOrderSubmitting, setIsOrderSubmitting] = useState(false);
+  const [orderForm, setOrderForm] = useState({
+    customerName: '',
+    customerEmail: '',
+    customerPhone: '',
+    message: '',
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -61,6 +74,19 @@ export function AdDetailsView({ adId }: { adId: string }) {
       cancelled = true;
     };
   }, [adId, messages.adDetails.notFound]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    setOrderForm((previous) => ({
+      customerName: previous.customerName || user.name || '',
+      customerEmail: previous.customerEmail || user.email || '',
+      customerPhone: previous.customerPhone || user.phone || '',
+      message: previous.message,
+    }));
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -110,6 +136,86 @@ export function AdDetailsView({ adId }: { adId: string }) {
     addSuffix: true,
     locale: languageMeta[locale].dateLocale,
   });
+  const orderCopy =
+    locale === 'ru'
+      ? {
+          title: 'Оставить заявку',
+          description: 'Запрос попадет в админ-панель, и продавец сможет связаться с вами.',
+          name: 'Имя',
+          email: 'Email',
+          phone: 'Телефон',
+          message: 'Комментарий',
+          messagePlaceholder: 'Например, когда вам удобно созвониться?',
+          submit: 'Отправить заявку',
+          successTitle: 'Заявка отправлена',
+          successDescription: 'Администратор и продавец получили ваш запрос.',
+          errorTitle: 'Заявка не отправлена',
+          statusNote: 'После отправки заявка появится в панели администратора.',
+        }
+      : locale === 'en'
+        ? {
+            title: 'Send an order request',
+            description: 'Your request will go to the admin panel so the seller can follow up.',
+            name: 'Name',
+            email: 'Email',
+            phone: 'Phone',
+            message: 'Message',
+            messagePlaceholder: 'For example, what time should we contact you?',
+            submit: 'Send request',
+            successTitle: 'Request sent',
+            successDescription: 'The admin and seller received your request.',
+            errorTitle: 'Request was not sent',
+            statusNote: 'After submission the request appears in the admin panel.',
+          }
+        : {
+            title: 'Buyurtma qoldirish',
+            description: 'So‘rov admin panelga tushadi va sotuvchi siz bilan bog‘lana oladi.',
+            name: 'Ism',
+            email: 'Email',
+            phone: 'Telefon',
+            message: 'Izoh',
+            messagePlaceholder: 'Masalan, qachon bog‘lanish qulayligini yozing',
+            submit: 'Buyurtma yuborish',
+            successTitle: 'Buyurtma yuborildi',
+            successDescription: 'Admin va sotuvchiga so‘rovingiz yetkazildi.',
+            errorTitle: 'Buyurtma yuborilmadi',
+            statusNote: 'Yuborilganidan keyin buyurtma admin panelda ko‘rinadi.',
+          };
+
+  const handleOrderSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsOrderSubmitting(true);
+
+    try {
+      await createOrderRequest({
+        adId: ad.id,
+        customerName: orderForm.customerName,
+        customerEmail: orderForm.customerEmail,
+        customerPhone: orderForm.customerPhone,
+        customerUserId: user?.id,
+        message: orderForm.message,
+      });
+
+      toast({
+        title: orderCopy.successTitle,
+        description: orderCopy.successDescription,
+      });
+
+      setOrderForm((previous) => ({
+        ...previous,
+        message: '',
+      }));
+    } catch (submitError) {
+      toast({
+        title: orderCopy.errorTitle,
+        description:
+          submitError instanceof Error ? submitError.message : messages.auth.requestFailedDescription,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsOrderSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -260,6 +366,83 @@ export function AdDetailsView({ adId }: { adId: string }) {
                     <Link href="/">{messages.adDetails.browseMore}</Link>
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-sm">
+              <CardHeader>
+                <CardTitle>{orderCopy.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={(event) => void handleOrderSubmit(event)} className="space-y-4">
+                  <p className="text-sm text-muted-foreground">{orderCopy.description}</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="order-customer-name">{orderCopy.name}</Label>
+                    <Input
+                      id="order-customer-name"
+                      value={orderForm.customerName}
+                      onChange={(event) =>
+                        setOrderForm((previous) => ({
+                          ...previous,
+                          customerName: event.target.value,
+                        }))
+                      }
+                      placeholder={orderCopy.name}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="order-customer-email">{orderCopy.email}</Label>
+                    <Input
+                      id="order-customer-email"
+                      type="email"
+                      value={orderForm.customerEmail}
+                      onChange={(event) =>
+                        setOrderForm((previous) => ({
+                          ...previous,
+                          customerEmail: event.target.value,
+                        }))
+                      }
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="order-customer-phone">{orderCopy.phone}</Label>
+                    <Input
+                      id="order-customer-phone"
+                      value={orderForm.customerPhone}
+                      onChange={(event) =>
+                        setOrderForm((previous) => ({
+                          ...previous,
+                          customerPhone: event.target.value,
+                        }))
+                      }
+                      placeholder="+998 90 123 45 67"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="order-message">{orderCopy.message}</Label>
+                    <Textarea
+                      id="order-message"
+                      value={orderForm.message}
+                      onChange={(event) =>
+                        setOrderForm((previous) => ({
+                          ...previous,
+                          message: event.target.value,
+                        }))
+                      }
+                      placeholder={orderCopy.messagePlaceholder}
+                    />
+                  </div>
+                  <Button type="submit" className="h-11 w-full" disabled={isOrderSubmitting}>
+                    {isOrderSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                    {orderCopy.submit}
+                  </Button>
+                  <div className="rounded-2xl bg-muted/50 p-4 text-sm text-muted-foreground">
+                    {orderCopy.statusNote}
+                  </div>
+                </form>
               </CardContent>
             </Card>
 
