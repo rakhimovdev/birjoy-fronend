@@ -30,8 +30,8 @@ export function CategoryBar() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 overflow-x-auto border-t border-white/80 bg-[rgba(255,255,255,0.94)] shadow-[0_-12px_28px_rgba(7,28,85,0.12)] backdrop-blur-xl scrollbar-hide md:static md:w-full md:border-t-0 md:border-b md:border-white/70 md:bg-[rgba(255,255,255,0.72)] md:shadow-none">
-      <div className="container mx-auto flex min-w-max snap-x snap-mandatory gap-3 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:justify-center md:snap-none md:gap-8 md:px-4 md:py-4 md:pb-4">
+    <div className="fixed inset-x-0 bottom-0 z-40 overflow-x-auto border-t border-white/80 bg-[rgba(255,255,255,0.94)] shadow-[0_-12px_28px_rgba(7,28,85,0.12)] backdrop-blur-xl scrollbar-hide">
+      <div className="container mx-auto flex min-w-max snap-x snap-mandatory gap-3 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:justify-center md:snap-none md:gap-8 md:px-4 md:py-4 md:pb-[calc(env(safe-area-inset-bottom)+1rem)]">
         <button
           type="button"
           onClick={() => updateCategory('all')}
