@@ -188,3 +188,13 @@ export async function updateAdminOrderStatus(orderId: string, status: OrderReque
 
   return normalizeOrder(data.order);
 }
+
+export async function deleteAdminAd(adId: string) {
+  await requestAdminApi(
+    `/admin/ads/${adId}`,
+    {
+      method: 'DELETE',
+    },
+    { requiresAuth: true }
+  );
+}

@@ -1,9 +1,22 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Loader2, LogIn, LogOut, RefreshCw, ShieldCheck } from 'lucide-react';
+import { ExternalLink, Loader2, LogIn, LogOut, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +37,7 @@ import {
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import {
+  deleteAdminAd,
   fetchAdminOrders,
   getStoredAdminProfile,
   getStoredAdminToken,
@@ -31,7 +45,9 @@ import {
   signOutAdmin,
   updateAdminOrderStatus,
 } from '@/lib/admin';
-import type { AdminProfile, OrderRequest, OrderRequestStatus } from '@/lib/types';
+import { fetchAds, getConditionLabel } from '@/lib/ads';
+import { getCategoryBySlug } from '@/lib/mock-data';
+import type { Ad, AdminProfile, OrderRequest, OrderRequestStatus } from '@/lib/types';
 
 const orderStatusOptions: Array<{ value: OrderRequestStatus; label: string }> = [
   { value: 'new', label: 'Yangi' },
@@ -73,10 +89,12 @@ function getStatusBadgeClassName(status: OrderRequestStatus) {
 export default function AdminPage() {
   const { toast } = useToast();
   const [admin, setAdmin] = useState<AdminProfile | null>(null);
+  const [ads, setAds] = useState<Ad[]>([]);
   const [orders, setOrders] = useState<OrderRequest[]>([]);
   const [isReady, setIsReady] = useState(false);
-  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingAdId, setDeletingAdId] = useState('');
   const [updatingOrderId, setUpdatingOrderId] = useState('');
   const [formData, setFormData] = useState({
     login: 'birjoy-admin',
@@ -88,16 +106,18 @@ export default function AdminPage() {
     role: 'admin',
   };
 
-  const loadOrders = async (currentAdmin?: AdminProfile | null) => {
-    setIsLoadingOrders(true);
+  const loadDashboard = async (currentAdmin?: AdminProfile | null) => {
+    setIsRefreshing(true);
 
     try {
-      const nextOrders = await fetchAdminOrders();
+      const [nextOrders, nextAds] = await Promise.all([fetchAdminOrders(), fetchAds()]);
       setOrders(nextOrders);
+      setAds(nextAds);
       setAdmin(currentAdmin || getStoredAdminProfile() || fallbackAdminProfile);
     } catch (error) {
       signOutAdmin();
       setAdmin(null);
+      setAds([]);
       setOrders([]);
       toast({
         title: 'Admin panelni yuklab bo‘lmadi',
@@ -106,7 +126,7 @@ export default function AdminPage() {
         variant: 'destructive',
       });
     } finally {
-      setIsLoadingOrders(false);
+      setIsRefreshing(false);
       setIsReady(true);
     }
   };
@@ -126,7 +146,7 @@ export default function AdminPage() {
       return;
     }
 
-    void loadOrders(storedAdmin);
+    void loadDashboard(storedAdmin);
   }, []);
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -140,7 +160,7 @@ export default function AdminPage() {
         title: 'Admin panelga kirildi',
         description: 'Buyurtmalar ro‘yxati yangilanmoqda.',
       });
-      await loadOrders(nextAdmin);
+      await loadDashboard(nextAdmin);
       setFormData((previous) => ({
         ...previous,
         password: '',
@@ -161,6 +181,7 @@ export default function AdminPage() {
   const handleSignOut = () => {
     signOutAdmin();
     setAdmin(null);
+    setAds([]);
     setOrders([]);
     toast({
       title: 'Admin paneldan chiqildi',
@@ -189,6 +210,28 @@ export default function AdminPage() {
       });
     } finally {
       setUpdatingOrderId('');
+    }
+  };
+
+  const handleDeleteAd = async (adId: string) => {
+    setDeletingAdId(adId);
+
+    try {
+      await deleteAdminAd(adId);
+      setAds((previous) => previous.filter((ad) => ad.id !== adId));
+      toast({
+        title: 'Eʼlon o‘chirildi',
+        description: 'Eʼlon admin paneldan muvaffaqiyatli olib tashlandi.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Eʼlon o‘chirilmadi',
+        description:
+          error instanceof Error ? error.message : 'Qaytadan urinib ko‘ring.',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingAdId('');
     }
   };
 
@@ -245,10 +288,10 @@ export default function AdminPage() {
                 <Button
                   variant="outline"
                   className="gap-2"
-                  onClick={() => void loadOrders(admin)}
-                  disabled={isLoadingOrders}
+                  onClick={() => void loadDashboard(admin)}
+                  disabled={isRefreshing}
                 >
-                  {isLoadingOrders ? (
+                  {isRefreshing ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <RefreshCw className="h-4 w-4" />
@@ -372,6 +415,121 @@ export default function AdminPage() {
                           </TableCell>
                         </TableRow>
                       ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-sm">
+              <CardHeader>
+                <CardTitle>Eʼlonlar boshqaruvi</CardTitle>
+                <CardDescription>
+                  Admin barcha eʼlonlarni ko‘rib chiqishi va kerak bo‘lsa o‘chirishi mumkin.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {ads.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed px-6 py-16 text-center">
+                    <p className="text-lg font-semibold">Hozircha eʼlonlar yo‘q</p>
+                    <p className="mt-2 text-muted-foreground">
+                      Yangi eʼlonlar joylanganda shu jadvalda paydo bo‘ladi.
+                    </p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Eʼlon</TableHead>
+                        <TableHead>Kategoriya</TableHead>
+                        <TableHead>Sotuvchi</TableHead>
+                        <TableHead>Holati</TableHead>
+                        <TableHead>Sana</TableHead>
+                        <TableHead className="text-right">Amal</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {ads.map((ad) => {
+                        const categoryName = getCategoryBySlug(ad.category)?.name.uz || ad.category;
+
+                        return (
+                          <TableRow key={ad.id}>
+                            <TableCell className="min-w-[260px]">
+                              <p className="font-semibold text-foreground">{ad.title.uz}</p>
+                              <p className="text-sm text-muted-foreground">{ad.location.uz}</p>
+                            </TableCell>
+                            <TableCell className="min-w-[180px]">
+                              <p className="font-medium text-foreground">{categoryName}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {getConditionLabel(ad.condition, 'uz')}
+                              </p>
+                            </TableCell>
+                            <TableCell className="min-w-[220px]">
+                              <p className="font-semibold text-foreground">{ad.userName}</p>
+                              <p className="text-sm text-muted-foreground">{ad.sellerPhone}</p>
+                            </TableCell>
+                            <TableCell className="min-w-[140px]">
+                              <Badge variant={ad.status === 'active' ? 'default' : 'secondary'}>
+                                {ad.status === 'active'
+                                  ? 'Faol'
+                                  : ad.status === 'pending'
+                                    ? 'Kutilmoqda'
+                                    : 'Flag qilingan'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="min-w-[160px] text-sm text-muted-foreground">
+                              {formatDate(ad.createdAt)}
+                            </TableCell>
+                            <TableCell className="min-w-[190px] text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button asChild variant="outline" size="sm" className="gap-2">
+                                  <Link href={`/ads/${ad.id}`} target="_blank" rel="noreferrer">
+                                    <ExternalLink className="h-4 w-4" />
+                                    Ko‘rish
+                                  </Link>
+                                </Button>
+
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      className="gap-2"
+                                      disabled={deletingAdId === ad.id}
+                                    >
+                                      {deletingAdId === ad.id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                      )}
+                                      O‘chirish
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Eʼlonni o‘chirasizmi?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Bu amal qaytarilmaydi. Eʼlon marketplace ichidan olib
+                                        tashlanadi, lekin eski buyurtma yozuvlari saqlanib qoladi.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        disabled={deletingAdId === ad.id}
+                                        onClick={() => void handleDeleteAd(ad.id)}
+                                      >
+                                        O‘chirish
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 )}
