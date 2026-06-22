@@ -5,6 +5,7 @@ import type { AdminProfile, OrderRequest, OrderRequestStatus } from '@/lib/types
 
 export const adminTokenStorageKey = 'birjoy-admin-token';
 export const adminProfileStorageKey = 'birjoy-admin-profile';
+export const adminSyncEventName = 'birjoy-admin-sync';
 
 type RemoteAdmin = Partial<AdminProfile>;
 type RemoteOrder = Partial<OrderRequest>;
@@ -24,6 +25,14 @@ type AdminApiError = Error & {
 
 function isBrowser() {
   return typeof window !== 'undefined';
+}
+
+function notifyAdminSync() {
+  if (!isBrowser()) {
+    return;
+  }
+
+  window.dispatchEvent(new Event(adminSyncEventName));
 }
 
 function normalizeAdmin(admin: RemoteAdmin | undefined): AdminProfile {
@@ -81,6 +90,7 @@ function writeAdminSession(token: string, admin: AdminProfile) {
 
   window.localStorage.setItem(adminTokenStorageKey, token);
   window.localStorage.setItem(adminProfileStorageKey, JSON.stringify(admin));
+  notifyAdminSync();
 }
 
 export function getStoredAdminToken() {
@@ -102,6 +112,7 @@ export function signOutAdmin() {
 
   window.localStorage.removeItem(adminTokenStorageKey);
   window.localStorage.removeItem(adminProfileStorageKey);
+  notifyAdminSync();
 }
 
 async function requestAdminApi(

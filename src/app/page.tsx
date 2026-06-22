@@ -17,6 +17,7 @@ import { getLocalizedText } from '@/lib/i18n';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { fetchAds, getConditionLabel } from '@/lib/ads';
+import { useAdminSession } from '@/hooks/use-admin-session';
 import type { Ad } from '@/lib/types';
 
 export default function Home() {
@@ -31,6 +32,7 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const { isFavorite } = useAuth();
   const { locale, messages } = useI18n();
+  const { isAdmin } = useAdminSession();
   const [ads, setAds] = useState<Ad[]>([]);
   const [isLoadingAds, setIsLoadingAds] = useState(true);
   const [adsError, setAdsError] = useState<string | null>(null);
@@ -250,7 +252,15 @@ function HomeContent() {
                   </div>
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {featuredAds.map((ad) => (
-                      <AdCard key={ad.id} ad={ad} isFavorite={isFavorite(ad.id)} />
+                      <AdCard
+                        key={ad.id}
+                        ad={ad}
+                        isFavorite={isFavorite(ad.id)}
+                        canDelete={isAdmin}
+                        onDeleted={(adId) => {
+                          setAds((previous) => previous.filter((item) => item.id !== adId));
+                        }}
+                      />
                     ))}
                   </div>
                 </div>
@@ -322,7 +332,15 @@ function HomeContent() {
                   </div>
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {latestAds.map((ad) => (
-                      <AdCard key={ad.id} ad={ad} isFavorite={isFavorite(ad.id)} />
+                      <AdCard
+                        key={ad.id}
+                        ad={ad}
+                        isFavorite={isFavorite(ad.id)}
+                        canDelete={isAdmin}
+                        onDeleted={(adId) => {
+                          setAds((previous) => previous.filter((item) => item.id !== adId));
+                        }}
+                      />
                     ))}
                   </div>
                 </div>

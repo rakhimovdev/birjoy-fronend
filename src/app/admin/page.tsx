@@ -47,31 +47,257 @@ import {
 } from '@/lib/admin';
 import { fetchAds, getConditionLabel } from '@/lib/ads';
 import { getCategoryBySlug } from '@/lib/mock-data';
+import { getLocalizedText, languageMeta, type Language } from '@/lib/i18n';
+import { useI18n } from '@/components/providers/LocaleProvider';
 import type { Ad, AdminProfile, OrderRequest, OrderRequestStatus } from '@/lib/types';
 
-const orderStatusOptions: Array<{ value: OrderRequestStatus; label: string }> = [
-  { value: 'new', label: 'Yangi' },
-  { value: 'contacted', label: 'Bog‘langan' },
-  { value: 'completed', label: 'Yakunlangan' },
-];
+const adminPageTranslations = {
+  uz: {
+    orderStatuses: {
+      new: 'Yangi',
+      contacted: 'Bog‘langan',
+      completed: 'Yakunlangan',
+    },
+    loadFailedTitle: 'Admin panelni yuklab bo‘lmadi',
+    loadFailedDescription: 'Qaytadan login qilib davom eting.',
+    loginSuccessTitle: 'Admin panelga kirildi',
+    loginSuccessDescription: 'Buyurtmalar ro‘yxati yangilanmoqda.',
+    loginFailedTitle: 'Login amalga oshmadi',
+    loginFailedDescription: 'Login yoki parolni qayta tekshirib ko‘ring.',
+    signOutTitle: 'Admin paneldan chiqildi',
+    signOutDescription: 'Sessiya yopildi.',
+    statusUpdatedTitle: 'Status yangilandi',
+    statusUpdatedDescription: (status: string) => `Buyurtma holati "${status}" ga o‘zgartirildi.`,
+    statusFailedTitle: 'Status yangilanmadi',
+    statusFailedDescription: 'Qaytadan urinib ko‘ring.',
+    adDeletedTitle: 'Eʼlon o‘chirildi',
+    adDeletedDescription: 'Eʼlon admin paneldan muvaffaqiyatli olib tashlandi.',
+    adDeleteFailedTitle: 'Eʼlon o‘chirilmadi',
+    adDeleteFailedDescription: 'Qaytadan urinib ko‘ring.',
+    heroBadge: 'BirJoy admin paneli',
+    heroTitle: 'Foydalanuvchilardan kelgan buyurtmalar shu yerga tushadi',
+    heroDescription:
+      'Yangi so‘rovlarni kuzatish, mijoz bilan bog‘langanini belgilash va yakunlangan buyurtmalarni boshqarish uchun yagona oynacha.',
+    activeAdmin: 'Aktiv admin',
+    loading: 'Admin maʼlumotlari yuklanmoqda...',
+    ordersSectionTitle: 'Buyurtmalar boshqaruvi',
+    ordersSectionDescription:
+      'Har bir buyurtma eʼlon, mijoz va sotuvchi maʼlumotlari bilan saqlanadi.',
+    refresh: 'Yangilash',
+    signOut: 'Chiqish',
+    totalOrders: 'Jami buyurtmalar',
+    ordersTableTitle: 'Kelgan buyurtmalar',
+    ordersTableDescription:
+      'So‘nggi buyurtmalar tepada ko‘rinadi. Statusni shu jadvaldan o‘zgartirish mumkin.',
+    emptyOrdersTitle: 'Hozircha buyurtmalar yo‘q',
+    emptyOrdersDescription:
+      'Foydalanuvchilar eʼlon ichidagi buyurtma formasini yuborganda shu yerda ko‘rinadi.',
+    adColumn: 'Eʼlon',
+    customerColumn: 'Mijoz',
+    sellerColumn: 'Sotuvchi',
+    statusColumn: 'Status',
+    dateColumn: 'Sana',
+    messageColumn: 'Xabar',
+    statusPlaceholder: 'Status tanlang',
+    emptyMessage: 'Izoh qoldirilmagan',
+    adsTableTitle: 'Eʼlonlar boshqaruvi',
+    adsTableDescription:
+      'Admin barcha eʼlonlarni ko‘rib chiqishi va kerak bo‘lsa o‘chirishi mumkin.',
+    emptyAdsTitle: 'Hozircha eʼlonlar yo‘q',
+    emptyAdsDescription: 'Yangi eʼlonlar joylanganda shu jadvalda paydo bo‘ladi.',
+    categoryColumn: 'Kategoriya',
+    conditionColumn: 'Holati',
+    actionColumn: 'Amal',
+    view: 'Ko‘rish',
+    delete: 'O‘chirish',
+    activeStatus: 'Faol',
+    pendingStatus: 'Kutilmoqda',
+    flaggedStatus: 'Flag qilingan',
+    deleteConfirmTitle: 'Eʼlonni o‘chirasizmi?',
+    deleteConfirmDescription:
+      'Bu amal qaytarilmaydi. Eʼlon marketplace ichidan olib tashlanadi, lekin eski buyurtma yozuvlari saqlanib qoladi.',
+    cancel: 'Bekor qilish',
+    loginCardTitle: 'Admin login',
+    loginCardDescription: 'Buyurtmalar paneliga kirish uchun admin login va parolni kiriting.',
+    loginLabel: 'Login',
+    passwordLabel: 'Parol',
+    passwordPlaceholder: 'Parolni kiriting',
+    loginAction: 'Admin panelga kirish',
+  },
+  ru: {
+    orderStatuses: {
+      new: 'Новая',
+      contacted: 'Связались',
+      completed: 'Завершена',
+    },
+    loadFailedTitle: 'Не удалось загрузить админ-панель',
+    loadFailedDescription: 'Войдите заново и попробуйте еще раз.',
+    loginSuccessTitle: 'Вход в админ-панель выполнен',
+    loginSuccessDescription: 'Список заявок обновляется.',
+    loginFailedTitle: 'Не удалось войти',
+    loginFailedDescription: 'Проверьте логин и пароль еще раз.',
+    signOutTitle: 'Вы вышли из админ-панели',
+    signOutDescription: 'Сессия завершена.',
+    statusUpdatedTitle: 'Статус обновлен',
+    statusUpdatedDescription: (status: string) => `Статус заявки изменен на "${status}".`,
+    statusFailedTitle: 'Статус не обновлен',
+    statusFailedDescription: 'Попробуйте еще раз.',
+    adDeletedTitle: 'Объявление удалено',
+    adDeletedDescription: 'Объявление успешно удалено из админ-панели.',
+    adDeleteFailedTitle: 'Не удалось удалить объявление',
+    adDeleteFailedDescription: 'Попробуйте еще раз.',
+    heroBadge: 'Админ-панель BirJoy',
+    heroTitle: 'Сюда попадают заявки от пользователей',
+    heroDescription:
+      'Единое окно для отслеживания новых запросов, отметки связи с клиентом и управления завершенными заявками.',
+    activeAdmin: 'Активный админ',
+    loading: 'Загружаются данные администратора...',
+    ordersSectionTitle: 'Управление заявками',
+    ordersSectionDescription:
+      'Каждая заявка хранится вместе с данными объявления, покупателя и продавца.',
+    refresh: 'Обновить',
+    signOut: 'Выйти',
+    totalOrders: 'Всего заявок',
+    ordersTableTitle: 'Входящие заявки',
+    ordersTableDescription:
+      'Последние заявки отображаются сверху. Статус можно менять прямо в таблице.',
+    emptyOrdersTitle: 'Пока нет заявок',
+    emptyOrdersDescription:
+      'Здесь появятся заявки, когда пользователи отправят форму внутри объявления.',
+    adColumn: 'Объявление',
+    customerColumn: 'Клиент',
+    sellerColumn: 'Продавец',
+    statusColumn: 'Статус',
+    dateColumn: 'Дата',
+    messageColumn: 'Сообщение',
+    statusPlaceholder: 'Выберите статус',
+    emptyMessage: 'Комментарий не оставлен',
+    adsTableTitle: 'Управление объявлениями',
+    adsTableDescription:
+      'Администратор может просматривать все объявления и при необходимости удалять их.',
+    emptyAdsTitle: 'Пока нет объявлений',
+    emptyAdsDescription: 'Когда появятся новые объявления, они будут показаны в этой таблице.',
+    categoryColumn: 'Категория',
+    conditionColumn: 'Состояние',
+    actionColumn: 'Действие',
+    view: 'Открыть',
+    delete: 'Удалить',
+    activeStatus: 'Активно',
+    pendingStatus: 'Ожидает',
+    flaggedStatus: 'Помечено',
+    deleteConfirmTitle: 'Удалить объявление?',
+    deleteConfirmDescription:
+      'Это действие необратимо. Объявление исчезнет из маркетплейса, но старые записи заявок сохранятся.',
+    cancel: 'Отмена',
+    loginCardTitle: 'Вход для администратора',
+    loginCardDescription: 'Введите логин и пароль администратора, чтобы открыть панель заявок.',
+    loginLabel: 'Логин',
+    passwordLabel: 'Пароль',
+    passwordPlaceholder: 'Введите пароль',
+    loginAction: 'Войти в админ-панель',
+  },
+  en: {
+    orderStatuses: {
+      new: 'New',
+      contacted: 'Contacted',
+      completed: 'Completed',
+    },
+    loadFailedTitle: 'Could not load the admin panel',
+    loadFailedDescription: 'Please sign in again and continue.',
+    loginSuccessTitle: 'Signed in to the admin panel',
+    loginSuccessDescription: 'Refreshing the order list.',
+    loginFailedTitle: 'Sign-in failed',
+    loginFailedDescription: 'Please recheck the login and password.',
+    signOutTitle: 'Signed out of the admin panel',
+    signOutDescription: 'The session has been closed.',
+    statusUpdatedTitle: 'Status updated',
+    statusUpdatedDescription: (status: string) => `The order status was changed to "${status}".`,
+    statusFailedTitle: 'Status was not updated',
+    statusFailedDescription: 'Please try again.',
+    adDeletedTitle: 'Listing deleted',
+    adDeletedDescription: 'The listing was successfully removed from the admin panel.',
+    adDeleteFailedTitle: 'Listing was not deleted',
+    adDeleteFailedDescription: 'Please try again.',
+    heroBadge: 'BirJoy admin panel',
+    heroTitle: 'User order requests land here',
+    heroDescription:
+      'A single place to monitor new requests, mark customer follow-ups, and manage completed orders.',
+    activeAdmin: 'Active admin',
+    loading: 'Loading admin data...',
+    ordersSectionTitle: 'Order management',
+    ordersSectionDescription:
+      'Each order is stored together with listing, customer, and seller details.',
+    refresh: 'Refresh',
+    signOut: 'Sign out',
+    totalOrders: 'Total orders',
+    ordersTableTitle: 'Incoming orders',
+    ordersTableDescription:
+      'Newest requests appear first. You can change the status directly from this table.',
+    emptyOrdersTitle: 'No orders yet',
+    emptyOrdersDescription:
+      'Orders will appear here when users submit the request form inside a listing.',
+    adColumn: 'Listing',
+    customerColumn: 'Customer',
+    sellerColumn: 'Seller',
+    statusColumn: 'Status',
+    dateColumn: 'Date',
+    messageColumn: 'Message',
+    statusPlaceholder: 'Select a status',
+    emptyMessage: 'No note provided',
+    adsTableTitle: 'Listing management',
+    adsTableDescription:
+      'The admin can review every listing and remove any of them when needed.',
+    emptyAdsTitle: 'No listings yet',
+    emptyAdsDescription: 'New listings will appear in this table when they are posted.',
+    categoryColumn: 'Category',
+    conditionColumn: 'Condition',
+    actionColumn: 'Action',
+    view: 'View',
+    delete: 'Delete',
+    activeStatus: 'Active',
+    pendingStatus: 'Pending',
+    flaggedStatus: 'Flagged',
+    deleteConfirmTitle: 'Delete this listing?',
+    deleteConfirmDescription:
+      'This action cannot be undone. The listing will be removed from the marketplace, but existing order records will remain.',
+    cancel: 'Cancel',
+    loginCardTitle: 'Admin sign in',
+    loginCardDescription: 'Enter the admin login and password to open the order dashboard.',
+    loginLabel: 'Login',
+    passwordLabel: 'Password',
+    passwordPlaceholder: 'Enter the password',
+    loginAction: 'Sign in to admin panel',
+  },
+} as const;
 
-function formatPrice(price: number) {
-  return new Intl.NumberFormat('uz-UZ', {
+function formatPrice(price: number, locale: Language) {
+  return new Intl.NumberFormat(languageMeta[locale].numberLocale, {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
   }).format(price);
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat('uz-UZ', {
+function formatDate(value: string, locale: Language) {
+  return new Intl.DateTimeFormat(languageMeta[locale].numberLocale, {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value));
 }
 
-function getStatusLabel(status: OrderRequestStatus) {
-  return orderStatusOptions.find((item) => item.value === status)?.label || status;
+function getOrderStatusOptions(locale: Language) {
+  const orderStatuses = adminPageTranslations[locale].orderStatuses;
+
+  return (Object.entries(orderStatuses) as Array<[OrderRequestStatus, string]>).map(
+    ([value, label]) => ({
+      value,
+      label,
+    })
+  );
+}
+
+function getStatusLabel(status: OrderRequestStatus, locale: Language) {
+  return adminPageTranslations[locale].orderStatuses[status];
 }
 
 function getStatusBadgeClassName(status: OrderRequestStatus) {
@@ -88,6 +314,9 @@ function getStatusBadgeClassName(status: OrderRequestStatus) {
 
 export default function AdminPage() {
   const { toast } = useToast();
+  const { locale } = useI18n();
+  const copy = adminPageTranslations[locale];
+  const orderStatusOptions = getOrderStatusOptions(locale);
   const [admin, setAdmin] = useState<AdminProfile | null>(null);
   const [ads, setAds] = useState<Ad[]>([]);
   const [orders, setOrders] = useState<OrderRequest[]>([]);
@@ -120,9 +349,8 @@ export default function AdminPage() {
       setAds([]);
       setOrders([]);
       toast({
-        title: 'Admin panelni yuklab bo‘lmadi',
-        description:
-          error instanceof Error ? error.message : 'Qaytadan login qilib davom eting.',
+        title: copy.loadFailedTitle,
+        description: error instanceof Error ? error.message : copy.loadFailedDescription,
         variant: 'destructive',
       });
     } finally {
@@ -157,8 +385,8 @@ export default function AdminPage() {
       const nextAdmin = await loginAdmin(formData);
       setAdmin(nextAdmin);
       toast({
-        title: 'Admin panelga kirildi',
-        description: 'Buyurtmalar ro‘yxati yangilanmoqda.',
+        title: copy.loginSuccessTitle,
+        description: copy.loginSuccessDescription,
       });
       await loadDashboard(nextAdmin);
       setFormData((previous) => ({
@@ -167,9 +395,8 @@ export default function AdminPage() {
       }));
     } catch (error) {
       toast({
-        title: 'Login amalga oshmadi',
-        description:
-          error instanceof Error ? error.message : 'Login yoki parolni qayta tekshirib ko‘ring.',
+        title: copy.loginFailedTitle,
+        description: error instanceof Error ? error.message : copy.loginFailedDescription,
         variant: 'destructive',
       });
     } finally {
@@ -184,8 +411,8 @@ export default function AdminPage() {
     setAds([]);
     setOrders([]);
     toast({
-      title: 'Admin paneldan chiqildi',
-      description: 'Sessiya yopildi.',
+      title: copy.signOutTitle,
+      description: copy.signOutDescription,
     });
   };
 
@@ -198,14 +425,13 @@ export default function AdminPage() {
         previous.map((order) => (order.id === orderId ? updatedOrder : order))
       );
       toast({
-        title: 'Status yangilandi',
-        description: `Buyurtma holati "${getStatusLabel(status)}" ga o‘zgartirildi.`,
+        title: copy.statusUpdatedTitle,
+        description: copy.statusUpdatedDescription(getStatusLabel(status, locale)),
       });
     } catch (error) {
       toast({
-        title: 'Status yangilanmadi',
-        description:
-          error instanceof Error ? error.message : 'Qaytadan urinib ko‘ring.',
+        title: copy.statusFailedTitle,
+        description: error instanceof Error ? error.message : copy.statusFailedDescription,
         variant: 'destructive',
       });
     } finally {
@@ -220,14 +446,13 @@ export default function AdminPage() {
       await deleteAdminAd(adId);
       setAds((previous) => previous.filter((ad) => ad.id !== adId));
       toast({
-        title: 'Eʼlon o‘chirildi',
-        description: 'Eʼlon admin paneldan muvaffaqiyatli olib tashlandi.',
+        title: copy.adDeletedTitle,
+        description: copy.adDeletedDescription,
       });
     } catch (error) {
       toast({
-        title: 'Eʼlon o‘chirilmadi',
-        description:
-          error instanceof Error ? error.message : 'Qaytadan urinib ko‘ring.',
+        title: copy.adDeleteFailedTitle,
+        description: error instanceof Error ? error.message : copy.adDeleteFailedDescription,
         variant: 'destructive',
       });
     } finally {
@@ -249,20 +474,15 @@ export default function AdminPage() {
             <div className="max-w-2xl">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold backdrop-blur">
                 <ShieldCheck className="h-4 w-4" />
-                BirJoy admin paneli
+                {copy.heroBadge}
               </div>
-              <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-                Foydalanuvchilardan kelgan buyurtmalar shu yerga tushadi
-              </h1>
-              <p className="mt-3 max-w-xl text-white/85">
-                Yangi so‘rovlarni kuzatish, mijoz bilan bog‘langanini belgilash va yakunlangan
-                buyurtmalarni boshqarish uchun yagona oynacha.
-              </p>
+              <h1 className="text-3xl font-bold tracking-tight md:text-4xl">{copy.heroTitle}</h1>
+              <p className="mt-3 max-w-xl text-white/85">{copy.heroDescription}</p>
             </div>
 
             {admin ? (
               <div className="rounded-3xl border border-white/15 bg-white/10 p-5 backdrop-blur">
-                <p className="text-sm text-white/80">Aktiv admin</p>
+                <p className="text-sm text-white/80">{copy.activeAdmin}</p>
                 <p className="mt-1 text-xl font-semibold">{admin.name}</p>
                 <p className="text-sm text-white/75">{admin.login}</p>
               </div>
@@ -273,16 +493,14 @@ export default function AdminPage() {
         {!isReady ? (
           <div className="rounded-3xl border bg-white px-6 py-16 text-center shadow-sm">
             <Loader2 className="mx-auto mb-4 h-6 w-6 animate-spin text-primary" />
-            <p className="text-muted-foreground">Admin maʼlumotlari yuklanmoqda...</p>
+            <p className="text-muted-foreground">{copy.loading}</p>
           </div>
         ) : admin ? (
           <div className="space-y-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="text-2xl font-bold tracking-tight">Buyurtmalar boshqaruvi</h2>
-                <p className="text-muted-foreground">
-                  Har bir buyurtma eʼlon, mijoz va sotuvchi maʼlumotlari bilan saqlanadi.
-                </p>
+                <h2 className="text-2xl font-bold tracking-tight">{copy.ordersSectionTitle}</h2>
+                <p className="text-muted-foreground">{copy.ordersSectionDescription}</p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button
@@ -296,11 +514,11 @@ export default function AdminPage() {
                   ) : (
                     <RefreshCw className="h-4 w-4" />
                   )}
-                  Yangilash
+                  {copy.refresh}
                 </Button>
                 <Button variant="outline" className="gap-2" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4" />
-                  Chiqish
+                  {copy.signOut}
                 </Button>
               </div>
             </div>
@@ -308,25 +526,25 @@ export default function AdminPage() {
             <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               <Card className="border-none shadow-sm">
                 <CardHeader className="pb-3">
-                  <CardDescription>Jami buyurtmalar</CardDescription>
+                  <CardDescription>{copy.totalOrders}</CardDescription>
                   <CardTitle className="text-3xl">{orders.length}</CardTitle>
                 </CardHeader>
               </Card>
               <Card className="border-none shadow-sm">
                 <CardHeader className="pb-3">
-                  <CardDescription>Yangi</CardDescription>
+                  <CardDescription>{copy.orderStatuses.new}</CardDescription>
                   <CardTitle className="text-3xl text-blue-700">{newOrdersCount}</CardTitle>
                 </CardHeader>
               </Card>
               <Card className="border-none shadow-sm">
                 <CardHeader className="pb-3">
-                  <CardDescription>Bog‘langan</CardDescription>
+                  <CardDescription>{copy.orderStatuses.contacted}</CardDescription>
                   <CardTitle className="text-3xl text-amber-700">{contactedOrdersCount}</CardTitle>
                 </CardHeader>
               </Card>
               <Card className="border-none shadow-sm">
                 <CardHeader className="pb-3">
-                  <CardDescription>Yakunlangan</CardDescription>
+                  <CardDescription>{copy.orderStatuses.completed}</CardDescription>
                   <CardTitle className="text-3xl text-emerald-700">{completedOrdersCount}</CardTitle>
                 </CardHeader>
               </Card>
@@ -334,30 +552,25 @@ export default function AdminPage() {
 
             <Card className="border-none shadow-sm">
               <CardHeader>
-                <CardTitle>Kelgan buyurtmalar</CardTitle>
-                <CardDescription>
-                  So‘nggi buyurtmalar tepada ko‘rinadi. Statusni shu jadvaldan o‘zgartirish mumkin.
-                </CardDescription>
+                <CardTitle>{copy.ordersTableTitle}</CardTitle>
+                <CardDescription>{copy.ordersTableDescription}</CardDescription>
               </CardHeader>
               <CardContent>
                 {orders.length === 0 ? (
                   <div className="rounded-3xl border border-dashed px-6 py-16 text-center">
-                    <p className="text-lg font-semibold">Hozircha buyurtmalar yo‘q</p>
-                    <p className="mt-2 text-muted-foreground">
-                      Foydalanuvchilar eʼlon ichidagi buyurtma formasini yuborganda shu yerda
-                      ko‘rinadi.
-                    </p>
+                    <p className="text-lg font-semibold">{copy.emptyOrdersTitle}</p>
+                    <p className="mt-2 text-muted-foreground">{copy.emptyOrdersDescription}</p>
                   </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Eʼlon</TableHead>
-                        <TableHead>Mijoz</TableHead>
-                        <TableHead>Sotuvchi</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Sana</TableHead>
-                        <TableHead>Xabar</TableHead>
+                        <TableHead>{copy.adColumn}</TableHead>
+                        <TableHead>{copy.customerColumn}</TableHead>
+                        <TableHead>{copy.sellerColumn}</TableHead>
+                        <TableHead>{copy.statusColumn}</TableHead>
+                        <TableHead>{copy.dateColumn}</TableHead>
+                        <TableHead>{copy.messageColumn}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -366,7 +579,7 @@ export default function AdminPage() {
                           <TableCell className="min-w-[220px]">
                             <p className="font-semibold text-foreground">{order.adTitle}</p>
                             <p className="text-sm text-muted-foreground">
-                              {formatPrice(order.adPrice)}
+                              {formatPrice(order.adPrice, locale)}
                             </p>
                           </TableCell>
                           <TableCell className="min-w-[220px]">
@@ -385,7 +598,7 @@ export default function AdminPage() {
                               <span
                                 className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClassName(order.status)}`}
                               >
-                                {getStatusLabel(order.status)}
+                                {getStatusLabel(order.status, locale)}
                               </span>
                               <Select
                                 value={order.status}
@@ -395,7 +608,7 @@ export default function AdminPage() {
                                 disabled={updatingOrderId === order.id}
                               >
                                 <SelectTrigger className="h-10 w-[170px]">
-                                  <SelectValue placeholder="Status tanlang" />
+                                  <SelectValue placeholder={copy.statusPlaceholder} />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {orderStatusOptions.map((option) => (
@@ -408,10 +621,10 @@ export default function AdminPage() {
                             </div>
                           </TableCell>
                           <TableCell className="min-w-[160px] text-sm text-muted-foreground">
-                            {formatDate(order.createdAt)}
+                            {formatDate(order.createdAt, locale)}
                           </TableCell>
                           <TableCell className="min-w-[220px] text-sm text-muted-foreground">
-                            {order.message || 'Izoh qoldirilmagan'}
+                            {order.message || copy.emptyMessage}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -423,45 +636,44 @@ export default function AdminPage() {
 
             <Card className="border-none shadow-sm">
               <CardHeader>
-                <CardTitle>Eʼlonlar boshqaruvi</CardTitle>
-                <CardDescription>
-                  Admin barcha eʼlonlarni ko‘rib chiqishi va kerak bo‘lsa o‘chirishi mumkin.
-                </CardDescription>
+                <CardTitle>{copy.adsTableTitle}</CardTitle>
+                <CardDescription>{copy.adsTableDescription}</CardDescription>
               </CardHeader>
               <CardContent>
                 {ads.length === 0 ? (
                   <div className="rounded-3xl border border-dashed px-6 py-16 text-center">
-                    <p className="text-lg font-semibold">Hozircha eʼlonlar yo‘q</p>
-                    <p className="mt-2 text-muted-foreground">
-                      Yangi eʼlonlar joylanganda shu jadvalda paydo bo‘ladi.
-                    </p>
+                    <p className="text-lg font-semibold">{copy.emptyAdsTitle}</p>
+                    <p className="mt-2 text-muted-foreground">{copy.emptyAdsDescription}</p>
                   </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Eʼlon</TableHead>
-                        <TableHead>Kategoriya</TableHead>
-                        <TableHead>Sotuvchi</TableHead>
-                        <TableHead>Holati</TableHead>
-                        <TableHead>Sana</TableHead>
-                        <TableHead className="text-right">Amal</TableHead>
+                        <TableHead>{copy.adColumn}</TableHead>
+                        <TableHead>{copy.categoryColumn}</TableHead>
+                        <TableHead>{copy.sellerColumn}</TableHead>
+                        <TableHead>{copy.conditionColumn}</TableHead>
+                        <TableHead>{copy.dateColumn}</TableHead>
+                        <TableHead className="text-right">{copy.actionColumn}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {ads.map((ad) => {
-                        const categoryName = getCategoryBySlug(ad.category)?.name.uz || ad.category;
+                        const category = getCategoryBySlug(ad.category);
+                        const categoryName = category ? getLocalizedText(category.name, locale) : ad.category;
+                        const adTitle = getLocalizedText(ad.title, locale);
+                        const adLocation = getLocalizedText(ad.location, locale);
 
                         return (
                           <TableRow key={ad.id}>
                             <TableCell className="min-w-[260px]">
-                              <p className="font-semibold text-foreground">{ad.title.uz}</p>
-                              <p className="text-sm text-muted-foreground">{ad.location.uz}</p>
+                              <p className="font-semibold text-foreground">{adTitle}</p>
+                              <p className="text-sm text-muted-foreground">{adLocation}</p>
                             </TableCell>
                             <TableCell className="min-w-[180px]">
                               <p className="font-medium text-foreground">{categoryName}</p>
                               <p className="text-sm text-muted-foreground">
-                                {getConditionLabel(ad.condition, 'uz')}
+                                {getConditionLabel(ad.condition, locale)}
                               </p>
                             </TableCell>
                             <TableCell className="min-w-[220px]">
@@ -471,21 +683,21 @@ export default function AdminPage() {
                             <TableCell className="min-w-[140px]">
                               <Badge variant={ad.status === 'active' ? 'default' : 'secondary'}>
                                 {ad.status === 'active'
-                                  ? 'Faol'
+                                  ? copy.activeStatus
                                   : ad.status === 'pending'
-                                    ? 'Kutilmoqda'
-                                    : 'Flag qilingan'}
+                                    ? copy.pendingStatus
+                                    : copy.flaggedStatus}
                               </Badge>
                             </TableCell>
                             <TableCell className="min-w-[160px] text-sm text-muted-foreground">
-                              {formatDate(ad.createdAt)}
+                              {formatDate(ad.createdAt, locale)}
                             </TableCell>
                             <TableCell className="min-w-[190px] text-right">
                               <div className="flex justify-end gap-2">
                                 <Button asChild variant="outline" size="sm" className="gap-2">
                                   <Link href={`/ads/${ad.id}`} target="_blank" rel="noreferrer">
                                     <ExternalLink className="h-4 w-4" />
-                                    Ko‘rish
+                                    {copy.view}
                                   </Link>
                                 </Button>
 
@@ -502,25 +714,22 @@ export default function AdminPage() {
                                       ) : (
                                         <Trash2 className="h-4 w-4" />
                                       )}
-                                      O‘chirish
+                                      {copy.delete}
                                     </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
                                     <AlertDialogHeader>
-                                      <AlertDialogTitle>Eʼlonni o‘chirasizmi?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Bu amal qaytarilmaydi. Eʼlon marketplace ichidan olib
-                                        tashlanadi, lekin eski buyurtma yozuvlari saqlanib qoladi.
-                                      </AlertDialogDescription>
+                                      <AlertDialogTitle>{copy.deleteConfirmTitle}</AlertDialogTitle>
+                                      <AlertDialogDescription>{copy.deleteConfirmDescription}</AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                      <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+                                      <AlertDialogCancel>{copy.cancel}</AlertDialogCancel>
                                       <AlertDialogAction
                                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                         disabled={deletingAdId === ad.id}
                                         onClick={() => void handleDeleteAd(ad.id)}
                                       >
-                                        O‘chirish
+                                        {copy.delete}
                                       </AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
@@ -540,15 +749,13 @@ export default function AdminPage() {
           <div className="mx-auto max-w-md">
             <Card className="border-none shadow-sm">
               <CardHeader>
-                <CardTitle>Admin login</CardTitle>
-                <CardDescription>
-                  Buyurtmalar paneliga kirish uchun admin login va parolni kiriting.
-                </CardDescription>
+                <CardTitle>{copy.loginCardTitle}</CardTitle>
+                <CardDescription>{copy.loginCardDescription}</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={(event) => void handleLogin(event)} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="admin-login">Login</Label>
+                    <Label htmlFor="admin-login">{copy.loginLabel}</Label>
                     <Input
                       id="admin-login"
                       value={formData.login}
@@ -562,7 +769,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="admin-password">Parol</Label>
+                    <Label htmlFor="admin-password">{copy.passwordLabel}</Label>
                     <Input
                       id="admin-password"
                       type="password"
@@ -573,7 +780,7 @@ export default function AdminPage() {
                           password: event.target.value,
                         }))
                       }
-                      placeholder="Parolni kiriting"
+                      placeholder={copy.passwordPlaceholder}
                       required
                     />
                   </div>
@@ -583,7 +790,7 @@ export default function AdminPage() {
                     ) : (
                       <LogIn className="h-4 w-4" />
                     )}
-                    Admin panelga kirish
+                    {copy.loginAction}
                   </Button>
                 </form>
               </CardContent>

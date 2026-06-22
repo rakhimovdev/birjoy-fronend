@@ -24,6 +24,8 @@ import { useI18n } from '@/components/providers/LocaleProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { AD_CONDITIONS, createAd } from '@/lib/ads';
 import { syncStoredUser } from '@/lib/auth';
+import { chooseNativeImages, takeNativePhoto } from '@/lib/native-media';
+import { isNativeAndroidApp } from '@/lib/native-app';
 
 export default function CreateAdPage() {
   return (
@@ -53,6 +55,22 @@ function CreateAdPageContent() {
   });
   const [keywords, setKeywords] = useState<string[]>([]);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const nativeAndroidApp = isNativeAndroidApp();
+
+  const nativeMediaCopy = {
+    uz: {
+      camera: 'Kamera',
+      gallery: 'Galereya',
+    },
+    ru: {
+      camera: 'Камера',
+      gallery: 'Галерея',
+    },
+    en: {
+      camera: 'Camera',
+      gallery: 'Gallery',
+    },
+  } as const;
 
   useEffect(() => {
     if (!user) {
@@ -209,6 +227,56 @@ function CreateAdPageContent() {
 
   const removeImage = (imageIndex: number) => {
     setUploadedImages((previous) => previous.filter((_, index) => index !== imageIndex));
+  };
+
+  const getAvailableSlots = () => 10 - uploadedImages.length;
+
+  const handleNativeGalleryUpload = async () => {
+    const availableSlots = getAvailableSlots();
+
+    if (availableSlots <= 0) {
+      toast({
+        title: messages.createAd.imageLimitTitle,
+        description: messages.createAd.imageLimitDescription,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const nextImages = await chooseNativeImages(availableSlots);
+      setUploadedImages((previous) => [...previous, ...nextImages]);
+    } catch (error) {
+      toast({
+        title: messages.createAd.imageUploadErrorTitle,
+        description: error instanceof Error ? error.message : messages.createAd.imageReadError,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleNativeCameraUpload = async () => {
+    const availableSlots = getAvailableSlots();
+
+    if (availableSlots <= 0) {
+      toast({
+        title: messages.createAd.imageLimitTitle,
+        description: messages.createAd.imageLimitDescription,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const photo = await takeNativePhoto();
+      setUploadedImages((previous) => [...previous, photo]);
+    } catch (error) {
+      toast({
+        title: messages.createAd.imageUploadErrorTitle,
+        description: error instanceof Error ? error.message : messages.createAd.imageReadError,
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -481,14 +549,35 @@ function CreateAdPageContent() {
                         className="hidden"
                         onChange={handleImageUpload}
                       />
-                      <button
-                        type="button"
-                        className="flex aspect-square flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:bg-muted/50"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <ImagePlus className="h-6 w-6" />
-                        <span className="text-xs">{messages.createAd.addPhoto}</span>
-                      </button>
+                      {nativeAndroidApp ? (
+                        <>
+                          <button
+                            type="button"
+                            className="flex aspect-square flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:bg-muted/50"
+                            onClick={() => void handleNativeGalleryUpload()}
+                          >
+                            <ImagePlus className="h-6 w-6" />
+                            <span className="text-xs">{nativeMediaCopy[locale].gallery}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="flex aspect-square flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:bg-muted/50"
+                            onClick={() => void handleNativeCameraUpload()}
+                          >
+                            <ShieldCheck className="h-6 w-6" />
+                            <span className="text-xs">{nativeMediaCopy[locale].camera}</span>
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          className="flex aspect-square flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:bg-muted/50"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <ImagePlus className="h-6 w-6" />
+                          <span className="text-xs">{messages.createAd.addPhoto}</span>
+                        </button>
+                      )}
                       {uploadedImages.map((image, index) => (
                         <div key={`${image.slice(0, 32)}-${index}`} className="relative aspect-square overflow-hidden rounded-lg border bg-muted/30">
                           <Image

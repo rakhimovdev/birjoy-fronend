@@ -2,11 +2,23 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Clock, Loader2, MapPin, Phone, Tag, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Clock, Loader2, MapPin, Phone, Tag, Trash2, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { AdCard } from '@/components/ads/AdCard';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,18 +32,23 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { useToast } from '@/hooks/use-toast';
 import { fetchAdById, fetchAds, getConditionLabel } from '@/lib/ads';
+import { deleteAdminAd } from '@/lib/admin';
 import { createOrderRequest } from '@/lib/orders';
+import { useAdminSession } from '@/hooks/use-admin-session';
 
 export function AdDetailsView({ adId }: { adId: string }) {
+  const router = useRouter();
   const { isFavorite, user } = useAuth();
   const { locale, messages } = useI18n();
   const { toast } = useToast();
+  const { isAdmin } = useAdminSession();
   const [ad, setAd] = useState<Ad | null>(null);
   const [relatedAds, setRelatedAds] = useState<Ad[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOrderSubmitting, setIsOrderSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [orderForm, setOrderForm] = useState({
     customerName: '',
     customerEmail: '',
@@ -181,6 +198,42 @@ export function AdDetailsView({ adId }: { adId: string }) {
             errorTitle: 'Buyurtma yuborilmadi',
             statusNote: 'Yuborilganidan keyin buyurtma admin panelda ko‘rinadi.',
           };
+  const deleteCopy =
+    locale === 'ru'
+      ? {
+          action: 'Удалить',
+          confirmTitle: 'Удалить объявление?',
+          confirmDescription:
+            'Это действие необратимо. Объявление будет снято с публикации для всех пользователей.',
+          confirm: 'Удалить',
+          cancel: 'Отмена',
+          successTitle: 'Объявление удалено',
+          successDescription: 'Объявление было успешно удалено администратором.',
+          errorTitle: 'Не удалось удалить объявление',
+        }
+      : locale === 'en'
+        ? {
+            action: 'Delete',
+            confirmTitle: 'Delete this listing?',
+            confirmDescription:
+              'This action cannot be undone. The listing will be removed from the marketplace for all users.',
+            confirm: 'Delete',
+            cancel: 'Cancel',
+            successTitle: 'Listing deleted',
+            successDescription: 'The listing was removed by the admin.',
+            errorTitle: 'Listing could not be deleted',
+          }
+        : {
+            action: "O‘chirish",
+            confirmTitle: "Eʼlonni o‘chirasizmi?",
+            confirmDescription:
+              "Bu amal qaytarilmaydi. Eʼlon barcha foydalanuvchilar uchun marketplace'dan olib tashlanadi.",
+            confirm: "O‘chirish",
+            cancel: 'Bekor qilish',
+            successTitle: "Eʼlon o‘chirildi",
+            successDescription: 'Eʼlon admin tomonidan muvaffaqiyatli olib tashlandi.',
+            errorTitle: "Eʼlon o‘chirilmadi",
+          };
 
   const handleOrderSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -217,15 +270,67 @@ export function AdDetailsView({ adId }: { adId: string }) {
     }
   };
 
+  const handleDeleteAd = async () => {
+    if (!ad) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      await deleteAdminAd(ad.id);
+      toast({
+        title: deleteCopy.successTitle,
+        description: deleteCopy.successDescription,
+      });
+      router.push('/');
+    } catch (deleteError) {
+      toast({
+        title: deleteCopy.errorTitle,
+        description:
+          deleteError instanceof Error ? deleteError.message : messages.auth.requestFailedDescription,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-6">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <Button asChild variant="ghost" className="px-0 text-primary hover:bg-transparent">
             <Link href="/">{messages.adDetails.backToListings}</Link>
           </Button>
+          {isAdmin ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="gap-2" disabled={isDeleting}>
+                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  {deleteCopy.action}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{deleteCopy.confirmTitle}</AlertDialogTitle>
+                  <AlertDialogDescription>{deleteCopy.confirmDescription}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{deleteCopy.cancel}</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => void handleDeleteAd()}
+                    disabled={isDeleting}
+                  >
+                    {deleteCopy.confirm}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,2fr)_360px]">
@@ -471,7 +576,15 @@ export function AdDetailsView({ adId }: { adId: string }) {
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {relatedAds.map((item) => (
-                <AdCard key={item.id} ad={item} isFavorite={isFavorite(item.id)} />
+                <AdCard
+                  key={item.id}
+                  ad={item}
+                  isFavorite={isFavorite(item.id)}
+                  canDelete={isAdmin}
+                  onDeleted={(deletedAdId) => {
+                    setRelatedAds((previous) => previous.filter((relatedAd) => relatedAd.id !== deletedAdId));
+                  }}
+                />
               ))}
             </div>
           </section>

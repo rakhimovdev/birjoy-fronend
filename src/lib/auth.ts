@@ -66,6 +66,15 @@ export type AuthResult =
       message?: string;
     };
 
+export type DeleteAccountResult =
+  | {
+      ok: true;
+    }
+  | {
+      ok: false;
+      message: string;
+    };
+
 function isBrowser() {
   return typeof window !== 'undefined';
 }
@@ -200,6 +209,22 @@ function writeStoredSessionUser(user: UserProfile | null) {
   }
 
   window.localStorage.setItem(authSessionStorageKey, JSON.stringify(user));
+}
+
+function deleteStoredUserById(userId: string) {
+  const users = readStoredUsers();
+
+  if (users.length === 0) {
+    return;
+  }
+
+  const nextUsers = users.filter((user) => user.id !== userId);
+
+  if (nextUsers.length === users.length) {
+    return;
+  }
+
+  writeStoredUsers(nextUsers);
 }
 
 function signUpUserLocally(input: SignUpInput): AuthResult {
@@ -426,4 +451,61 @@ export function syncStoredUser(nextUser: UserProfile) {
   writeStoredUsers(users);
   writeStoredSessionUser(sanitizeUser(updatedUser));
   notifyAuthSync();
+}
+
+export async function deleteCurrentUserAccount(): Promise<DeleteAccountResult> {
+  const storedUser = getStoredSessionUser();
+  const token = getStoredAuthToken();
+
+  if (!storedUser) {
+    return {
+      ok: false,
+      message: 'No signed-in user was found.',
+    };
+  }
+
+  if (!backendApiBaseUrl || !token) {
+    deleteStoredUserById(storedUser.id);
+    writeStoredToken(null);
+    writeStoredSessionUser(null);
+    notifyAuthSync();
+
+    return {
+      ok: true,
+    };
+  }
+
+  try {
+    const response = await fetch(`${backendApiBaseUrl}/auth/me`, {
+      method: 'DELETE',
+      credentials: 'include',
+      cache: 'no-store',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = (await response.json().catch(() => ({}))) as RemoteAuthResponse;
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        message: data.message || 'Account deletion failed.',
+      };
+    }
+
+    deleteStoredUserById(storedUser.id);
+    writeStoredToken(null);
+    writeStoredSessionUser(null);
+    notifyAuthSync();
+
+    return {
+      ok: true,
+    };
+  } catch {
+    return {
+      ok: false,
+      message: 'Account deletion failed.',
+    };
+  }
 }

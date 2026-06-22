@@ -47,3 +47,7 @@ firestore-debug.log
 .next-*/
 .next*
 *.tsbuildinfo*
+
+# Android signing material
+/keystore/
+/android/keystore.properties

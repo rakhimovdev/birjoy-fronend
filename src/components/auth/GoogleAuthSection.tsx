@@ -10,6 +10,7 @@ import { useI18n } from '@/components/providers/LocaleProvider';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { BirJoyAuth, isNativeAndroidApp } from '@/lib/native-app';
 
 type GoogleCredentialResponse = {
   credential?: string;
@@ -69,6 +70,7 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
   );
   const [scriptState, setScriptState] = useState<'idle' | 'ready' | 'error'>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const nativeGoogleAuth = isNativeAndroidApp();
 
   useEffect(() => {
     if (embeddedGoogleClientId) {
@@ -120,6 +122,10 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
   }, [embeddedGoogleClientId]);
 
   useEffect(() => {
+    if (nativeGoogleAuth) {
+      return;
+    }
+
     if (!googleClientId || scriptState !== 'ready' || !window.google || !buttonRef.current) {
       return;
     }
@@ -181,14 +187,70 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
       logo_alignment: 'left',
       width: buttonWidth,
     });
-  }, [googleClientId, messages, redirectTo, router, scriptState, signInWithGoogle, toast]);
+  }, [googleClientId, messages, nativeGoogleAuth, redirectTo, router, scriptState, signInWithGoogle, toast]);
 
-  const isGoogleUnavailable = configState === 'error' || scriptState === 'error';
-  const isLoadingGoogle = configState !== 'ready' || scriptState !== 'ready';
+  const handleNativeGoogleSignIn = async () => {
+    if (!googleClientId) {
+      toast({
+        title: messages.auth.requestFailedTitle,
+        description: messages.auth.googleUnavailableDescription,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const nativeResult = await BirJoyAuth.signInWithGoogle({
+        serverClientId: googleClientId,
+      });
+
+      if (!nativeResult.idToken) {
+        throw new Error('Google ID token was not returned.');
+      }
+
+      const result = await signInWithGoogle(nativeResult.idToken);
+
+      if (!result.ok) {
+        toast({
+          title:
+            result.error === 'server_unavailable'
+              ? messages.auth.serverUnavailableTitle
+              : messages.auth.requestFailedTitle,
+          description:
+            result.error === 'server_unavailable'
+              ? result.message || messages.auth.serverUnavailableDescription
+              : result.message || messages.auth.requestFailedDescription,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: messages.auth.googleSuccessTitle,
+        description: messages.auth.googleSuccessDescription,
+      });
+
+      router.replace(redirectTo);
+    } catch (error) {
+      toast({
+        title: messages.auth.requestFailedTitle,
+        description:
+          error instanceof Error ? error.message : messages.auth.requestFailedDescription,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isGoogleUnavailable = configState === 'error' || (!nativeGoogleAuth && scriptState === 'error');
+  const isLoadingGoogle = configState !== 'ready' || (!nativeGoogleAuth && scriptState !== 'ready');
 
   return (
     <div className="space-y-4">
-      {googleClientId ? (
+      {googleClientId && !nativeGoogleAuth ? (
         <Script
           src="https://accounts.google.com/gsi/client"
           strategy="afterInteractive"
@@ -207,6 +269,23 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
         <div className="rounded-2xl border border-dashed bg-muted/40 p-4 text-sm text-muted-foreground">
           {messages.auth.googleUnavailableDescription}
         </div>
+      ) : nativeGoogleAuth ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="h-12 w-full rounded-full text-base font-semibold"
+          onClick={() => void handleNativeGoogleSignIn()}
+          disabled={isLoadingGoogle || isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {messages.auth.googleAction}
+            </>
+          ) : (
+            messages.auth.googleAction
+          )}
+        </Button>
       ) : (
         <div className="relative min-h-12">
           <div

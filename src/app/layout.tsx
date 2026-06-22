@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { LocaleProvider } from '@/components/providers/LocaleProvider';
 import { AuthProvider } from '@/components/providers/AuthProvider';
+import { NativeAppBridge } from '@/components/providers/NativeAppBridge';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.bir-joy.uz';
 
@@ -47,6 +48,7 @@ export default function RootLayout({
       <body className="font-body antialiased bg-background">
         <AuthProvider>
           <LocaleProvider>
+            <NativeAppBridge />
             {children}
             <Toaster />
           </LocaleProvider>

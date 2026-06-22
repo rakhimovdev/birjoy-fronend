@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <title>BirJoy Offline</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --brand-blue: #0b48d6;
+        --brand-blue-deep: #071c55;
+        --brand-orange: #ff730a;
+        --panel: rgba(255, 255, 255, 0.9);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top, rgba(28, 120, 255, 0.2), transparent 36%),
+          linear-gradient(180deg, #fff9f1 0%, #f8fbff 100%);
+        color: var(--brand-blue-deep);
+      }
+
+      main {
+        width: min(100%, 420px);
+        padding: 32px 28px;
+        border-radius: 32px;
+        background: var(--panel);
+        box-shadow: 0 24px 70px rgba(7, 28, 85, 0.13);
+        text-align: center;
+      }
+
+      .mark {
+        width: 92px;
+        height: 92px;
+        margin: 0 auto 18px;
+        display: block;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: 2rem;
+      }
+
+      p {
+        margin: 0 0 24px;
+        line-height: 1.7;
+        color: rgba(32, 48, 95, 0.86);
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 14px 22px;
+        background: linear-gradient(135deg, var(--brand-blue) 0%, #1c78ff 100%);
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 14px 32px rgba(11, 72, 214, 0.22);
+      }
+
+      small {
+        display: block;
+        margin-top: 18px;
+        color: rgba(32, 48, 95, 0.7);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <svg class="mark" viewBox="0 0 188 188" aria-hidden="true">
+        <defs>
+          <linearGradient id="birjoy-blue" x1="40" y1="20" x2="150" y2="176" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#1C78FF" />
+            <stop offset="1" stop-color="#0B48D6" />
+          </linearGradient>
+          <linearGradient id="birjoy-orange" x1="110" y1="22" x2="178" y2="176" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#FF8A1F" />
+            <stop offset="1" stop-color="#FF6500" />
+          </linearGradient>
+        </defs>
+        <rect width="188" height="188" rx="42" fill="#FFF9F1" />
+        <path
+          fill="url(#birjoy-blue)"
+          d="M57 16h20c11 0 20 9 20 20v43c13-13 30-20 49-20 21 0 41 8 56 22v33c0 33-27 60-60 60h-11c-33 0-60-27-60-60V16h-14Zm41 95c0 18 15 33 33 33s33-15 33-33-15-33-33-33-33 15-33 33Z"
+        />
+        <circle cx="131" cy="111" r="23" fill="#FFF9F1" />
+        <path
+          fill="url(#birjoy-orange)"
+          d="M142 57h24v65c0 29-24 52-53 52h-26l22-27h3c16 0 30-13 30-30V57Z"
+        />
+        <circle cx="154" cy="34" r="13" fill="url(#birjoy-orange)" />
+      </svg>
+      <h1>Internet yo‘q</h1>
+      <p>
+        BirJoy’ni yuklash uchun internet aloqasi kerak. Aloqa tiklangach, qayta urinib
+        ko‘rishingiz mumkin.
+      </p>
+      <button type="button" onclick="window.location.reload()">Qayta urinish</button>
+      <small>BirJoy marketplace Android ilovasi</small>
+    </main>
+  </body>
+</html>

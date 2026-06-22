@@ -2,10 +2,21 @@
 
 import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Navbar } from '@/components/layout/Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -18,6 +29,8 @@ import { useToast } from '@/hooks/use-toast';
 import { getLocalizedText } from '@/lib/i18n';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { fetchAds, getConditionLabel } from '@/lib/ads';
+import { deleteCurrentUserAccount } from '@/lib/auth';
+import { useAdminSession } from '@/hooks/use-admin-session';
 import type { Ad } from '@/lib/types';
 
 export default function ProfilePage() {
@@ -32,11 +45,46 @@ function ProfilePageContent() {
   const { user, isFavorite } = useAuth();
   const { toast } = useToast();
   const { locale, messages } = useI18n();
+  const { isAdmin } = useAdminSession();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [ads, setAds] = useState<Ad[]>([]);
   const [isLoadingAds, setIsLoadingAds] = useState(true);
   const [adsError, setAdsError] = useState<string | null>(null);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const defaultTab = searchParams.get('tab') || 'ads';
+  const deleteAccountCopy = {
+    uz: {
+      title: 'Akkauntni o‘chirasizmi?',
+      description:
+        'Bu amal qaytarilmaydi. Profilingiz, eʼlonlaringiz va ushbu akkauntga bog‘langan buyurtmalar o‘chiriladi.',
+      confirm: 'Akkauntni o‘chirish',
+      cancel: 'Bekor qilish',
+      successTitle: 'Akkaunt o‘chirildi',
+      successDescription: 'Sizning maʼlumotlaringiz tizimdan olib tashlandi.',
+      errorTitle: 'Akkaunt o‘chirilmadi',
+    },
+    ru: {
+      title: 'Удалить аккаунт?',
+      description:
+        'Это действие необратимо. Профиль, объявления и связанные с аккаунтом заявки будут удалены.',
+      confirm: 'Удалить аккаунт',
+      cancel: 'Отмена',
+      successTitle: 'Аккаунт удалён',
+      successDescription: 'Ваши данные были удалены из системы.',
+      errorTitle: 'Не удалось удалить аккаунт',
+    },
+    en: {
+      title: 'Delete your account?',
+      description:
+        'This action cannot be undone. Your profile, listings, and account-linked orders will be deleted.',
+      confirm: 'Delete account',
+      cancel: 'Cancel',
+      successTitle: 'Account deleted',
+      successDescription: 'Your data has been removed from the system.',
+      errorTitle: 'Account could not be deleted',
+    },
+  } as const;
 
   useEffect(() => {
     let cancelled = false;
@@ -112,6 +160,31 @@ function ProfilePageContent() {
     });
   };
 
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+
+    try {
+      const result = await deleteCurrentUserAccount();
+
+      if (!result.ok) {
+        toast({
+          title: deleteAccountCopy[locale].errorTitle,
+          description: result.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: deleteAccountCopy[locale].successTitle,
+        description: deleteAccountCopy[locale].successDescription,
+      });
+      router.replace('/');
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -175,12 +248,34 @@ function ProfilePageContent() {
                     <Download className="h-4 w-4" />
                     {messages.profile.downloadMyData}
                   </Button>
-                  <Button
-                    variant="ghost"
-                    className="h-9 w-full justify-start gap-2 text-sm text-destructive hover:text-destructive"
-                  >
-                    {messages.profile.deleteAccount}
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="h-9 w-full justify-start gap-2 text-sm text-destructive hover:text-destructive"
+                      >
+                        {messages.profile.deleteAccount}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{deleteAccountCopy[locale].title}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {deleteAccountCopy[locale].description}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{deleteAccountCopy[locale].cancel}</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          disabled={isDeletingAccount}
+                          onClick={() => void handleDeleteAccount()}
+                        >
+                          {deleteAccountCopy[locale].confirm}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </CardContent>
               </Card>
             </div>
@@ -218,7 +313,15 @@ function ProfilePageContent() {
                       </div>
                     ) : myAds.length > 0 ? (
                       myAds.map((ad) => (
-                        <AdCard key={ad.id} ad={ad} isFavorite={isFavorite(ad.id)} />
+                        <AdCard
+                          key={ad.id}
+                          ad={ad}
+                          isFavorite={isFavorite(ad.id)}
+                          canDelete={isAdmin}
+                          onDeleted={(adId) => {
+                            setAds((previous) => previous.filter((item) => item.id !== adId));
+                          }}
+                        />
                       ))
                     ) : (
                       <div className="col-span-full rounded-lg border bg-white py-20 text-center">
@@ -247,7 +350,15 @@ function ProfilePageContent() {
                       </div>
                     ) : favoriteAds.length > 0 ? (
                       favoriteAds.map((ad) => (
-                        <AdCard key={ad.id} ad={ad} isFavorite={isFavorite(ad.id)} />
+                        <AdCard
+                          key={ad.id}
+                          ad={ad}
+                          isFavorite={isFavorite(ad.id)}
+                          canDelete={isAdmin}
+                          onDeleted={(adId) => {
+                            setAds((previous) => previous.filter((item) => item.id !== adId));
+                          }}
+                        />
                       ))
                     ) : (
                       <div className="col-span-full rounded-lg border bg-white py-20 text-center">

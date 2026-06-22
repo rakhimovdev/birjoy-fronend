@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { isNativeApp } from '@/lib/native-app';
 
 type InstallAppButtonProps = {
   className?: string;
@@ -84,8 +85,14 @@ export function InstallAppButton({
   const [isIos, setIsIos] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
+  const nativeApp = isNativeApp();
 
   useEffect(() => {
+    if (nativeApp) {
+      setIsStandalone(true);
+      return;
+    }
+
     setIsIos(detectIosDevice());
     setIsStandalone(isStandaloneMode());
 
@@ -130,7 +137,11 @@ export function InstallAppButton({
       window.removeEventListener('appinstalled', handleAppInstalled);
       standaloneMediaQuery.removeEventListener('change', handleStandaloneChange);
     };
-  }, [messages, toast]);
+  }, [messages, nativeApp, toast]);
+
+  if (nativeApp) {
+    return null;
+  }
 
   if (isStandalone || (!deferredPrompt && !isIos)) {
     return null;
