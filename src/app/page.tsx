@@ -111,7 +111,7 @@ function HomeContent() {
         <CategoryBar />
       </div>
 
-      <main className="flex-1">
+      <main className="flex-1 pb-32 md:pb-0">
         {shouldShowHero ? (
           <section className="relative overflow-hidden border-b border-white/20 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_46%,_#ff730a_108%)] py-16 text-white md:py-20">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.14),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.12),_transparent_28%)]" />

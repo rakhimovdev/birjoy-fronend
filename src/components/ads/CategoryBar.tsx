@@ -30,16 +30,16 @@ export function CategoryBar() {
   };
 
   return (
-    <div className="w-full overflow-x-auto border-b border-white/70 bg-[rgba(255,255,255,0.72)] backdrop-blur scrollbar-hide">
-      <div className="container mx-auto flex min-w-max gap-4 px-4 py-4 sm:justify-center sm:gap-8">
+    <div className="fixed inset-x-0 bottom-0 z-40 overflow-x-auto border-t border-white/80 bg-[rgba(255,255,255,0.94)] shadow-[0_-12px_28px_rgba(7,28,85,0.12)] backdrop-blur-xl scrollbar-hide md:static md:w-full md:border-t-0 md:border-b md:border-white/70 md:bg-[rgba(255,255,255,0.72)] md:shadow-none">
+      <div className="container mx-auto flex min-w-max snap-x snap-mandatory gap-3 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:justify-center md:snap-none md:gap-8 md:px-4 md:py-4 md:pb-4">
         <button
           type="button"
           onClick={() => updateCategory('all')}
-          className="group flex min-w-[84px] flex-col items-center gap-2"
+          className="group flex min-w-[72px] snap-start flex-col items-center gap-1.5 md:min-w-[84px] md:gap-2"
         >
           <div
             className={cn(
-              'rounded-full p-3 transition-all',
+              'rounded-full p-2.5 transition-all md:p-3',
               activeCategory === 'all'
                 ? 'bg-primary text-white shadow-[0_10px_20px_rgba(11,72,214,0.22)]'
                 : 'bg-white group-hover:bg-primary/10 group-hover:text-primary'
@@ -49,7 +49,7 @@ export function CategoryBar() {
           </div>
           <span
             className={cn(
-              'text-xs font-medium transition-colors',
+              'text-center text-[11px] font-medium leading-tight transition-colors md:text-xs',
               activeCategory === 'all'
                 ? 'text-primary'
                 : 'text-muted-foreground group-hover:text-primary'
@@ -68,11 +68,11 @@ export function CategoryBar() {
               key={category.id}
               type="button"
               onClick={() => updateCategory(category.slug)}
-              className="group flex min-w-[84px] flex-col items-center gap-2"
+              className="group flex min-w-[72px] snap-start flex-col items-center gap-1.5 md:min-w-[84px] md:gap-2"
             >
               <div
                 className={cn(
-                  'rounded-full p-3 transition-all',
+                  'rounded-full p-2.5 transition-all md:p-3',
                   isActive
                     ? 'bg-primary text-white shadow-[0_10px_20px_rgba(11,72,214,0.22)]'
                     : 'bg-white group-hover:bg-primary/10 group-hover:text-primary'
@@ -82,7 +82,7 @@ export function CategoryBar() {
               </div>
               <span
                 className={cn(
-                  'text-xs font-medium transition-colors',
+                  'text-center text-[11px] font-medium leading-tight transition-colors md:text-xs',
                   isActive
                     ? 'text-primary'
                     : 'text-muted-foreground group-hover:text-primary'
