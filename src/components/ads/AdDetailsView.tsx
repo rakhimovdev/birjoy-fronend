@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Clock, Loader2, MapPin, Phone, Tag, Trash2, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
-import { Navbar } from '@/components/layout/Navbar';
+import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { AdCard } from '@/components/ads/AdCard';
 import {
   AlertDialog,
@@ -107,23 +107,21 @@ export function AdDetailsView({ adId }: { adId: string }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="container mx-auto px-4 py-12">
-          <div className="rounded-3xl border bg-white px-6 py-12 text-center shadow-sm">
+      <MarketplaceShell>
+        <main className="marketplace-main">
+          <div className="surface-card rounded-[1.75rem] px-6 py-12 text-center">
             <h1 className="text-2xl font-bold tracking-tight">{messages.adDetails.loading}</h1>
           </div>
         </main>
-      </div>
+      </MarketplaceShell>
     );
   }
 
   if (!ad) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="container mx-auto px-4 py-12">
-          <div className="rounded-3xl border bg-white px-6 py-12 text-center shadow-sm">
+      <MarketplaceShell>
+        <main className="marketplace-main">
+          <div className="surface-card rounded-[1.75rem] px-6 py-12 text-center">
             <h1 className="mb-3 text-2xl font-bold tracking-tight">{messages.adDetails.notFound}</h1>
             <p className="mb-8 text-muted-foreground">{error || messages.adDetails.notFound}</p>
             <Button asChild>
@@ -131,7 +129,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
             </Button>
           </div>
         </main>
-      </div>
+      </MarketplaceShell>
     );
   }
 
@@ -297,10 +295,8 @@ export function AdDetailsView({ adId }: { adId: string }) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
-      <main className="container mx-auto px-4 py-8">
+    <MarketplaceShell>
+      <main className="marketplace-main">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <Button asChild variant="ghost" className="px-0 text-primary hover:bg-transparent">
             <Link href="/">{messages.adDetails.backToListings}</Link>
@@ -333,14 +329,15 @@ export function AdDetailsView({ adId }: { adId: string }) {
           ) : null}
         </div>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,2fr)_360px]">
+        <div className="detail-grid">
           <div className="space-y-6">
-            <div className="relative aspect-[16/10] overflow-hidden rounded-3xl border bg-white shadow-sm">
+            <div className="surface-card relative aspect-[16/10] overflow-hidden rounded-[1.9rem]">
               <Image
                 src={selectedImage}
                 alt={localizedTitle}
                 fill
                 className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 92vw, 64vw"
                 data-ai-hint="classified product detail"
                 unoptimized={shouldDisableOptimization}
               />
@@ -351,7 +348,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
               ) : null}
             </div>
             {ad.images.length > 1 ? (
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-4 gap-3 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5">
                 {ad.images.map((image, index) => (
                   <button
                     key={`${image.slice(0, 32)}-${index}`}
@@ -365,6 +362,8 @@ export function AdDetailsView({ adId }: { adId: string }) {
                       alt={`${localizedTitle} ${index + 1}`}
                       fill
                       className="object-cover"
+                      sizes="(max-width: 768px) 22vw, (max-width: 1024px) 18vw, 120px"
+                      loading="lazy"
                       unoptimized={image.startsWith('data:') || image.startsWith('blob:')}
                     />
                   </button>
@@ -372,15 +371,15 @@ export function AdDetailsView({ adId }: { adId: string }) {
               </div>
             ) : null}
 
-            <div className="rounded-3xl border bg-white p-6 shadow-sm">
+            <div className="surface-card rounded-[1.9rem] p-5 sm:p-6">
               <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
                   <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-primary">
                     {localizedCategory}
                   </p>
-                  <h1 className="text-3xl font-bold tracking-tight md:text-4xl">{localizedTitle}</h1>
+                  <h1 className="page-title font-bold">{localizedTitle}</h1>
                 </div>
-                <div className="text-3xl font-bold text-primary">{formattedPrice}</div>
+                <div className="text-2xl font-bold text-primary sm:text-3xl">{formattedPrice}</div>
               </div>
 
               <div className="grid grid-cols-1 gap-4 border-y py-5 text-sm text-muted-foreground md:grid-cols-2 xl:grid-cols-4">
@@ -416,13 +415,13 @@ export function AdDetailsView({ adId }: { adId: string }) {
 
               <div className="pt-6">
                 <h2 className="mb-3 text-xl font-semibold">{messages.adDetails.description}</h2>
-                <p className="whitespace-pre-line leading-7 text-muted-foreground">{localizedDescription}</p>
+                <p className="body-lead whitespace-pre-line text-muted-foreground">{localizedDescription}</p>
               </div>
             </div>
           </div>
 
           <div className="space-y-6">
-            <Card className="sticky top-24 border-none shadow-sm">
+            <Card className="surface-card border-none shadow-none lg:sticky lg:top-24">
               <CardHeader>
                 <CardTitle>{messages.adDetails.overview}</CardTitle>
               </CardHeader>
@@ -474,7 +473,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-sm">
+            <Card className="surface-card border-none shadow-none">
               <CardHeader>
                 <CardTitle>{orderCopy.title}</CardTitle>
               </CardHeader>
@@ -551,7 +550,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-sm">
+            <Card className="surface-card border-none shadow-none">
               <CardHeader>
                 <CardTitle>{messages.adDetails.safetyTitle}</CardTitle>
               </CardHeader>
@@ -574,7 +573,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
                 <Link href="/">{messages.adDetails.browseMore}</Link>
               </Button>
             </div>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="listing-grid">
               {relatedAds.map((item) => (
                 <AdCard
                   key={item.id}
@@ -590,6 +589,6 @@ export function AdDetailsView({ adId }: { adId: string }) {
           </section>
         ) : null}
       </main>
-    </div>
+    </MarketplaceShell>
   );
 }

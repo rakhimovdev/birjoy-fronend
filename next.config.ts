@@ -66,6 +66,9 @@ const nextConfig: NextConfig = {
     reactCompiler: false,
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [360, 390, 412, 768, 800, 1024, 1280, 1366, 1536],
+    imageSizes: [48, 64, 96, 128, 160, 192, 256, 320, 384],
     remotePatterns: [
       {
         protocol: 'https',

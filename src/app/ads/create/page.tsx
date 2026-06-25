@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { Navbar } from '@/components/layout/Navbar';
+import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -339,14 +339,12 @@ function CreateAdPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <Navbar />
-
+    <MarketplaceShell>
       <ProtectedRoute>
-        <main className="container mx-auto max-w-4xl px-4 py-8">
-          <div className="mb-8">
-            <h1 className="mb-2 text-3xl font-bold tracking-tight text-primary">{messages.createAd.title}</h1>
-            <p className="text-muted-foreground">{messages.createAd.description}</p>
+        <main className="marketplace-main">
+          <div className="surface-card rounded-[1.75rem] px-5 py-6 sm:px-6">
+            <h1 className="page-title mb-3 font-bold text-primary">{messages.createAd.title}</h1>
+            <p className="body-lead text-muted-foreground">{messages.createAd.description}</p>
           </div>
 
           {moderationResult?.flagged ? (
@@ -361,10 +359,10 @@ function CreateAdPageContent() {
             </Alert>
           ) : null}
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-              <div className="space-y-6 md:col-span-2">
-                <Card>
+          <form onSubmit={handleSubmit} className="page-stack">
+            <div className="two-pane-grid">
+              <div className="page-stack">
+                <Card className="surface-card rounded-[1.75rem] border-none shadow-none">
                   <CardHeader>
                     <CardTitle>{messages.createAd.basicInfo}</CardTitle>
                   </CardHeader>
@@ -440,13 +438,13 @@ function CreateAdPageContent() {
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="surface-card rounded-[1.75rem] border-none shadow-none">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0">
                     <div className="space-y-1">
                       <CardTitle>{messages.createAd.descriptionTitle}</CardTitle>
                       <CardDescription>{messages.createAd.descriptionHelp}</CardDescription>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         type="button"
                         variant="outline"
@@ -500,7 +498,7 @@ function CreateAdPageContent() {
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="surface-card rounded-[1.75rem] border-none shadow-none">
                   <CardHeader>
                     <CardTitle>{messages.createAd.location}</CardTitle>
                   </CardHeader>
@@ -533,14 +531,14 @@ function CreateAdPageContent() {
                 </Card>
               </div>
 
-              <div className="space-y-6">
-                <Card>
+              <div className="page-stack">
+                <Card className="surface-card rounded-[1.75rem] border-none shadow-none">
                   <CardHeader>
                     <CardTitle>{messages.createAd.media}</CardTitle>
                     <CardDescription>{messages.createAd.mediaDescription}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -553,7 +551,7 @@ function CreateAdPageContent() {
                         <>
                           <button
                             type="button"
-                            className="flex aspect-square flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:bg-muted/50"
+                            className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed text-muted-foreground transition-colors hover:bg-muted/50"
                             onClick={() => void handleNativeGalleryUpload()}
                           >
                             <ImagePlus className="h-6 w-6" />
@@ -561,7 +559,7 @@ function CreateAdPageContent() {
                           </button>
                           <button
                             type="button"
-                            className="flex aspect-square flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:bg-muted/50"
+                            className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed text-muted-foreground transition-colors hover:bg-muted/50"
                             onClick={() => void handleNativeCameraUpload()}
                           >
                             <ShieldCheck className="h-6 w-6" />
@@ -571,7 +569,7 @@ function CreateAdPageContent() {
                       ) : (
                         <button
                           type="button"
-                          className="flex aspect-square flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:bg-muted/50"
+                          className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed text-muted-foreground transition-colors hover:bg-muted/50"
                           onClick={() => fileInputRef.current?.click()}
                         >
                           <ImagePlus className="h-6 w-6" />
@@ -579,17 +577,18 @@ function CreateAdPageContent() {
                         </button>
                       )}
                       {uploadedImages.map((image, index) => (
-                        <div key={`${image.slice(0, 32)}-${index}`} className="relative aspect-square overflow-hidden rounded-lg border bg-muted/30">
+                        <div key={`${image.slice(0, 32)}-${index}`} className="relative aspect-square overflow-hidden rounded-2xl border bg-muted/30">
                           <Image
                             src={image}
                             alt={`${messages.createAd.addPhoto} ${index + 1}`}
                             fill
                             className="object-cover"
+                            sizes="(max-width: 768px) 44vw, (max-width: 1024px) 28vw, 18vw"
                             unoptimized
                           />
                           <button
                             type="button"
-                            className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white transition-colors hover:bg-black/75"
+                            className="touch-target absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white transition-colors hover:bg-black/75"
                             onClick={() => removeImage(index)}
                             aria-label={messages.createAd.removePhoto}
                           >
@@ -604,8 +603,8 @@ function CreateAdPageContent() {
                   </CardContent>
                 </Card>
 
-                <div className="sticky top-24 space-y-4">
-                  <Button type="submit" className="h-12 w-full gap-2 text-lg font-bold" disabled={loading}>
+                <div className="surface-card rounded-[1.75rem] p-4 lg:sticky lg:top-24">
+                  <Button type="submit" className="h-12 w-full gap-2 rounded-2xl text-lg font-bold" disabled={loading}>
                     {loading ? (
                       <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
@@ -613,13 +612,13 @@ function CreateAdPageContent() {
                     )}
                     {messages.createAd.publish}
                   </Button>
-                  <p className="text-center text-xs text-muted-foreground">{messages.createAd.terms}</p>
+                  <p className="mt-4 text-center text-xs text-muted-foreground">{messages.createAd.terms}</p>
                 </div>
               </div>
             </div>
           </form>
         </main>
       </ProtectedRoute>
-    </div>
+    </MarketplaceShell>
   );
 }

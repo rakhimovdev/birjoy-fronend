@@ -1,10 +1,9 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { LayoutGrid } from 'lucide-react';
-import { CATEGORIES } from '@/lib/mock-data';
+import { LayoutGrid, LucideIcon } from 'lucide-react';
 import * as Icons from 'lucide-react';
-import { LucideIcon } from 'lucide-react';
+import { CATEGORIES } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { getLocalizedText } from '@/lib/i18n';
@@ -30,33 +29,32 @@ export function CategoryBar() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 overflow-x-auto border-t border-white/80 bg-[rgba(255,255,255,0.94)] shadow-[0_-12px_28px_rgba(7,28,85,0.12)] backdrop-blur-xl scrollbar-hide">
-      <div className="container mx-auto flex min-w-max snap-x snap-mandatory gap-3 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:justify-center md:snap-none md:gap-8 md:px-4 md:py-4 md:pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+    <section className="surface-card rounded-[1.75rem] px-4 py-4 sm:px-5">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.26em] text-primary/70">
+            {messages.navbar.marketCategories}
+          </p>
+          <h2 className="mt-2 text-xl font-bold tracking-tight text-[#071c55]">
+            {messages.home.exploreCategories}
+          </h2>
+        </div>
+        <p className="max-w-2xl text-sm text-muted-foreground">
+          {messages.home.heroDescription}
+        </p>
+      </div>
+
+      <div className="category-bar-grid">
         <button
           type="button"
           onClick={() => updateCategory('all')}
-          className="group flex min-w-[72px] snap-start flex-col items-center gap-1.5 md:min-w-[84px] md:gap-2"
+          className="category-pill"
+          data-active={activeCategory === 'all'}
         >
-          <div
-            className={cn(
-              'rounded-full p-2.5 transition-all md:p-3',
-              activeCategory === 'all'
-                ? 'bg-primary text-white shadow-[0_10px_20px_rgba(11,72,214,0.22)]'
-                : 'bg-white group-hover:bg-primary/10 group-hover:text-primary'
-            )}
-          >
-            <LayoutGrid className="h-6 w-6" />
-          </div>
-          <span
-            className={cn(
-              'text-center text-[11px] font-medium leading-tight transition-colors md:text-xs',
-              activeCategory === 'all'
-                ? 'text-primary'
-                : 'text-muted-foreground group-hover:text-primary'
-            )}
-          >
-            {messages.categoryBar.all}
+          <span className="category-pill__icon">
+            <LayoutGrid className="h-5 w-5" />
           </span>
+          <span className="category-pill__label">{messages.categoryBar.all}</span>
         </button>
 
         {CATEGORIES.map((category) => {
@@ -68,32 +66,17 @@ export function CategoryBar() {
               key={category.id}
               type="button"
               onClick={() => updateCategory(category.slug)}
-              className="group flex min-w-[72px] snap-start flex-col items-center gap-1.5 md:min-w-[84px] md:gap-2"
+              className={cn('category-pill', isActive && 'text-primary')}
+              data-active={isActive}
             >
-              <div
-                className={cn(
-                  'rounded-full p-2.5 transition-all md:p-3',
-                  isActive
-                    ? 'bg-primary text-white shadow-[0_10px_20px_rgba(11,72,214,0.22)]'
-                    : 'bg-white group-hover:bg-primary/10 group-hover:text-primary'
-                )}
-              >
-                {Icon ? <Icon className="h-6 w-6" /> : null}
-              </div>
-              <span
-                className={cn(
-                  'text-center text-[11px] font-medium leading-tight transition-colors md:text-xs',
-                  isActive
-                    ? 'text-primary'
-                    : 'text-muted-foreground group-hover:text-primary'
-                )}
-              >
-                {getLocalizedText(category.name, locale)}
+              <span className="category-pill__icon">
+                {Icon ? <Icon className="h-5 w-5" /> : null}
               </span>
+              <span className="category-pill__label">{getLocalizedText(category.name, locale)}</span>
             </button>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

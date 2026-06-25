@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Navbar } from '@/components/layout/Navbar';
+import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { CategoryBar } from '@/components/ads/CategoryBar';
 import { AdCard } from '@/components/ads/AdCard';
 import { BrandLogo } from '@/components/brand/BrandLogo';
@@ -107,35 +107,34 @@ function HomeContent() {
     : null;
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Navbar />
-      <div id="browse-categories">
-        <CategoryBar />
-      </div>
+    <MarketplaceShell>
+      <main className="marketplace-main">
+        <div id="browse-categories">
+          <CategoryBar />
+        </div>
 
-      <main className="flex-1 pb-32 md:pb-36">
         {shouldShowHero ? (
-          <section className="relative overflow-hidden border-b border-white/20 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_46%,_#ff730a_108%)] py-16 text-white md:py-20">
+          <section className="relative overflow-hidden rounded-[2rem] border border-white/20 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_46%,_#ff730a_108%)] py-12 text-white md:py-16">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.14),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.12),_transparent_28%)]" />
             <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[linear-gradient(180deg,_rgba(255,255,255,0.05),_transparent)] lg:block" />
-            <div className="relative z-10 container mx-auto grid items-center gap-12 px-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+            <div className="relative z-10 grid items-center gap-10 px-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] lg:px-8">
               <div className="max-w-3xl">
                 <div className="mb-5 inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold text-white/90 backdrop-blur">
                   BirJoy Marketplace
                 </div>
-                <h1 className="mb-4 font-headline text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">
+                <h1 className="hero-display mb-4 font-headline font-extrabold">
                   {messages.home.heroTitlePrefix}{' '}
                   <span className="text-[#ffd7b5]">{messages.home.heroTitleAccent}</span>
                   {messages.home.heroTitleSuffix ? ` ${messages.home.heroTitleSuffix}` : ''}
                 </h1>
-                <p className="mb-8 max-w-2xl text-lg font-medium leading-8 text-white/82 md:text-xl">
+                <p className="body-lead mb-8 max-w-2xl font-medium text-white/82">
                   {messages.home.heroDescription}
                 </p>
                 <div className="flex flex-wrap gap-4">
                   <Button
                     asChild
                     size="lg"
-                    className="bg-accent px-8 font-bold text-accent-foreground shadow-[0_18px_36px_rgba(255,115,10,0.28)] hover:bg-accent/90"
+                    className="min-h-12 rounded-2xl bg-accent px-8 font-bold text-accent-foreground shadow-[0_18px_36px_rgba(255,115,10,0.28)] hover:bg-accent/90"
                   >
                     <Link href="/ads/create">{messages.home.startSelling}</Link>
                   </Button>
@@ -143,7 +142,7 @@ function HomeContent() {
                     asChild
                     size="lg"
                     variant="outline"
-                    className="border-white/25 bg-white/10 text-white backdrop-blur-md hover:bg-white/18"
+                    className="min-h-12 rounded-2xl border-white/25 bg-white/10 text-white backdrop-blur-md hover:bg-white/18"
                   >
                     <Link href="#browse-categories">{messages.home.exploreCategories}</Link>
                   </Button>
@@ -177,8 +176,8 @@ function HomeContent() {
         ) : null}
 
         {hasFilters ? (
-          <section className="border-b bg-background/70 py-6">
-            <div className="container mx-auto flex flex-col gap-4 px-4 md:flex-row md:items-center md:justify-between">
+          <section className="surface-card rounded-[1.75rem] px-5 py-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold tracking-tight">{messages.home.resultsTitle}</h2>
                 <p className="text-sm text-muted-foreground">{messages.home.resultsDescription}</p>
@@ -195,50 +194,37 @@ function HomeContent() {
         ) : null}
 
         {isLoadingAds ? (
-          <section className="py-12">
-            <div className="container mx-auto px-4">
-              <div className="rounded-3xl border bg-white px-6 py-12 text-center shadow-sm">
-                <h2 className="mb-3 text-3xl font-bold tracking-tight">{messages.home.loadingListings}</h2>
-                <p className="mx-auto max-w-2xl text-muted-foreground">
-                  {messages.home.resultsDescription}
-                </p>
-              </div>
-            </div>
+          <section className="surface-card rounded-[1.75rem] px-6 py-12 text-center">
+            <h2 className="mb-3 text-3xl font-bold tracking-tight">{messages.home.loadingListings}</h2>
+            <p className="mx-auto max-w-2xl text-muted-foreground">
+              {messages.home.resultsDescription}
+            </p>
           </section>
         ) : adsError ? (
-          <section className="py-12">
-            <div className="container mx-auto px-4">
-              <div className="rounded-3xl border bg-white px-6 py-12 text-center shadow-sm">
-                <h2 className="mb-3 text-3xl font-bold tracking-tight">{messages.createAd.submitError}</h2>
-                <p className="mx-auto max-w-2xl text-muted-foreground">{adsError}</p>
-              </div>
-            </div>
+          <section className="surface-card rounded-[1.75rem] px-6 py-12 text-center">
+            <h2 className="mb-3 text-3xl font-bold tracking-tight">{messages.createAd.submitError}</h2>
+            <p className="mx-auto max-w-2xl text-muted-foreground">{adsError}</p>
           </section>
         ) : matchingAds.length === 0 ? (
-          <section className="py-12">
-            <div className="container mx-auto px-4">
-              <div className="rounded-3xl border bg-white px-6 py-12 text-center shadow-sm">
-                <h2 className="mb-3 text-3xl font-bold tracking-tight">{messages.home.noResultsTitle}</h2>
-                <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
-                  {messages.home.noResultsDescription}
-                </p>
-                <div className="flex flex-wrap justify-center gap-4">
-                  <Button asChild>
-                    <Link href="/">{messages.home.clearFilters}</Link>
-                  </Button>
-                  <Button asChild variant="outline">
-                    <Link href="/ads/create">{messages.home.startSelling}</Link>
-                  </Button>
-                </div>
-              </div>
+          <section className="surface-card rounded-[1.75rem] px-6 py-12 text-center">
+            <h2 className="mb-3 text-3xl font-bold tracking-tight">{messages.home.noResultsTitle}</h2>
+            <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
+              {messages.home.noResultsDescription}
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Button asChild>
+                <Link href="/">{messages.home.clearFilters}</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/ads/create">{messages.home.startSelling}</Link>
+              </Button>
             </div>
           </section>
         ) : (
           <>
             {featuredAds.length > 0 ? (
-              <section id="featured-listings" className="bg-white/70 py-12 backdrop-blur-sm">
-                <div className="container mx-auto px-4">
-                  <div className="mb-8 flex items-center justify-between gap-4">
+              <section id="featured-listings" className="surface-card rounded-[1.75rem] px-5 py-8 backdrop-blur-sm sm:px-6">
+                <div className="mb-8 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-6 w-6 fill-accent text-accent" />
                       <h2 className="text-2xl font-bold tracking-tight">{messages.home.featuredListings}</h2>
@@ -250,40 +236,38 @@ function HomeContent() {
                       </Link>
                     </Button>
                   </div>
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {featuredAds.map((ad) => (
-                      <AdCard
-                        key={ad.id}
-                        ad={ad}
-                        isFavorite={isFavorite(ad.id)}
-                        canDelete={isAdmin}
-                        onDeleted={(adId) => {
-                          setAds((previous) => previous.filter((item) => item.id !== adId));
-                        }}
-                      />
-                    ))}
-                  </div>
+                <div className="listing-grid">
+                  {featuredAds.map((ad) => (
+                    <AdCard
+                      key={ad.id}
+                      ad={ad}
+                      isFavorite={isFavorite(ad.id)}
+                      canDelete={isAdmin}
+                      onDeleted={(adId) => {
+                        setAds((previous) => previous.filter((item) => item.id !== adId));
+                      }}
+                    />
+                  ))}
                 </div>
               </section>
             ) : null}
 
-            <section className="overflow-hidden bg-[linear-gradient(180deg,_rgba(11,72,214,0.04),_rgba(255,115,10,0.06))] py-20">
-              <div className="container mx-auto px-4">
-                <div className="flex flex-col items-center gap-12 lg:flex-row">
+            <section className="overflow-hidden rounded-[2rem] bg-[linear-gradient(180deg,_rgba(11,72,214,0.04),_rgba(255,115,10,0.06))] px-5 py-12 sm:px-6 lg:py-16">
+              <div className="flex flex-col items-center gap-12 lg:flex-row">
                   <div className="flex-1 space-y-8">
                     <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-bold text-primary">
                       <Smartphone className="h-4 w-4" />
                       {messages.home.mobileBadge}
                     </div>
-                    <h2 className="text-4xl font-extrabold leading-tight tracking-tight md:text-5xl">
+                    <h2 className="page-title font-extrabold">
                       {messages.home.mobileTitleTop} <br />
                       <span className="text-primary">{messages.home.mobileTitleBottom}</span>
                     </h2>
-                    <p className="text-xl leading-relaxed text-muted-foreground">
+                    <p className="body-lead text-muted-foreground">
                       {messages.home.mobileDescription}
                     </p>
                     <div className="flex flex-wrap gap-4">
-                      <Button className="h-16 rounded-2xl bg-foreground px-8 text-background transition-all hover:scale-105 hover:bg-foreground/90">
+                      <Button className="min-h-12 rounded-2xl bg-foreground px-6 text-background transition-all hover:scale-105 hover:bg-foreground/90 sm:h-16 sm:px-8">
                         <div className="flex flex-col items-start leading-none">
                           <span className="text-[10px] font-bold uppercase opacity-60">
                             {messages.home.appStoreLead}
@@ -291,7 +275,7 @@ function HomeContent() {
                           <span className="text-xl font-bold">{messages.home.appStoreTitle}</span>
                         </div>
                       </Button>
-                      <Button className="h-16 rounded-2xl bg-foreground px-8 text-background transition-all hover:scale-105 hover:bg-foreground/90">
+                      <Button className="min-h-12 rounded-2xl bg-foreground px-6 text-background transition-all hover:scale-105 hover:bg-foreground/90 sm:h-16 sm:px-8">
                         <div className="flex flex-col items-start leading-none">
                           <span className="text-[10px] font-bold uppercase opacity-60">
                             {messages.home.playStoreLead}
@@ -309,19 +293,18 @@ function HomeContent() {
                           alt="BirJoy App Interface"
                           fill
                           className="object-contain"
+                          sizes="(max-width: 768px) 75vw, (max-width: 1024px) 50vw, 36vw"
                           data-ai-hint="smartphone interface app"
                         />
                       </div>
                     ) : null}
                   </div>
-                </div>
               </div>
             </section>
 
             {latestAds.length > 0 ? (
-              <section id="all-listings" className="py-12">
-                <div className="container mx-auto px-4">
-                  <div className="mb-8 flex items-center justify-between gap-4">
+              <section id="all-listings" className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
+                <div className="mb-8 flex items-center justify-between gap-4">
                     <h2 className="text-2xl font-bold tracking-tight">{messages.home.recentPostings}</h2>
                     <Button asChild variant="ghost" className="gap-1 font-semibold text-primary">
                       <Link href={hasFilters ? '/' : '#browse-categories'}>
@@ -330,28 +313,26 @@ function HomeContent() {
                       </Link>
                     </Button>
                   </div>
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {latestAds.map((ad) => (
-                      <AdCard
-                        key={ad.id}
-                        ad={ad}
-                        isFavorite={isFavorite(ad.id)}
-                        canDelete={isAdmin}
-                        onDeleted={(adId) => {
-                          setAds((previous) => previous.filter((item) => item.id !== adId));
-                        }}
-                      />
-                    ))}
-                  </div>
+                <div className="listing-grid">
+                  {latestAds.map((ad) => (
+                    <AdCard
+                      key={ad.id}
+                      ad={ad}
+                      isFavorite={isFavorite(ad.id)}
+                      canDelete={isAdmin}
+                      onDeleted={(adId) => {
+                        setAds((previous) => previous.filter((item) => item.id !== adId));
+                      }}
+                    />
+                  ))}
                 </div>
               </section>
             ) : null}
           </>
         )}
 
-        <section className="bg-[linear-gradient(120deg,_#071c55_0%,_#0b48d6_58%,_#ff730a_140%)] py-16 text-white">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 gap-12 text-center md:grid-cols-3">
+        <section className="rounded-[2rem] bg-[linear-gradient(120deg,_#071c55_0%,_#0b48d6_58%,_#ff730a_140%)] px-5 py-12 text-white sm:px-6">
+          <div className="grid grid-cols-1 gap-8 text-center md:grid-cols-3">
               <div>
                 <h3 className="mb-2 text-4xl font-bold">1M+</h3>
                 <p className="text-white/70">{messages.home.activeUsers}</p>
@@ -364,13 +345,10 @@ function HomeContent() {
                 <h3 className="mb-2 text-4xl font-bold">100+</h3>
                 <p className="text-white/70">{messages.home.supportedCities}</p>
               </div>
-            </div>
           </div>
         </section>
-      </main>
 
-      <footer className="border-t border-white/70 bg-[rgba(255,250,242,0.82)] py-12 backdrop-blur">
-        <div className="container mx-auto px-4">
+        <footer className="rounded-[2rem] border border-white/70 bg-[rgba(255,250,242,0.82)] px-5 py-10 backdrop-blur sm:px-6">
           <div className="mb-8 grid grid-cols-2 gap-8 md:grid-cols-5">
             <div className="col-span-2 md:col-span-1">
               <BrandLogo size="md" showTagline className="mb-4" />
@@ -437,8 +415,8 @@ function HomeContent() {
           <div className="border-t pt-8 text-center text-sm text-muted-foreground">
             © 2024 BirJoy. {messages.home.footerRights}
           </div>
-        </div>
-      </footer>
-    </div>
+        </footer>
+      </main>
+    </MarketplaceShell>
   );
 }

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { Navbar } from '@/components/layout/Navbar';
+import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
@@ -119,12 +119,11 @@ function ProfilePageContent() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <MarketplaceShell>
         <ProtectedRoute>
           <div />
         </ProtectedRoute>
-      </div>
+      </MarketplaceShell>
     );
   }
 
@@ -186,14 +185,19 @@ function ProfilePageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
+    <MarketplaceShell>
       <ProtectedRoute>
-        <main className="container mx-auto max-w-6xl px-4 py-8">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
-            <div className="space-y-6 lg:col-span-1">
-              <Card>
+        <main className="marketplace-main">
+          <div className="surface-card rounded-[1.75rem] px-5 py-6 sm:px-6">
+            <h1 className="page-title font-bold text-primary">{messages.navbar.profile}</h1>
+            <p className="body-lead mt-3 max-w-3xl text-muted-foreground">
+              {messages.profile.memberSince}
+            </p>
+          </div>
+
+          <div className="page-grid profile-grid">
+            <div className="page-stack">
+              <Card className="surface-card rounded-[1.75rem] border-none shadow-none">
                 <CardContent className="flex flex-col items-center pt-8 text-center">
                   <Avatar className="mb-4 h-24 w-24 border-4 border-primary/10">
                     <AvatarImage src={user.avatar} alt={user.name} />
@@ -231,7 +235,7 @@ function ProfilePageContent() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="surface-card rounded-[1.75rem] border-none shadow-none">
                 <CardHeader className="p-4">
                   <CardTitle className="text-sm">{messages.profile.accountSettings}</CardTitle>
                 </CardHeader>
@@ -280,19 +284,19 @@ function ProfilePageContent() {
               </Card>
             </div>
 
-            <div className="lg:col-span-3">
+            <div className="min-w-0">
               <Tabs defaultValue={defaultTab} className="w-full">
-                <TabsList className="mb-8 grid w-full grid-cols-2 border bg-white">
+                <TabsList className="mb-6 grid h-auto w-full grid-cols-2 gap-2 rounded-[1.25rem] border bg-white p-1.5">
                   <TabsTrigger
                     value="ads"
-                    className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
+                    className="min-h-12 gap-2 rounded-[1rem] data-[state=active]:bg-primary data-[state=active]:text-white"
                   >
                     <Package className="h-4 w-4" />
                     {messages.profile.myAdsTab} ({myAds.length})
                   </TabsTrigger>
                   <TabsTrigger
                     value="favorites"
-                    className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
+                    className="min-h-12 gap-2 rounded-[1rem] data-[state=active]:bg-primary data-[state=active]:text-white"
                   >
                     <Heart className="h-4 w-4" />
                     {messages.profile.favoritesTab} ({favoriteAds.length})
@@ -300,14 +304,14 @@ function ProfilePageContent() {
                 </TabsList>
 
                 <TabsContent value="ads">
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div className="listing-grid">
                     {isLoadingAds ? (
-                      <div className="col-span-full rounded-lg border bg-white py-20 text-center">
+                      <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
                         <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                         <h3 className="mb-1 text-lg font-semibold">{messages.profile.loadingListings}</h3>
                       </div>
                     ) : adsError ? (
-                      <div className="col-span-full rounded-lg border bg-white py-20 text-center">
+                      <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
                         <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                         <p className="mx-auto max-w-xl text-muted-foreground">{adsError}</p>
                       </div>
@@ -324,7 +328,7 @@ function ProfilePageContent() {
                         />
                       ))
                     ) : (
-                      <div className="col-span-full rounded-lg border bg-white py-20 text-center">
+                      <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
                         <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                         <h3 className="mb-1 text-lg font-semibold">{messages.profile.noAdsYet}</h3>
                         <p className="mb-6 text-muted-foreground">{messages.profile.noAdsDescription}</p>
@@ -337,14 +341,14 @@ function ProfilePageContent() {
                 </TabsContent>
 
                 <TabsContent value="favorites">
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div className="listing-grid">
                     {isLoadingAds ? (
-                      <div className="col-span-full rounded-lg border bg-white py-20 text-center">
+                      <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
                         <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                         <h3 className="mb-1 text-lg font-semibold">{messages.profile.loadingListings}</h3>
                       </div>
                     ) : adsError ? (
-                      <div className="col-span-full rounded-lg border bg-white py-20 text-center">
+                      <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
                         <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                         <p className="mx-auto max-w-xl text-muted-foreground">{adsError}</p>
                       </div>
@@ -361,7 +365,7 @@ function ProfilePageContent() {
                         />
                       ))
                     ) : (
-                      <div className="col-span-full rounded-lg border bg-white py-20 text-center">
+                      <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
                         <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                         <h3 className="mb-1 text-lg font-semibold">{messages.profile.emptyFavorites}</h3>
                         <p className="mb-6 text-muted-foreground">
@@ -379,6 +383,6 @@ function ProfilePageContent() {
           </div>
         </main>
       </ProtectedRoute>
-    </div>
+    </MarketplaceShell>
   );
 }

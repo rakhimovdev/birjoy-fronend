@@ -133,7 +133,7 @@ export function AdCard({
   return (
     <Card
       className={cn(
-        'group overflow-hidden border-border/50 transition-all duration-300 hover:shadow-lg',
+        'group flex h-full flex-col overflow-hidden rounded-[1.6rem] border-border/50 bg-white/92 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_42px_rgba(7,28,85,0.12)]',
         className
       )}
     >
@@ -143,6 +143,8 @@ export function AdCard({
           alt={localizedTitle}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
+          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 16vw"
+          loading="lazy"
           data-ai-hint="classified ad product"
           unoptimized={shouldDisableOptimization}
         />
@@ -157,7 +159,7 @@ export function AdCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-12 top-2 h-8 w-8 rounded-full bg-white/85 text-destructive backdrop-blur-sm transition-colors hover:bg-white"
+                className="touch-target absolute right-14 top-3 h-12 w-12 rounded-full bg-white/88 text-destructive shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
                 onClick={(event) => {
                   event.preventDefault();
                 }}
@@ -192,7 +194,7 @@ export function AdCard({
           variant="ghost"
           size="icon"
           className={cn(
-            'absolute right-2 top-2 h-8 w-8 rounded-full bg-white/80 text-muted-foreground backdrop-blur-sm transition-colors hover:bg-white',
+            'touch-target absolute right-3 top-3 h-12 w-12 rounded-full bg-white/88 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-white',
             isFavorite ? 'text-red-500' : 'text-muted-foreground'
           )}
           onClick={(event) => {
@@ -224,9 +226,9 @@ export function AdCard({
           <Heart className={cn('h-5 w-5', isFavorite && 'fill-current')} />
         </Button>
       </Link>
-      <CardContent className="p-4">
-        <div className="mb-2 flex items-start justify-between gap-3">
-          <span className="text-xl font-bold text-primary">{formattedPrice}</span>
+      <CardContent className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <span className="text-lg font-bold text-primary sm:text-xl">{formattedPrice}</span>
           <div className="flex flex-wrap justify-end gap-2">
             <Badge variant="secondary" className="shrink-0">
               {localizedCategory}
@@ -236,15 +238,15 @@ export function AdCard({
             </Badge>
           </div>
         </div>
-        <Link href={`/ads/${ad.id}`} className="mb-3 block">
-          <h3 className="line-clamp-2 text-lg font-semibold transition-colors group-hover:text-primary">
+        <Link href={`/ads/${ad.id}`} className="block">
+          <h3 className="line-clamp-2 text-base font-semibold leading-6 transition-colors group-hover:text-primary sm:text-lg">
             {localizedTitle}
           </h3>
         </Link>
-        <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+        <div className="mt-auto flex flex-col gap-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5" />
-            <span>{localizedLocation}</span>
+            <span className="truncate">{localizedLocation}</span>
           </div>
           <div className="flex items-center gap-1">
             <Phone className="h-3.5 w-3.5" />
