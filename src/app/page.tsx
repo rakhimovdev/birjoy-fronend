@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
@@ -10,8 +9,7 @@ import { AdCard } from '@/components/ads/AdCard';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { CATEGORIES, getCategoryBySlug } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles, Smartphone } from 'lucide-react';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getLocalizedText } from '@/lib/i18n';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -109,9 +107,7 @@ function HomeContent() {
   return (
     <MarketplaceShell>
       <main className="marketplace-main">
-        <div id="browse-categories">
-          <CategoryBar />
-        </div>
+        <CategoryBar />
 
         {shouldShowHero ? (
           <section className="relative overflow-hidden rounded-[2rem] border border-white/20 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_46%,_#ff730a_108%)] py-12 text-white md:py-16">
@@ -251,56 +247,6 @@ function HomeContent() {
                 </div>
               </section>
             ) : null}
-
-            <section className="overflow-hidden rounded-[2rem] bg-[linear-gradient(180deg,_rgba(11,72,214,0.04),_rgba(255,115,10,0.06))] px-5 py-12 sm:px-6 lg:py-16">
-              <div className="flex flex-col items-center gap-12 lg:flex-row">
-                  <div className="flex-1 space-y-8">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-bold text-primary">
-                      <Smartphone className="h-4 w-4" />
-                      {messages.home.mobileBadge}
-                    </div>
-                    <h2 className="page-title font-extrabold">
-                      {messages.home.mobileTitleTop} <br />
-                      <span className="text-primary">{messages.home.mobileTitleBottom}</span>
-                    </h2>
-                    <p className="body-lead text-muted-foreground">
-                      {messages.home.mobileDescription}
-                    </p>
-                    <div className="flex flex-wrap gap-4">
-                      <Button className="min-h-12 rounded-2xl bg-foreground px-6 text-background transition-all hover:scale-105 hover:bg-foreground/90 sm:h-16 sm:px-8">
-                        <div className="flex flex-col items-start leading-none">
-                          <span className="text-[10px] font-bold uppercase opacity-60">
-                            {messages.home.appStoreLead}
-                          </span>
-                          <span className="text-xl font-bold">{messages.home.appStoreTitle}</span>
-                        </div>
-                      </Button>
-                      <Button className="min-h-12 rounded-2xl bg-foreground px-6 text-background transition-all hover:scale-105 hover:bg-foreground/90 sm:h-16 sm:px-8">
-                        <div className="flex flex-col items-start leading-none">
-                          <span className="text-[10px] font-bold uppercase opacity-60">
-                            {messages.home.playStoreLead}
-                          </span>
-                          <span className="text-xl font-bold">{messages.home.playStoreTitle}</span>
-                        </div>
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="relative aspect-[4/5] w-full max-w-md flex-1">
-                    {PlaceHolderImages[6] ? (
-                      <div className="relative h-full w-full transition-transform duration-700 hover:rotate-0 lg:rotate-6">
-                        <Image
-                          src={PlaceHolderImages[6].imageUrl}
-                          alt="BirJoy App Interface"
-                          fill
-                          className="object-contain"
-                          sizes="(max-width: 768px) 75vw, (max-width: 1024px) 50vw, 36vw"
-                          data-ai-hint="smartphone interface app"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-              </div>
-            </section>
 
             {latestAds.length > 0 ? (
               <section id="all-listings" className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
