@@ -16,6 +16,7 @@ import {
   getNativePlatformDiagnostics,
   isLikelyNativeAndroidShell,
   logNativeAuthDebug,
+  type NativeAppRestoredResult,
   waitForBirJoyAuthPlugin,
 } from '@/lib/native-app';
 
@@ -66,6 +67,13 @@ type GoogleAuthSectionProps = {
   redirectTo: string;
 };
 
+type NativeGoogleSignInResult = {
+  idToken?: string;
+  displayName?: string;
+  email?: string;
+  photoUrl?: string;
+};
+
 function isGoogleFlowCancellation(message: string) {
   const normalizedMessage = message.trim().toLowerCase();
 
@@ -94,6 +102,47 @@ function describeGoogleClientId(clientId: string) {
   };
 }
 
+function isBirJoyGoogleSignInRestoredResult(
+  restoredResult?: NativeAppRestoredResult | null
+) {
+  return (
+    restoredResult?.pluginId === 'BirJoyAuth' &&
+    restoredResult?.methodName === 'signInWithGoogle'
+  );
+}
+
+function getRestoredResultKey(restoredResult: NativeAppRestoredResult) {
+  return JSON.stringify({
+    pluginId: restoredResult.pluginId || '',
+    methodName: restoredResult.methodName || '',
+    success: Boolean(restoredResult.success),
+    receivedAt: restoredResult.receivedAt || 0,
+    idToken: String(restoredResult.data?.idToken || ''),
+    errorMessage: String(restoredResult.error?.message || ''),
+  });
+}
+
+function getRestoredResultErrorMessage(restoredResult: NativeAppRestoredResult) {
+  return (
+    restoredResult.error?.message ||
+    (typeof restoredResult.error?.data?.message === 'string'
+      ? restoredResult.error.data.message
+      : '') ||
+    ''
+  );
+}
+
+function toNativeGoogleSignInResult(
+  data?: Record<string, unknown>
+): NativeGoogleSignInResult {
+  return {
+    idToken: typeof data?.idToken === 'string' ? data.idToken : '',
+    displayName: typeof data?.displayName === 'string' ? data.displayName : '',
+    email: typeof data?.email === 'string' ? data.email : '',
+    photoUrl: typeof data?.photoUrl === 'string' ? data.photoUrl : '',
+  };
+}
+
 export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
   const embeddedGoogleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() || '';
   const { signInWithGoogle } = useAuth();
@@ -101,6 +150,7 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
   const { toast } = useToast();
   const router = useRouter();
   const buttonRef = useRef<HTMLDivElement | null>(null);
+  const handledRestoredResultKeyRef = useRef('');
   const [googleClientId, setGoogleClientId] = useState(embeddedGoogleClientId);
   const [configState, setConfigState] = useState<GoogleConfigState>(
     backendApiBaseUrl ? 'loading' : embeddedGoogleClientId ? 'ready' : 'error'
@@ -290,6 +340,164 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
     };
   }, [embeddedGoogleClientId, nativeGoogleAuth, nativePluginAvailable]);
 
+  const completeNativeGoogleSignIn = async (
+    nativeResult: NativeGoogleSignInResult,
+    source: 'plugin-promise' | 'app-restored-result'
+  ) => {
+    if (!nativeResult.idToken) {
+      throw new Error('Google ID token was not returned.');
+    }
+
+    logNativeAuthDebug('google-auth-native-token-received', {
+      source,
+      idTokenLength: nativeResult.idToken.length,
+      email: nativeResult.email || '',
+      displayName: nativeResult.displayName || '',
+    });
+    logNativeAuthDebug('google-auth-native-backend-request-start', {
+      source,
+      url: `${backendApiBaseUrl}/auth/google`,
+    });
+    const result = await signInWithGoogle(nativeResult.idToken);
+
+    if (!result.ok) {
+      logNativeAuthDebug('google-auth-native-backend-failed', {
+        source,
+        error: result.error,
+        message: result.message || '',
+      });
+      toast({
+        title:
+          result.error === 'server_unavailable'
+            ? messages.auth.serverUnavailableTitle
+            : messages.auth.requestFailedTitle,
+        description:
+          result.error === 'server_unavailable'
+            ? result.message || messages.auth.serverUnavailableDescription
+            : result.message || messages.auth.requestFailedDescription,
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    logNativeAuthDebug('google-auth-native-success', {
+      source,
+      redirectTo,
+    });
+    toast({
+      title: messages.auth.googleSuccessTitle,
+      description: messages.auth.googleSuccessDescription,
+    });
+
+    router.replace(redirectTo);
+    return true;
+  };
+
+  useEffect(() => {
+    if (!nativeGoogleAuth) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const handleRestoredResult = (restoredResult?: NativeAppRestoredResult | null) => {
+      if (!restoredResult || !isBirJoyGoogleSignInRestoredResult(restoredResult)) {
+        return;
+      }
+
+      const restoredResultKey = getRestoredResultKey(restoredResult);
+
+      if (handledRestoredResultKeyRef.current === restoredResultKey) {
+        return;
+      }
+
+      handledRestoredResultKeyRef.current = restoredResultKey;
+      window.__birjoyLastAppRestoredResult = undefined;
+      console.info('plugin restored result', {
+        success: Boolean(restoredResult.success),
+        hasData: Boolean(restoredResult.data),
+        hasError: Boolean(restoredResult.error),
+      });
+      logNativeAuthDebug('google-auth-native-restored-result-received', {
+        success: Boolean(restoredResult.success),
+        hasData: Boolean(restoredResult.data),
+        hasError: Boolean(restoredResult.error),
+      });
+
+      void (async () => {
+        setIsSubmitting(true);
+
+        try {
+          if (!restoredResult.success) {
+            const errorMessage =
+              getRestoredResultErrorMessage(restoredResult) ||
+              'Google sign-in failed after returning from the Android account picker.';
+
+            console.info('plugin rejected', {
+              errorMessage,
+            });
+
+            if (isGoogleFlowCancellation(errorMessage)) {
+              logNativeAuthDebug('google-auth-native-cancelled', {
+                source: 'app-restored-result',
+                errorMessage,
+              });
+              return;
+            }
+
+            throw new Error(errorMessage);
+          }
+
+          const restoredNativeResult = toNativeGoogleSignInResult(restoredResult.data);
+
+          await completeNativeGoogleSignIn(restoredNativeResult, 'app-restored-result');
+        } catch (error) {
+          logNativeAuthDebug('google-auth-native-failed', {
+            source: 'app-restored-result',
+            errorMessage: getErrorMessage(error),
+          });
+          toast({
+            title: messages.auth.requestFailedTitle,
+            description:
+              error instanceof Error ? error.message : messages.auth.requestFailedDescription,
+            variant: 'destructive',
+          });
+        } finally {
+          if (!cancelled) {
+            setIsSubmitting(false);
+          }
+        }
+      })();
+    };
+
+    handleRestoredResult(window.__birjoyLastAppRestoredResult);
+
+    const onRestoredResult = (event: Event) => {
+      if (!(event instanceof CustomEvent)) {
+        return;
+      }
+
+      handleRestoredResult(event.detail as NativeAppRestoredResult);
+    };
+
+    window.addEventListener('birjoy:app-restored-result', onRestoredResult);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('birjoy:app-restored-result', onRestoredResult);
+    };
+  }, [
+    completeNativeGoogleSignIn,
+    messages.auth.googleSuccessDescription,
+    messages.auth.googleSuccessTitle,
+    messages.auth.requestFailedDescription,
+    messages.auth.requestFailedTitle,
+    nativeGoogleAuth,
+    redirectTo,
+    router,
+    toast,
+  ]);
+
   useEffect(() => {
     if (nativeGoogleAuth) {
       logNativeAuthDebug('google-auth-web-flow-skipped', {
@@ -450,48 +658,7 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
         email: nativeResult.email || '',
       });
 
-      if (!nativeResult.idToken) {
-        throw new Error('Google ID token was not returned.');
-      }
-
-      logNativeAuthDebug('google-auth-native-token-received', {
-        idTokenLength: nativeResult.idToken.length,
-        email: nativeResult.email || '',
-        displayName: nativeResult.displayName || '',
-      });
-      logNativeAuthDebug('google-auth-native-backend-request-start', {
-        url: `${backendApiBaseUrl}/auth/google`,
-      });
-      const result = await signInWithGoogle(nativeResult.idToken);
-
-      if (!result.ok) {
-        logNativeAuthDebug('google-auth-native-backend-failed', {
-          error: result.error,
-          message: result.message || '',
-        });
-        toast({
-          title:
-            result.error === 'server_unavailable'
-              ? messages.auth.serverUnavailableTitle
-              : messages.auth.requestFailedTitle,
-          description:
-            result.error === 'server_unavailable'
-              ? result.message || messages.auth.serverUnavailableDescription
-              : result.message || messages.auth.requestFailedDescription,
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      logNativeAuthDebug('google-auth-native-success', {
-        redirectTo,
-      });
-      toast({
-        title: messages.auth.googleSuccessTitle,
-        description: messages.auth.googleSuccessDescription,
-      });
-
-      router.replace(redirectTo);
+      await completeNativeGoogleSignIn(nativeResult, 'plugin-promise');
     } catch (error) {
       console.info('plugin rejected', {
         errorMessage: getErrorMessage(error),

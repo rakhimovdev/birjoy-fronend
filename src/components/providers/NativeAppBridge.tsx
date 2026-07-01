@@ -11,6 +11,7 @@ import {
   extractInAppPath,
   getNativePlatformDiagnostics,
   isLikelyNativeAndroidShell,
+  type NativeAppRestoredResult,
   isOwnedSiteUrl,
   logNativeAuthDebug,
 } from '@/lib/native-app';
@@ -249,14 +250,20 @@ export function NativeAppBridge() {
     });
 
     void App.addListener('appRestoredResult', (result) => {
+      const restoredResult: NativeAppRestoredResult = {
+        ...result,
+        receivedAt: Date.now(),
+      };
+
       logNativeAuthDebug('native-bridge-app-restored-result', {
-        pluginId: result?.pluginId,
-        methodName: result?.methodName,
-        success: result?.success,
+        pluginId: restoredResult.pluginId,
+        methodName: restoredResult.methodName,
+        success: restoredResult.success,
       });
+      window.__birjoyLastAppRestoredResult = restoredResult;
       window.dispatchEvent(
         new CustomEvent('birjoy:app-restored-result', {
-          detail: result,
+          detail: restoredResult,
         })
       );
     }).then((listener) => {

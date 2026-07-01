@@ -12,6 +12,19 @@ export type NativeGoogleAuthDebugEvent = {
   data?: Record<string, unknown>;
 };
 
+export type NativeAppRestoredResult = {
+  pluginId?: string;
+  methodName?: string;
+  success?: boolean;
+  data?: Record<string, unknown>;
+  error?: {
+    message?: string;
+    code?: string;
+    data?: Record<string, unknown>;
+  };
+  receivedAt?: number;
+};
+
 export type NativePlatformDiagnostics = {
   platform: string;
   isNativePlatform: boolean;
@@ -55,6 +68,7 @@ declare global {
     Capacitor?: {
       PluginHeaders?: CapacitorPluginHeader[];
     };
+    __birjoyLastAppRestoredResult?: NativeAppRestoredResult;
   }
 }
 
