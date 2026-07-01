@@ -79,6 +79,14 @@ function isBrowser() {
   return typeof window !== 'undefined';
 }
 
+function authDebugLog(step: string, data?: Record<string, unknown>) {
+  if (!isBrowser()) {
+    return;
+  }
+
+  console.info('[BirJoyAuth][backend]', step, data || {});
+}
+
 function notifyAuthSync() {
   if (!isBrowser()) {
     return;
@@ -286,8 +294,34 @@ async function callAuthEndpoint(
   endpoint: 'register' | 'login' | 'google',
   payload: SignUpInput | SignInInput | GoogleAuthInput
 ): Promise<AuthResult> {
+  const requestUrl = `${backendApiBaseUrl}/auth/${endpoint}`;
+  const sanitizedPayload =
+    endpoint === 'google'
+      ? {
+          credentialPresent: Boolean((payload as GoogleAuthInput).credential),
+          credentialLength: (payload as GoogleAuthInput).credential?.length || 0,
+        }
+      : endpoint === 'login'
+        ? {
+            email: (payload as SignInInput).email,
+            passwordPresent: Boolean((payload as SignInInput).password),
+          }
+        : {
+            email: (payload as SignUpInput).email,
+            name: (payload as SignUpInput).name,
+            phonePresent: Boolean((payload as SignUpInput).phone),
+            locationPresent: Boolean((payload as SignUpInput).location),
+            passwordPresent: Boolean((payload as SignUpInput).password),
+          };
+
+  authDebugLog('request-start', {
+    endpoint,
+    url: requestUrl,
+    payload: sanitizedPayload,
+  });
+
   try {
-    const response = await fetch(`${backendApiBaseUrl}/auth/${endpoint}`, {
+    const response = await fetch(requestUrl, {
       method: 'POST',
       credentials: 'include',
       cache: 'no-store',
@@ -298,6 +332,19 @@ async function callAuthEndpoint(
     });
 
     const data = (await response.json().catch(() => ({}))) as RemoteAuthResponse;
+    authDebugLog('response-received', {
+      endpoint,
+      url: requestUrl,
+      status: response.status,
+      ok: response.ok,
+      body: {
+        code: data.code,
+        message: data.message,
+        hasToken: Boolean(data.token),
+        hasUser: Boolean(data.user),
+        userEmail: data.user?.email,
+      },
+    });
 
     if (!response.ok) {
       if (response.status === 409 || data.code === 'EMAIL_IN_USE') {
@@ -331,12 +378,24 @@ async function callAuthEndpoint(
     }
 
     const user = normalizeRemoteUser(data.user);
+    authDebugLog('response-success', {
+      endpoint,
+      url: requestUrl,
+      userId: user.id,
+      userEmail: user.email,
+      userRole: user.role,
+    });
     writeStoredToken(data.token);
     writeStoredSessionUser(user);
     notifyAuthSync();
 
     return { ok: true, user };
-  } catch {
+  } catch (error) {
+    authDebugLog('request-failed', {
+      endpoint,
+      url: requestUrl,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    });
     return {
       ok: false,
       error: 'server_unavailable',

@@ -1,10 +1,16 @@
 'use client';
 
-import { Capacitor, registerPlugin } from '@capacitor/core';
+import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor/core';
 
 const APP_SCHEME = 'birjoy:';
 const OWNED_HOSTS = new Set(['www.bir-joy.uz', 'bir-joy.uz']);
 const NATIVE_USER_AGENT_TOKEN = 'BirJoyAndroidApp';
+
+export type NativeGoogleAuthDebugEvent = {
+  step: string;
+  message: string;
+  data?: Record<string, unknown>;
+};
 
 type BirJoyAuthPlugin = {
   signInWithGoogle(options: {
@@ -15,9 +21,29 @@ type BirJoyAuthPlugin = {
     email?: string;
     photoUrl?: string;
   }>;
+  addListener(
+    eventName: 'googleAuthDebug',
+    listenerFunc: (event: NativeGoogleAuthDebugEvent) => void
+  ): Promise<PluginListenerHandle>;
 };
 
 export const BirJoyAuth = registerPlugin<BirJoyAuthPlugin>('BirJoyAuth');
+
+function hasWindowObject() {
+  return typeof window !== 'undefined';
+}
+
+type CapacitorPluginHeader = {
+  name?: string;
+};
+
+declare global {
+  interface Window {
+    Capacitor?: {
+      PluginHeaders?: CapacitorPluginHeader[];
+    };
+  }
+}
 
 export function isNativeApp() {
   return Capacitor.isNativePlatform();
@@ -43,6 +69,37 @@ export function isOwnedSiteUrl(url: URL) {
   return isOwnedSiteHost(url.hostname);
 }
 
+export function getNativePlatformDiagnostics() {
+  const userAgent = hasWindowObject() ? window.navigator.userAgent : '';
+  const pluginHeaders =
+    hasWindowObject() && Array.isArray(window.Capacitor?.PluginHeaders)
+      ? window.Capacitor.PluginHeaders
+      : [];
+
+  return {
+    platform: Capacitor.getPlatform(),
+    isNativePlatform: Capacitor.isNativePlatform(),
+    isNativeAndroidApp: isNativeAndroidApp(),
+    userAgentHasNativeToken: isNativeUserAgent(userAgent),
+    hasAndroidBridge: hasWindowObject() && 'androidBridge' in window,
+    hasCapacitorObject: hasWindowObject() && typeof window.Capacitor !== 'undefined',
+    pluginHeaderNames: pluginHeaders.map((header: CapacitorPluginHeader) => header?.name).filter(Boolean),
+    birJoyAuthHeaderPresent: pluginHeaders.some(
+      (header: CapacitorPluginHeader) => header?.name === 'BirJoyAuth'
+    ),
+    birJoyAuthPluginAvailable: Capacitor.isPluginAvailable('BirJoyAuth'),
+    locationHref: hasWindowObject() ? window.location.href : '',
+  };
+}
+
+export function logNativeAuthDebug(step: string, data?: Record<string, unknown>) {
+  if (!hasWindowObject()) {
+    return;
+  }
+
+  console.info('[BirJoyAuth]', step, data || {});
+}
+
 export function extractInAppPath(urlValue: string) {
   try {
     const url = new URL(urlValue);
@@ -61,4 +118,3 @@ export function extractInAppPath(urlValue: string) {
     return '';
   }
 }
-

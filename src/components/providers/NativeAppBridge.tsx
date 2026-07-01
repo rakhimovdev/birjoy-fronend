@@ -6,7 +6,13 @@ import { App } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Network } from '@capacitor/network';
 import { Button } from '@/components/ui/button';
-import { extractInAppPath, isNativeApp, isOwnedSiteUrl } from '@/lib/native-app';
+import {
+  extractInAppPath,
+  getNativePlatformDiagnostics,
+  isNativeApp,
+  isOwnedSiteUrl,
+  logNativeAuthDebug,
+} from '@/lib/native-app';
 
 const supportedExternalProtocols = new Set(['http:', 'https:']);
 
@@ -24,7 +30,14 @@ export function NativeAppBridge() {
   const nativeApp = useMemo(() => isNativeApp(), []);
 
   useEffect(() => {
+    const diagnostics = getNativePlatformDiagnostics();
+    logNativeAuthDebug('native-bridge-mounted', diagnostics);
+    Object.assign(window, {
+      __birjoyNativeDiagnostics: diagnostics,
+    });
+
     if (!nativeApp) {
+      logNativeAuthDebug('native-bridge-web-mode', diagnostics);
       return;
     }
 
@@ -144,6 +157,9 @@ export function NativeAppBridge() {
     });
 
     void App.getLaunchUrl().then((launchData) => {
+      logNativeAuthDebug('native-bridge-launch-url', {
+        launchUrl: launchData?.url || '',
+      });
       if (launchData?.url) {
         const handled = navigateInApp(launchData.url);
 
@@ -154,6 +170,9 @@ export function NativeAppBridge() {
     });
 
     void App.addListener('appUrlOpen', ({ url }) => {
+      logNativeAuthDebug('native-bridge-app-url-open', {
+        url,
+      });
       const handled = navigateInApp(url);
 
       if (!handled) {
@@ -166,6 +185,11 @@ export function NativeAppBridge() {
     });
 
     void App.addListener('appRestoredResult', (result) => {
+      logNativeAuthDebug('native-bridge-app-restored-result', {
+        pluginId: result?.pluginId,
+        methodName: result?.methodName,
+        success: result?.success,
+      });
       window.dispatchEvent(
         new CustomEvent('birjoy:app-restored-result', {
           detail: result,
@@ -178,6 +202,10 @@ export function NativeAppBridge() {
     });
 
     void Network.getStatus().then((status) => {
+      logNativeAuthDebug('native-bridge-network-status', {
+        connected: status.connected,
+        connectionType: status.connectionType,
+      });
       setIsOffline(!status.connected);
     });
 

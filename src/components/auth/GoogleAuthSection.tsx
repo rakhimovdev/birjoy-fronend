@@ -1,7 +1,7 @@
 'use client';
 
 import Script from 'next/script';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { backendApiBaseUrl } from '@/lib/api';
@@ -10,7 +10,12 @@ import { useI18n } from '@/components/providers/LocaleProvider';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { BirJoyAuth, isNativeAndroidApp } from '@/lib/native-app';
+import {
+  BirJoyAuth,
+  getNativePlatformDiagnostics,
+  isNativeAndroidApp,
+  logNativeAuthDebug,
+} from '@/lib/native-app';
 
 type GoogleCredentialResponse = {
   credential?: string;
@@ -69,6 +74,24 @@ function isGoogleFlowCancellation(message: string) {
   );
 }
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function describeGoogleClientId(clientId: string) {
+  if (!clientId) {
+    return {
+      present: false,
+      suffix: '',
+    };
+  }
+
+  return {
+    present: true,
+    suffix: clientId.slice(-18),
+  };
+}
+
 export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
   const embeddedGoogleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() || '';
   const { signInWithGoogle } = useAuth();
@@ -82,10 +105,59 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
   );
   const [scriptState, setScriptState] = useState<'idle' | 'ready' | 'error'>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const nativeGoogleAuth = isNativeAndroidApp();
+  const nativeDiagnostics = useMemo(() => getNativePlatformDiagnostics(), []);
+  const nativeGoogleAuth = nativeDiagnostics.isNativeAndroidApp;
+  const nativePluginAvailable = nativeDiagnostics.birJoyAuthPluginAvailable;
+
+  useEffect(() => {
+    logNativeAuthDebug('google-auth-mounted', {
+      redirectTo,
+      backendApiBaseUrl,
+      embeddedGoogleClientId: describeGoogleClientId(embeddedGoogleClientId),
+      nativeDiagnostics,
+    });
+  }, [embeddedGoogleClientId, nativeDiagnostics, redirectTo]);
+
+  useEffect(() => {
+    if (!nativeGoogleAuth) {
+      return;
+    }
+
+    logNativeAuthDebug('google-auth-native-plugin-diagnostics', {
+      nativePluginAvailable,
+      nativeDiagnostics,
+    });
+
+    let listenerHandle: { remove: () => Promise<void> } | null = null;
+
+    void BirJoyAuth.addListener('googleAuthDebug', (event) => {
+      logNativeAuthDebug(`native-plugin-${event.step}`, {
+        message: event.message,
+        data: event.data,
+      });
+    })
+      .then((listener) => {
+        listenerHandle = listener;
+      })
+      .catch((error) => {
+        logNativeAuthDebug('native-plugin-listener-failed', {
+          errorMessage: getErrorMessage(error),
+        });
+      });
+
+    return () => {
+      if (listenerHandle) {
+        void listenerHandle.remove();
+      }
+    };
+  }, [nativeDiagnostics, nativeGoogleAuth, nativePluginAvailable]);
 
   useEffect(() => {
     if (!backendApiBaseUrl) {
+      logNativeAuthDebug('google-auth-config-runtime-skipped', {
+        reason: 'backendApiBaseUrl-missing',
+        fallbackClientId: describeGoogleClientId(embeddedGoogleClientId),
+      });
       setGoogleClientId(embeddedGoogleClientId);
       setConfigState(embeddedGoogleClientId ? 'ready' : 'error');
       return;
@@ -93,6 +165,11 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
 
     let isActive = true;
     setConfigState('loading');
+    logNativeAuthDebug('google-auth-config-fetch-start', {
+      url: `${backendApiBaseUrl}/config/public`,
+      nativeGoogleAuth,
+      nativePluginAvailable,
+    });
 
     void fetch(`${backendApiBaseUrl}/config/public`, {
       cache: 'no-store',
@@ -113,6 +190,11 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
           return;
         }
 
+        logNativeAuthDebug('google-auth-config-fetch-success', {
+          googleAuthEnabled,
+          runtimeGoogleClientId: describeGoogleClientId(runtimeGoogleClientId),
+          resolvedGoogleClientId: describeGoogleClientId(resolvedGoogleClientId),
+        });
         setGoogleClientId(resolvedGoogleClientId);
         setConfigState(
           googleAuthEnabled && resolvedGoogleClientId
@@ -122,11 +204,15 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
               : 'disabled'
         );
       })
-      .catch(() => {
+      .catch((error) => {
         if (!isActive) {
           return;
         }
 
+        logNativeAuthDebug('google-auth-config-fetch-failed', {
+          errorMessage: getErrorMessage(error),
+          fallbackClientId: describeGoogleClientId(embeddedGoogleClientId),
+        });
         setGoogleClientId(embeddedGoogleClientId);
         setConfigState(embeddedGoogleClientId ? 'ready' : 'error');
       });
@@ -134,10 +220,14 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
     return () => {
       isActive = false;
     };
-  }, [embeddedGoogleClientId]);
+  }, [embeddedGoogleClientId, nativeGoogleAuth, nativePluginAvailable]);
 
   useEffect(() => {
     if (nativeGoogleAuth) {
+      logNativeAuthDebug('google-auth-web-flow-skipped', {
+        reason: 'native-android-detected',
+        nativePluginAvailable,
+      });
       return;
     }
 
@@ -148,6 +238,10 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
     const container = buttonRef.current;
     const buttonWidth = Math.max(240, Math.round(container.getBoundingClientRect().width || 320));
 
+    logNativeAuthDebug('google-auth-web-button-init', {
+      googleClientId: describeGoogleClientId(googleClientId),
+      buttonWidth,
+    });
     container.innerHTML = '';
     window.google.accounts.id.initialize({
       client_id: googleClientId,
@@ -156,14 +250,22 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
       callback: (response) => {
         void (async () => {
           if (!response.credential) {
+            logNativeAuthDebug('google-auth-web-credential-missing');
             return;
           }
 
+          logNativeAuthDebug('google-auth-web-credential-received', {
+            credentialLength: response.credential.length,
+          });
           setIsSubmitting(true);
 
           const result = await signInWithGoogle(response.credential);
 
           if (!result.ok) {
+            logNativeAuthDebug('google-auth-web-backend-failed', {
+              error: result.error,
+              message: result.message || '',
+            });
             toast({
               title:
                 result.error === 'server_unavailable'
@@ -179,6 +281,9 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
             return;
           }
 
+          logNativeAuthDebug('google-auth-web-success', {
+            redirectTo,
+          });
           toast({
             title: messages.auth.googleSuccessTitle,
             description: messages.auth.googleSuccessDescription,
@@ -197,14 +302,23 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
       logo_alignment: 'left',
       width: buttonWidth,
     });
+    logNativeAuthDebug('google-auth-web-button-rendered');
 
     return () => {
       container.innerHTML = '';
     };
-  }, [googleClientId, messages, nativeGoogleAuth, redirectTo, router, scriptState, signInWithGoogle, toast]);
+  }, [googleClientId, messages, nativeGoogleAuth, nativePluginAvailable, redirectTo, router, scriptState, signInWithGoogle, toast]);
 
   const handleNativeGoogleSignIn = async () => {
+    logNativeAuthDebug('google-auth-button-clicked', {
+      flow: 'native',
+      redirectTo,
+      googleClientId: describeGoogleClientId(googleClientId),
+      nativeDiagnostics,
+    });
+
     if (!googleClientId) {
+      logNativeAuthDebug('google-auth-native-client-id-missing');
       toast({
         title: messages.auth.requestFailedTitle,
         description: messages.auth.googleUnavailableDescription,
@@ -216,6 +330,15 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
     setIsSubmitting(true);
 
     try {
+      if (!nativePluginAvailable) {
+        throw new Error(
+          'BirJoyAuth Capacitor plugin is unavailable in this Android build. Rebuild and reinstall the Android app after syncing native changes.'
+        );
+      }
+
+      logNativeAuthDebug('google-auth-native-plugin-call-start', {
+        googleClientId: describeGoogleClientId(googleClientId),
+      });
       const nativeResult = await BirJoyAuth.signInWithGoogle({
         serverClientId: googleClientId,
       });
@@ -224,9 +347,21 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
         throw new Error('Google ID token was not returned.');
       }
 
+      logNativeAuthDebug('google-auth-native-token-received', {
+        idTokenLength: nativeResult.idToken.length,
+        email: nativeResult.email || '',
+        displayName: nativeResult.displayName || '',
+      });
+      logNativeAuthDebug('google-auth-native-backend-request-start', {
+        url: `${backendApiBaseUrl}/auth/google`,
+      });
       const result = await signInWithGoogle(nativeResult.idToken);
 
       if (!result.ok) {
+        logNativeAuthDebug('google-auth-native-backend-failed', {
+          error: result.error,
+          message: result.message || '',
+        });
         toast({
           title:
             result.error === 'server_unavailable'
@@ -241,6 +376,9 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
         return;
       }
 
+      logNativeAuthDebug('google-auth-native-success', {
+        redirectTo,
+      });
       toast({
         title: messages.auth.googleSuccessTitle,
         description: messages.auth.googleSuccessDescription,
@@ -249,9 +387,15 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
       router.replace(redirectTo);
     } catch (error) {
       if (error instanceof Error && isGoogleFlowCancellation(error.message)) {
+        logNativeAuthDebug('google-auth-native-cancelled', {
+          errorMessage: error.message,
+        });
         return;
       }
 
+      logNativeAuthDebug('google-auth-native-failed', {
+        errorMessage: getErrorMessage(error),
+      });
       toast({
         title: messages.auth.requestFailedTitle,
         description:
@@ -275,8 +419,14 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
         <Script
           src="https://accounts.google.com/gsi/client"
           strategy="afterInteractive"
-          onLoad={() => setScriptState('ready')}
-          onError={() => setScriptState('error')}
+          onLoad={() => {
+            logNativeAuthDebug('google-auth-web-script-loaded');
+            setScriptState('ready');
+          }}
+          onError={() => {
+            logNativeAuthDebug('google-auth-web-script-failed');
+            setScriptState('error');
+          }}
         />
       ) : null}
 
