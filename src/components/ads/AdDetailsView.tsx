@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Clock, Loader2, MapPin, Phone, Tag, Trash2, User } from 'lucide-react';
+import { Clock, Loader2, MapPin, MessageSquare, Phone, Tag, Trash2, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
@@ -33,6 +33,7 @@ import { useI18n } from '@/components/providers/LocaleProvider';
 import { useToast } from '@/hooks/use-toast';
 import { fetchAdById, fetchAds, getConditionLabel } from '@/lib/ads';
 import { deleteAdminAd } from '@/lib/admin';
+import { createChatConversation } from '@/lib/chat';
 import { createOrderRequest } from '@/lib/orders';
 import { useAdminSession } from '@/hooks/use-admin-session';
 
@@ -49,6 +50,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [isOrderSubmitting, setIsOrderSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isStartingChat, setIsStartingChat] = useState(false);
   const [orderForm, setOrderForm] = useState({
     customerName: '',
     customerEmail: '',
@@ -140,6 +142,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
   const localizedCategory = category ? getLocalizedText(category.name, locale) : messages.adDetails.category;
   const localizedCondition = getConditionLabel(ad.condition, locale);
   const selectedImage = ad.images[selectedImageIndex] || ad.images[0];
+  const isOwnListing = user?.id === ad.userId;
   const shouldDisableOptimization =
     selectedImage.startsWith('data:') || selectedImage.startsWith('blob:');
   const formattedPrice = new Intl.NumberFormat(languageMeta[locale].numberLocale, {
@@ -232,6 +235,30 @@ export function AdDetailsView({ adId }: { adId: string }) {
             successDescription: 'Eʼlon admin tomonidan muvaffaqiyatli olib tashlandi.',
             errorTitle: "Eʼlon o‘chirilmadi",
           };
+  const chatCopy =
+    locale === 'ru'
+      ? {
+          action: 'Написать продавцу',
+          loading: 'Открываем чат...',
+          helper: 'Продолжите общение в реальном чате внутри приложения.',
+          ownListing: 'Это ваше объявление, поэтому чат с самим собой недоступен.',
+          errorTitle: 'Не удалось открыть чат',
+        }
+      : locale === 'en'
+        ? {
+            action: 'Message seller',
+            loading: 'Opening chat...',
+            helper: 'Continue the conversation in the real in-app chat.',
+            ownListing: 'This is your own listing, so self-chat is disabled.',
+            errorTitle: 'Chat could not be opened',
+          }
+        : {
+            action: 'Sotuvchiga yozish',
+            loading: 'Chat ochilmoqda...',
+            helper: 'Suhbatni ilova ichidagi haqiqiy chatda davom ettiring.',
+            ownListing: 'Bu sizning eʼloningiz, shuning uchun o‘zingizga chat ochib bo‘lmaydi.',
+            errorTitle: 'Chatni ochib bo‘lmadi',
+          };
 
   const handleOrderSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -291,6 +318,37 @@ export function AdDetailsView({ adId }: { adId: string }) {
       });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleStartChat = async () => {
+    if (!ad) {
+      return;
+    }
+
+    if (!user) {
+      router.push(`/sign-in?redirect=${encodeURIComponent(`/chat?adId=${ad.id}`)}`);
+      return;
+    }
+
+    if (isOwnListing) {
+      return;
+    }
+
+    setIsStartingChat(true);
+
+    try {
+      const conversation = await createChatConversation(ad.id);
+      router.push(`/chat?conversation=${encodeURIComponent(conversation.id)}`);
+    } catch (startChatError) {
+      toast({
+        title: chatCopy.errorTitle,
+        description:
+          startChatError instanceof Error ? startChatError.message : messages.auth.requestFailedDescription,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsStartingChat(false);
     }
   };
 
@@ -463,6 +521,16 @@ export function AdDetailsView({ adId }: { adId: string }) {
                 </div>
 
                 <div className="grid gap-3">
+                  {!isOwnListing ? (
+                    <Button type="button" className="h-11 gap-2" onClick={() => void handleStartChat()} disabled={isStartingChat}>
+                      {isStartingChat ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
+                      {isStartingChat ? chatCopy.loading : chatCopy.action}
+                    </Button>
+                  ) : (
+                    <div className="rounded-2xl bg-muted/50 p-4 text-sm text-muted-foreground">
+                      {chatCopy.ownListing}
+                    </div>
+                  )}
                   <Button asChild className="h-11">
                     <Link href="/ads/create">{messages.adDetails.createSimilar}</Link>
                   </Button>
@@ -470,6 +538,11 @@ export function AdDetailsView({ adId }: { adId: string }) {
                     <Link href="/">{messages.adDetails.browseMore}</Link>
                   </Button>
                 </div>
+                {!isOwnListing ? (
+                  <div className="rounded-2xl bg-muted/50 p-4 text-sm text-muted-foreground">
+                    {chatCopy.helper}
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
 

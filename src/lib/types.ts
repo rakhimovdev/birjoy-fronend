@@ -57,6 +57,45 @@ export type OrderRequest = {
   updatedAt: string;
 };
 
+export type ChatParticipantRole = 'buyer' | 'seller';
+
+export type ChatParticipant = {
+  id: string;
+  role: ChatParticipantRole;
+  name: string;
+  avatar?: string;
+  phone?: string;
+};
+
+export type ChatMessage = {
+  id: string;
+  text: string;
+  senderId: string;
+  senderRole: ChatParticipantRole;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ChatConversationSummary = {
+  id: string;
+  adId: string;
+  adTitle: string;
+  adPrice: number;
+  adImage?: string;
+  viewerRole: ChatParticipantRole;
+  otherParticipant: ChatParticipant;
+  seller: ChatParticipant;
+  buyer: ChatParticipant;
+  lastMessageText: string;
+  lastMessageAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ChatConversation = ChatConversationSummary & {
+  messages: ChatMessage[];
+};
+
 export type AdminProfile = {
   login: string;
   name: string;
