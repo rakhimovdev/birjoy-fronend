@@ -1,7 +1,7 @@
 'use client';
 
 import Script from 'next/script';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { backendApiBaseUrl } from '@/lib/api';
@@ -11,10 +11,12 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import {
+  areNativePlatformDiagnosticsEqual,
   BirJoyAuth,
   getNativePlatformDiagnostics,
-  isNativeAndroidApp,
+  isLikelyNativeAndroidShell,
   logNativeAuthDebug,
+  waitForBirJoyAuthPlugin,
 } from '@/lib/native-app';
 
 type GoogleCredentialResponse = {
@@ -105,9 +107,75 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
   );
   const [scriptState, setScriptState] = useState<'idle' | 'ready' | 'error'>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const nativeDiagnostics = useMemo(() => getNativePlatformDiagnostics(), []);
-  const nativeGoogleAuth = nativeDiagnostics.isNativeAndroidApp;
+  const [nativeDiagnostics, setNativeDiagnostics] = useState(() =>
+    getNativePlatformDiagnostics()
+  );
+  const nativeGoogleAuth = isLikelyNativeAndroidShell(nativeDiagnostics);
   const nativePluginAvailable = nativeDiagnostics.birJoyAuthPluginAvailable;
+  const nativeBridgeReady = nativeGoogleAuth && nativeDiagnostics.birJoyAuthPluginAvailable;
+
+  useEffect(() => {
+    let cancelled = false;
+    let pollTimer: number | null = null;
+    let pollAttempts = 0;
+
+    const syncNativeDiagnostics = (reason: string) => {
+      const nextDiagnostics = getNativePlatformDiagnostics();
+
+      setNativeDiagnostics((currentDiagnostics) => {
+        if (areNativePlatformDiagnosticsEqual(currentDiagnostics, nextDiagnostics)) {
+          return currentDiagnostics;
+        }
+
+        logNativeAuthDebug('google-auth-native-diagnostics-updated', {
+          reason,
+          diagnostics: nextDiagnostics,
+        });
+        return nextDiagnostics;
+      });
+
+      return nextDiagnostics;
+    };
+
+    const initialDiagnostics = syncNativeDiagnostics('mount');
+
+    if (!isLikelyNativeAndroidShell(initialDiagnostics) && !initialDiagnostics.hasAndroidBridge) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const pollNativeDiagnostics = () => {
+      if (cancelled) {
+        return;
+      }
+
+      pollAttempts += 1;
+      const nextDiagnostics = syncNativeDiagnostics(`poll-${pollAttempts}`);
+
+      if (
+        isLikelyNativeAndroidShell(nextDiagnostics) &&
+        nextDiagnostics.birJoyAuthPluginAvailable
+      ) {
+        return;
+      }
+
+      if (pollAttempts >= 40) {
+        return;
+      }
+
+      pollTimer = window.setTimeout(pollNativeDiagnostics, 150);
+    };
+
+    pollTimer = window.setTimeout(pollNativeDiagnostics, 150);
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) {
+        window.clearTimeout(pollTimer);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     logNativeAuthDebug('google-auth-mounted', {
@@ -119,7 +187,7 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
   }, [embeddedGoogleClientId, nativeDiagnostics, redirectTo]);
 
   useEffect(() => {
-    if (!nativeGoogleAuth) {
+    if (!nativeBridgeReady) {
       return;
     }
 
@@ -150,7 +218,7 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
         void listenerHandle.remove();
       }
     };
-  }, [nativeDiagnostics, nativeGoogleAuth, nativePluginAvailable]);
+  }, [nativeBridgeReady, nativeDiagnostics, nativePluginAvailable]);
 
   useEffect(() => {
     if (!backendApiBaseUrl) {
@@ -225,8 +293,9 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
   useEffect(() => {
     if (nativeGoogleAuth) {
       logNativeAuthDebug('google-auth-web-flow-skipped', {
-        reason: 'native-android-detected',
+        reason: nativeBridgeReady ? 'native-android-detected' : 'native-shell-detected',
         nativePluginAvailable,
+        nativeDiagnostics,
       });
       return;
     }
@@ -307,14 +376,35 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
     return () => {
       container.innerHTML = '';
     };
-  }, [googleClientId, messages, nativeGoogleAuth, nativePluginAvailable, redirectTo, router, scriptState, signInWithGoogle, toast]);
+  }, [
+    googleClientId,
+    messages,
+    nativeBridgeReady,
+    nativeDiagnostics,
+    nativeGoogleAuth,
+    nativePluginAvailable,
+    redirectTo,
+    router,
+    scriptState,
+    signInWithGoogle,
+    toast,
+  ]);
 
   const handleNativeGoogleSignIn = async () => {
+    const clickDiagnostics = getNativePlatformDiagnostics();
+
+    console.info('button clicked', {
+      redirectTo,
+    });
+    console.info('isNativeAndroidApp result', clickDiagnostics.isNativeAndroidApp);
+    console.info('Capacitor.getPlatform()', clickDiagnostics.platform);
+    console.info('Capacitor.isNativePlatform()', clickDiagnostics.isNativePlatform);
+    console.info('BirJoyAuth object exists', Boolean(BirJoyAuth));
     logNativeAuthDebug('google-auth-button-clicked', {
       flow: 'native',
       redirectTo,
       googleClientId: describeGoogleClientId(googleClientId),
-      nativeDiagnostics,
+      nativeDiagnostics: clickDiagnostics,
     });
 
     if (!googleClientId) {
@@ -330,17 +420,34 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
     setIsSubmitting(true);
 
     try {
-      if (!nativePluginAvailable) {
+      const readyDiagnostics = await waitForBirJoyAuthPlugin();
+      setNativeDiagnostics((currentDiagnostics) =>
+        areNativePlatformDiagnosticsEqual(currentDiagnostics, readyDiagnostics)
+          ? currentDiagnostics
+          : readyDiagnostics
+      );
+
+      if (
+        !isLikelyNativeAndroidShell(readyDiagnostics) ||
+        !readyDiagnostics.birJoyAuthPluginAvailable
+      ) {
         throw new Error(
-          'BirJoyAuth Capacitor plugin is unavailable in this Android build. Rebuild and reinstall the Android app after syncing native changes.'
+          'BirJoyAuth native bridge is not ready in this WebView yet, so Google sign-in stayed on the frontend and never reached the Android plugin.'
         );
       }
 
+      console.info('calling BirJoyAuth.signInWithGoogle', {
+        serverClientIdPresent: Boolean(googleClientId),
+      });
       logNativeAuthDebug('google-auth-native-plugin-call-start', {
         googleClientId: describeGoogleClientId(googleClientId),
       });
       const nativeResult = await BirJoyAuth.signInWithGoogle({
         serverClientId: googleClientId,
+      });
+      console.info('plugin resolved', {
+        idTokenLength: nativeResult.idToken?.length || 0,
+        email: nativeResult.email || '',
       });
 
       if (!nativeResult.idToken) {
@@ -386,6 +493,9 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
 
       router.replace(redirectTo);
     } catch (error) {
+      console.info('plugin rejected', {
+        errorMessage: getErrorMessage(error),
+      });
       if (error instanceof Error && isGoogleFlowCancellation(error.message)) {
         logNativeAuthDebug('google-auth-native-cancelled', {
           errorMessage: error.message,
@@ -411,7 +521,9 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
     configState === 'disabled' ||
     configState === 'error' ||
     (!nativeGoogleAuth && scriptState === 'error');
-  const isLoadingGoogle = configState !== 'ready' || (!nativeGoogleAuth && scriptState !== 'ready');
+  const isLoadingGoogle =
+    configState !== 'ready' ||
+    (nativeGoogleAuth ? !nativeBridgeReady : scriptState !== 'ready');
 
   return (
     <div className="space-y-4">

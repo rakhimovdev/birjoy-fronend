@@ -12,6 +12,19 @@ export type NativeGoogleAuthDebugEvent = {
   data?: Record<string, unknown>;
 };
 
+export type NativePlatformDiagnostics = {
+  platform: string;
+  isNativePlatform: boolean;
+  isNativeAndroidApp: boolean;
+  userAgentHasNativeToken: boolean;
+  hasAndroidBridge: boolean;
+  hasCapacitorObject: boolean;
+  pluginHeaderNames: string[];
+  birJoyAuthHeaderPresent: boolean;
+  birJoyAuthPluginAvailable: boolean;
+  locationHref: string;
+};
+
 type BirJoyAuthPlugin = {
   signInWithGoogle(options: {
     serverClientId: string;
@@ -69,7 +82,7 @@ export function isOwnedSiteUrl(url: URL) {
   return isOwnedSiteHost(url.hostname);
 }
 
-export function getNativePlatformDiagnostics() {
+export function getNativePlatformDiagnostics(): NativePlatformDiagnostics {
   const userAgent = hasWindowObject() ? window.navigator.userAgent : '';
   const pluginHeaders =
     hasWindowObject() && Array.isArray(window.Capacitor?.PluginHeaders)
@@ -83,13 +96,71 @@ export function getNativePlatformDiagnostics() {
     userAgentHasNativeToken: isNativeUserAgent(userAgent),
     hasAndroidBridge: hasWindowObject() && 'androidBridge' in window,
     hasCapacitorObject: hasWindowObject() && typeof window.Capacitor !== 'undefined',
-    pluginHeaderNames: pluginHeaders.map((header: CapacitorPluginHeader) => header?.name).filter(Boolean),
+    pluginHeaderNames: pluginHeaders
+      .map((header: CapacitorPluginHeader) => header?.name)
+      .filter((headerName): headerName is string => Boolean(headerName)),
     birJoyAuthHeaderPresent: pluginHeaders.some(
       (header: CapacitorPluginHeader) => header?.name === 'BirJoyAuth'
     ),
     birJoyAuthPluginAvailable: Capacitor.isPluginAvailable('BirJoyAuth'),
     locationHref: hasWindowObject() ? window.location.href : '',
   };
+}
+
+export function areNativePlatformDiagnosticsEqual(
+  current: NativePlatformDiagnostics,
+  next: NativePlatformDiagnostics
+) {
+  return (
+    current.platform === next.platform &&
+    current.isNativePlatform === next.isNativePlatform &&
+    current.isNativeAndroidApp === next.isNativeAndroidApp &&
+    current.userAgentHasNativeToken === next.userAgentHasNativeToken &&
+    current.hasAndroidBridge === next.hasAndroidBridge &&
+    current.hasCapacitorObject === next.hasCapacitorObject &&
+    current.birJoyAuthHeaderPresent === next.birJoyAuthHeaderPresent &&
+    current.birJoyAuthPluginAvailable === next.birJoyAuthPluginAvailable &&
+    current.locationHref === next.locationHref &&
+    current.pluginHeaderNames.join(',') === next.pluginHeaderNames.join(',')
+  );
+}
+
+export function isLikelyNativeAndroidShell(
+  diagnostics: NativePlatformDiagnostics = getNativePlatformDiagnostics()
+) {
+  return (
+    diagnostics.isNativeAndroidApp ||
+    diagnostics.userAgentHasNativeToken ||
+    diagnostics.hasAndroidBridge ||
+    diagnostics.birJoyAuthHeaderPresent
+  );
+}
+
+export async function waitForBirJoyAuthPlugin(options?: {
+  timeoutMs?: number;
+  pollIntervalMs?: number;
+}) {
+  if (!hasWindowObject()) {
+    return getNativePlatformDiagnostics();
+  }
+
+  const timeoutMs = options?.timeoutMs ?? 4000;
+  const pollIntervalMs = options?.pollIntervalMs ?? 120;
+  const startedAt = Date.now();
+  let diagnostics = getNativePlatformDiagnostics();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    if (isLikelyNativeAndroidShell(diagnostics) && diagnostics.birJoyAuthPluginAvailable) {
+      return diagnostics;
+    }
+
+    await new Promise<void>((resolve) => {
+      window.setTimeout(resolve, pollIntervalMs);
+    });
+    diagnostics = getNativePlatformDiagnostics();
+  }
+
+  return diagnostics;
 }
 
 export function logNativeAuthDebug(step: string, data?: Record<string, unknown>) {

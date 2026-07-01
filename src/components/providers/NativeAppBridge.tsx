@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { App } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Network } from '@capacitor/network';
 import { Button } from '@/components/ui/button';
 import {
+  areNativePlatformDiagnosticsEqual,
   extractInAppPath,
   getNativePlatformDiagnostics,
-  isNativeApp,
+  isLikelyNativeAndroidShell,
   isOwnedSiteUrl,
   logNativeAuthDebug,
 } from '@/lib/native-app';
@@ -27,10 +28,73 @@ function getHrefFromElement(target: EventTarget | null) {
 export function NativeAppBridge() {
   const router = useRouter();
   const [isOffline, setIsOffline] = useState(false);
-  const nativeApp = useMemo(() => isNativeApp(), []);
+  const [nativeDiagnostics, setNativeDiagnostics] = useState(() =>
+    getNativePlatformDiagnostics()
+  );
+  const nativeApp = nativeDiagnostics.isNativeAndroidApp;
 
   useEffect(() => {
-    const diagnostics = getNativePlatformDiagnostics();
+    let cancelled = false;
+    let pollTimer: number | null = null;
+    let pollAttempts = 0;
+
+    const syncNativeDiagnostics = (reason: string) => {
+      const nextDiagnostics = getNativePlatformDiagnostics();
+
+      setNativeDiagnostics((currentDiagnostics) => {
+        if (areNativePlatformDiagnosticsEqual(currentDiagnostics, nextDiagnostics)) {
+          return currentDiagnostics;
+        }
+
+        logNativeAuthDebug('native-bridge-diagnostics-updated', {
+          reason,
+          diagnostics: nextDiagnostics,
+        });
+        return nextDiagnostics;
+      });
+
+      return nextDiagnostics;
+    };
+
+    const initialDiagnostics = syncNativeDiagnostics('mount');
+
+    if (!isLikelyNativeAndroidShell(initialDiagnostics) && !initialDiagnostics.hasAndroidBridge) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const pollNativeDiagnostics = () => {
+      if (cancelled) {
+        return;
+      }
+
+      pollAttempts += 1;
+      const nextDiagnostics = syncNativeDiagnostics(`poll-${pollAttempts}`);
+
+      if (nextDiagnostics.isNativeAndroidApp) {
+        return;
+      }
+
+      if (pollAttempts >= 40) {
+        return;
+      }
+
+      pollTimer = window.setTimeout(pollNativeDiagnostics, 150);
+    };
+
+    pollTimer = window.setTimeout(pollNativeDiagnostics, 150);
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) {
+        window.clearTimeout(pollTimer);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const diagnostics = nativeDiagnostics;
     logNativeAuthDebug('native-bridge-mounted', diagnostics);
     Object.assign(window, {
       __birjoyNativeDiagnostics: diagnostics,
@@ -241,7 +305,7 @@ export function NativeAppBridge() {
     return () => {
       cleanupTasks.forEach((cleanup) => cleanup());
     };
-  }, [nativeApp, router]);
+  }, [nativeApp, nativeDiagnostics, router]);
 
   if (!nativeApp || !isOffline) {
     return null;
