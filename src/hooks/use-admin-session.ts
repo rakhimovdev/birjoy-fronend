@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
+  fallbackAdminProfile,
   adminProfileStorageKey,
   adminSyncEventName,
   adminTokenStorageKey,
@@ -9,12 +10,6 @@ import {
   getStoredAdminToken,
 } from '@/lib/admin';
 import type { AdminProfile } from '@/lib/types';
-
-const fallbackAdminProfile: AdminProfile = {
-  login: 'birjoy-admin',
-  name: 'BirJoy Admin',
-  role: 'admin',
-};
 
 export function useAdminSession() {
   const [admin, setAdmin] = useState<AdminProfile | null>(null);

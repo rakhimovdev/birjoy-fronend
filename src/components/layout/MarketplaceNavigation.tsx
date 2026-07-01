@@ -147,7 +147,7 @@ export function MarketplaceDrawer() {
       </SheetTrigger>
       <SheetContent
         side="left"
-        className="w-[min(90vw,23rem)] border-r border-white/70 bg-[rgba(255,250,242,0.98)] p-0 shadow-[0_28px_80px_rgba(7,28,85,0.16)]"
+        className="w-[min(94vw,23.5rem)] border-r border-white/70 bg-[rgba(255,250,242,0.98)] p-0 shadow-[0_28px_80px_rgba(7,28,85,0.16)]"
       >
         <div className="tablet-drawer-scroll flex h-full flex-col">
           <SheetHeader className="border-b border-border/70 px-5 py-5 text-left">
@@ -195,7 +195,7 @@ export function MarketplaceDrawer() {
               <p className="text-xs font-bold uppercase tracking-[0.26em] text-muted-foreground">
                 {messages.navbar.marketCategories}
               </p>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid gap-2 min-[481px]:grid-cols-2">
                 <SheetClose asChild>
                   <Link
                     href={buildCategoryHref('all', currentQuery)}

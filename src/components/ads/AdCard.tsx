@@ -133,7 +133,7 @@ export function AdCard({
   return (
     <Card
       className={cn(
-        'group flex h-full flex-col overflow-hidden rounded-[1.6rem] border-border/50 bg-white/92 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_42px_rgba(7,28,85,0.12)]',
+        'group flex h-full flex-col overflow-hidden rounded-[1.45rem] border-border/50 bg-white/92 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_42px_rgba(7,28,85,0.12)] sm:rounded-[1.6rem]',
         className
       )}
     >
@@ -143,7 +143,7 @@ export function AdCard({
           alt={localizedTitle}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
-          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 16vw"
+          sizes="(max-width: 480px) 100vw, (max-width: 767px) 50vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 16vw"
           loading="lazy"
           data-ai-hint="classified ad product"
           unoptimized={shouldDisableOptimization}
@@ -159,7 +159,7 @@ export function AdCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="touch-target absolute right-14 top-3 h-12 w-12 rounded-full bg-white/88 text-destructive shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
+                className="touch-target absolute right-12 top-3 h-11 w-11 rounded-full bg-white/88 text-destructive shadow-sm backdrop-blur-sm transition-colors hover:bg-white min-[481px]:right-14 min-[481px]:h-12 min-[481px]:w-12"
                 onClick={(event) => {
                   event.preventDefault();
                 }}
@@ -194,7 +194,7 @@ export function AdCard({
           variant="ghost"
           size="icon"
           className={cn(
-            'touch-target absolute right-3 top-3 h-12 w-12 rounded-full bg-white/88 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-white',
+            'touch-target absolute right-3 top-3 h-11 w-11 rounded-full bg-white/88 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-white min-[481px]:h-12 min-[481px]:w-12',
             isFavorite ? 'text-red-500' : 'text-muted-foreground'
           )}
           onClick={(event) => {
@@ -227,9 +227,9 @@ export function AdCard({
         </Button>
       </Link>
       <CardContent className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-2 min-[481px]:flex-row min-[481px]:items-start min-[481px]:justify-between">
           <span className="text-lg font-bold text-primary sm:text-xl">{formattedPrice}</span>
-          <div className="flex flex-wrap justify-end gap-2">
+          <div className="flex flex-wrap justify-start gap-2 min-[481px]:justify-end">
             <Badge variant="secondary" className="shrink-0">
               {localizedCategory}
             </Badge>
@@ -239,7 +239,7 @@ export function AdCard({
           </div>
         </div>
         <Link href={`/ads/${ad.id}`} className="block">
-          <h3 className="line-clamp-2 text-base font-semibold leading-6 transition-colors group-hover:text-primary sm:text-lg">
+          <h3 className="line-clamp-2 text-[0.98rem] font-semibold leading-6 transition-colors group-hover:text-primary min-[481px]:text-base sm:text-lg">
             {localizedTitle}
           </h3>
         </Link>

@@ -12,32 +12,32 @@ type BrandLogoProps = {
 
 const sizeStyles = {
   sm: {
-    gap: 'gap-2.5',
-    mark: 'h-10 w-10',
-    title: 'text-[2rem]',
+    gap: 'gap-2 sm:gap-2.5',
+    mark: 'h-9 w-9 min-[481px]:h-10 min-[481px]:w-10',
+    title: 'text-[1.72rem] min-[481px]:text-[1.9rem] sm:text-[2rem]',
     tagline: 'text-[0.58rem] tracking-[0.34em]',
     line: 'w-5',
   },
   md: {
-    gap: 'gap-3',
-    mark: 'h-12 w-12',
-    title: 'text-[2.45rem]',
+    gap: 'gap-2.5 sm:gap-3',
+    mark: 'h-10 w-10 sm:h-12 sm:w-12',
+    title: 'text-[2.1rem] sm:text-[2.45rem]',
     tagline: 'text-[0.65rem] tracking-[0.38em]',
-    line: 'w-8',
+    line: 'w-6 sm:w-8',
   },
   lg: {
-    gap: 'gap-4',
-    mark: 'h-16 w-16',
-    title: 'text-[3.4rem]',
-    tagline: 'text-xs tracking-[0.42em]',
-    line: 'w-10',
+    gap: 'gap-3 sm:gap-4',
+    mark: 'h-14 w-14 sm:h-16 sm:w-16',
+    title: 'text-[2.8rem] sm:text-[3.4rem]',
+    tagline: 'text-[0.72rem] sm:text-xs tracking-[0.36em] sm:tracking-[0.42em]',
+    line: 'w-8 sm:w-10',
   },
   hero: {
-    gap: 'gap-5',
-    mark: 'h-24 w-24',
-    title: 'text-[4.8rem]',
-    tagline: 'text-sm tracking-[0.52em]',
-    line: 'w-14',
+    gap: 'gap-3 sm:gap-4 lg:gap-5',
+    mark: 'h-16 w-16 min-[481px]:h-20 min-[481px]:w-20 lg:h-24 lg:w-24',
+    title: 'text-[3rem] min-[481px]:text-[3.7rem] lg:text-[4.8rem]',
+    tagline: 'text-[0.68rem] min-[481px]:text-xs lg:text-sm tracking-[0.34em] min-[481px]:tracking-[0.42em] lg:tracking-[0.52em]',
+    line: 'w-8 min-[481px]:w-10 lg:w-14',
   },
 } as const;
 
@@ -87,14 +87,14 @@ export function BrandLogo({
     <div className={cn('inline-flex items-center', styles.gap, className)}>
       <BrandMark className={cn(styles.mark, markClassName)} />
 
-      <div className="flex flex-col justify-center leading-none">
+      <div className="min-w-0 flex flex-col justify-center leading-none">
         <div className={cn('font-headline font-extrabold tracking-tight', styles.title)}>
           <span className="text-[#071C55]">Bir</span>
           <span className="text-[#FF730A]">Joy</span>
         </div>
 
         {showTagline ? (
-          <div className="mt-2 flex items-center gap-3 text-[#20305F]/78">
+          <div className="mt-2 flex items-center gap-2 sm:gap-3 text-[#20305F]/78">
             <span className={cn('h-px rounded-full bg-[#AEB8CE]', styles.line)} />
             <span className={cn('font-body uppercase', styles.tagline)}>{tagline}</span>
             <span className={cn('h-px rounded-full bg-[#AEB8CE]', styles.line)} />

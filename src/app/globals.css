@@ -35,11 +35,13 @@
   html {
     scroll-behavior: smooth;
     scrollbar-gutter: stable;
+    max-width: 100%;
   }
   body {
     @apply bg-background text-foreground font-body;
     position: relative;
     min-height: 100vh;
+    max-width: 100%;
     overflow-x: clip;
     background-image:
       radial-gradient(circle at top left, rgba(11, 72, 214, 0.14), transparent 28%),
@@ -74,6 +76,17 @@
   svg {
     max-width: 100%;
   }
+  a,
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  li {
+    overflow-wrap: anywhere;
+  }
 }
 
 @layer components {
@@ -82,6 +95,8 @@
     --section-gap: 1.25rem;
     --bottom-nav-height: 5.5rem;
     --page-max-width: 92rem;
+    --sticky-top: 7.25rem;
+    --category-scroll-offset: 10rem;
     --hero-heading-size: clamp(2.2rem, 8vw, 4.8rem);
     --page-heading-size: clamp(1.85rem, 5.4vw, 3.2rem);
     --body-copy-size: clamp(0.96rem, 1.3vw, 1.1rem);
@@ -98,6 +113,7 @@
     max-width: min(100%, calc(var(--page-max-width) + (var(--page-gutter) * 2)));
     padding-inline: var(--page-gutter);
     padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 1.25rem);
+    overflow-x: clip;
   }
 
   .marketplace-main {
@@ -120,7 +136,7 @@
   .listing-grid {
     display: grid;
     gap: clamp(0.875rem, 1.8vw, 1.5rem);
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .listing-grid > * {
@@ -257,6 +273,7 @@
     display: flex;
     gap: 0.75rem;
     overflow-x: auto;
+    padding-inline-end: 0.125rem;
     padding-bottom: 0.25rem;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
@@ -334,6 +351,8 @@
       --page-gutter: 0.875rem;
       --section-gap: 1rem;
       --bottom-nav-height: 5.25rem;
+      --sticky-top: 7.5rem;
+      --category-scroll-offset: 10.5rem;
       --hero-heading-size: clamp(1.95rem, 10vw, 2.85rem);
       --page-heading-size: clamp(1.55rem, 7vw, 2.2rem);
       --body-copy-size: 0.96rem;
@@ -352,6 +371,12 @@
     }
   }
 
+  @media (min-width: 481px) and (max-width: 768px) {
+    .listing-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
   @media (max-width: 768px) {
     .phone-nav-only {
       display: flex;
@@ -367,10 +392,12 @@
     :root {
       --page-gutter: 1.25rem;
       --bottom-nav-height: 0rem;
+      --sticky-top: 5.6rem;
+      --category-scroll-offset: 7.25rem;
       --hero-heading-size: clamp(2.6rem, 6vw, 4rem);
       --page-heading-size: clamp(2rem, 4.2vw, 2.8rem);
       --body-copy-size: 1rem;
-      --listing-min-column: 13rem;
+      --listing-min-column: 14rem;
     }
 
     .marketplace-content {
@@ -390,13 +417,27 @@
       grid-template-columns: repeat(auto-fit, minmax(var(--listing-min-column), 1fr));
     }
 
-    .chat-layout {
-      grid-template-columns: minmax(17rem, 21rem) minmax(0, 1fr);
-    }
-
     .category-bar-grid {
       flex-wrap: wrap;
       overflow: visible;
+    }
+  }
+
+  @media (min-width: 900px) {
+    .two-pane-grid {
+      grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 0.92fr);
+    }
+
+    .detail-grid {
+      grid-template-columns: minmax(0, 1.28fr) minmax(18rem, 0.96fr);
+    }
+
+    .profile-grid {
+      grid-template-columns: minmax(17rem, 20rem) minmax(0, 1fr);
+    }
+
+    .chat-layout {
+      grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
     }
   }
 
@@ -404,6 +445,8 @@
     :root {
       --page-gutter: 1.5rem;
       --bottom-nav-height: 0rem;
+      --sticky-top: 5.6rem;
+      --category-scroll-offset: 7.25rem;
       --hero-heading-size: clamp(3rem, 4.7vw, 5rem);
       --page-heading-size: clamp(2.2rem, 3.2vw, 3.3rem);
       --body-copy-size: 1.04rem;
@@ -458,39 +501,6 @@
   @media (min-width: 1536px) {
     :root {
       --listing-min-column: 15rem;
-    }
-  }
-
-  @media (width: 768px) and (min-height: 900px) {
-    :root {
-      --bottom-nav-height: 0rem;
-      --page-gutter: 1.25rem;
-    }
-
-    .phone-nav-only {
-      display: none !important;
-    }
-
-    .tablet-nav-only,
-    .tablet-and-up-only {
-      display: flex !important;
-    }
-
-    .marketplace-content {
-      padding-bottom: 2rem;
-    }
-
-    .listing-grid {
-      grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-    }
-
-    .chat-layout {
-      grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr);
-    }
-
-    .category-bar-grid {
-      flex-wrap: wrap;
-      overflow: visible;
     }
   }
 }

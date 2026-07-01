@@ -74,14 +74,14 @@ export default function PrivacyPolicyPage() {
       <Navbar />
 
       <main className="container mx-auto max-w-4xl px-4 py-10 md:py-14">
-        <section className="overflow-hidden rounded-[2rem] border border-white/60 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_46%,_#ff730a_110%)] p-8 text-white shadow-[0_28px_70px_rgba(7,28,85,0.18)]">
+        <section className="overflow-hidden rounded-[2rem] border border-white/60 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_46%,_#ff730a_110%)] p-5 text-white shadow-[0_28px_70px_rgba(7,28,85,0.18)] sm:p-8">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold backdrop-blur">
                 <LockKeyhole className="h-4 w-4" />
                 BirJoy Privacy Policy
               </div>
-              <h1 className="mt-5 text-4xl font-extrabold tracking-tight md:text-5xl">
+              <h1 className="mt-5 text-3xl font-extrabold tracking-tight min-[481px]:text-4xl md:text-5xl">
                 Privacy and data handling for the BirJoy marketplace
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-8 text-white/82 md:text-lg">
@@ -96,7 +96,7 @@ export default function PrivacyPolicyPage() {
           </div>
         </section>
 
-        <section className="mt-8 rounded-[2rem] border border-[#dbe4ff] bg-white p-8 shadow-[0_18px_50px_rgba(7,28,85,0.08)] md:p-10">
+        <section className="mt-8 rounded-[2rem] border border-[#dbe4ff] bg-white p-5 shadow-[0_18px_50px_rgba(7,28,85,0.08)] sm:p-8 md:p-10">
           <div className="mb-8 flex items-center gap-3 text-[#071c55]">
             <ShieldCheck className="h-5 w-5" />
             <p className="text-sm font-semibold uppercase tracking-[0.22em]">
@@ -114,13 +114,13 @@ export default function PrivacyPolicyPage() {
           </div>
         </section>
 
-        <div className="mt-8 flex flex-wrap gap-4">
-          <Button asChild variant="outline" className="gap-2">
+        <div className="mt-8 flex flex-col gap-3 min-[481px]:flex-row min-[481px]:flex-wrap">
+          <Button asChild variant="outline" className="w-full gap-2 min-[481px]:w-auto">
             <Link href="/account-deletion">
               Account deletion page
             </Link>
           </Button>
-          <Button asChild className="gap-2">
+          <Button asChild className="w-full gap-2 min-[481px]:w-auto">
             <Link href="/">
               <ArrowLeft className="h-4 w-4" />
               Back to BirJoy

@@ -110,10 +110,10 @@ function HomeContent() {
         <CategoryBar />
 
         {shouldShowHero ? (
-          <section className="relative overflow-hidden rounded-[2rem] border border-white/20 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_46%,_#ff730a_108%)] py-12 text-white md:py-16">
+          <section className="relative overflow-hidden rounded-[2rem] border border-white/20 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_46%,_#ff730a_108%)] py-10 text-white sm:py-12 md:py-14 lg:py-16">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.14),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.12),_transparent_28%)]" />
             <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[linear-gradient(180deg,_rgba(255,255,255,0.05),_transparent)] lg:block" />
-            <div className="relative z-10 grid items-center gap-10 px-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] lg:px-8">
+            <div className="relative z-10 grid items-center gap-8 px-5 sm:px-6 md:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)] lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] lg:px-8">
               <div className="max-w-3xl">
                 <div className="mb-5 inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold text-white/90 backdrop-blur">
                   BirJoy Marketplace
@@ -126,11 +126,11 @@ function HomeContent() {
                 <p className="body-lead mb-8 max-w-2xl font-medium text-white/82">
                   {messages.home.heroDescription}
                 </p>
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-col gap-3 min-[481px]:flex-row min-[481px]:flex-wrap">
                   <Button
                     asChild
                     size="lg"
-                    className="min-h-12 rounded-2xl bg-accent px-8 font-bold text-accent-foreground shadow-[0_18px_36px_rgba(255,115,10,0.28)] hover:bg-accent/90"
+                    className="min-h-12 w-full rounded-2xl bg-accent px-6 font-bold text-accent-foreground shadow-[0_18px_36px_rgba(255,115,10,0.28)] hover:bg-accent/90 min-[481px]:w-auto sm:px-8"
                   >
                     <Link href="/ads/create">{messages.home.startSelling}</Link>
                   </Button>
@@ -138,17 +138,17 @@ function HomeContent() {
                     asChild
                     size="lg"
                     variant="outline"
-                    className="min-h-12 rounded-2xl border-white/25 bg-white/10 text-white backdrop-blur-md hover:bg-white/18"
+                    className="min-h-12 w-full rounded-2xl border-white/25 bg-white/10 text-white backdrop-blur-md hover:bg-white/18 min-[481px]:w-auto"
                   >
                     <Link href="#browse-categories">{messages.home.exploreCategories}</Link>
                   </Button>
                 </div>
               </div>
 
-              <div className="relative mx-auto w-full max-w-xl">
+              <div className="relative mx-auto w-full max-w-xl md:max-w-none">
                 <div className="absolute -left-6 top-8 h-28 w-28 rounded-full bg-white/12 blur-2xl" />
                 <div className="absolute -bottom-8 right-4 h-32 w-32 rounded-full bg-[#ffb26d]/25 blur-3xl" />
-                <div className="relative rounded-[2rem] border border-white/15 bg-white/10 p-6 shadow-[0_30px_80px_rgba(4,18,58,0.35)] backdrop-blur-2xl">
+                <div className="relative rounded-[2rem] border border-white/15 bg-white/10 p-5 shadow-[0_30px_80px_rgba(4,18,58,0.35)] backdrop-blur-2xl sm:p-6">
                   <BrandLogo
                     size="hero"
                     showTagline
@@ -172,7 +172,7 @@ function HomeContent() {
         ) : null}
 
         {hasFilters ? (
-          <section className="surface-card rounded-[1.75rem] px-5 py-5">
+          <section className="surface-card rounded-[1.75rem] px-5 py-5 sm:px-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold tracking-tight">{messages.home.resultsTitle}</h2>
@@ -182,7 +182,7 @@ function HomeContent() {
                   {selectedCategoryLabel ? <Badge variant="secondary">{selectedCategoryLabel}</Badge> : null}
                 </div>
               </div>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="w-full min-[481px]:w-auto">
                 <Link href="/">{messages.home.clearFilters}</Link>
               </Button>
             </div>
@@ -190,28 +190,28 @@ function HomeContent() {
         ) : null}
 
         {isLoadingAds ? (
-          <section className="surface-card rounded-[1.75rem] px-6 py-12 text-center">
-            <h2 className="mb-3 text-3xl font-bold tracking-tight">{messages.home.loadingListings}</h2>
+          <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
+            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">{messages.home.loadingListings}</h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
               {messages.home.resultsDescription}
             </p>
           </section>
         ) : adsError ? (
-          <section className="surface-card rounded-[1.75rem] px-6 py-12 text-center">
-            <h2 className="mb-3 text-3xl font-bold tracking-tight">{messages.createAd.submitError}</h2>
+          <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
+            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">{messages.createAd.submitError}</h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">{adsError}</p>
           </section>
         ) : matchingAds.length === 0 ? (
-          <section className="surface-card rounded-[1.75rem] px-6 py-12 text-center">
-            <h2 className="mb-3 text-3xl font-bold tracking-tight">{messages.home.noResultsTitle}</h2>
+          <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
+            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">{messages.home.noResultsTitle}</h2>
             <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
               {messages.home.noResultsDescription}
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Button asChild>
+            <div className="flex flex-col justify-center gap-3 min-[481px]:flex-row min-[481px]:flex-wrap">
+              <Button asChild className="w-full min-[481px]:w-auto">
                 <Link href="/">{messages.home.clearFilters}</Link>
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="w-full min-[481px]:w-auto">
                 <Link href="/ads/create">{messages.home.startSelling}</Link>
               </Button>
             </div>
@@ -220,12 +220,12 @@ function HomeContent() {
           <>
             {featuredAds.length > 0 ? (
               <section id="featured-listings" className="surface-card rounded-[1.75rem] px-5 py-8 backdrop-blur-sm sm:px-6">
-                <div className="mb-8 flex items-center justify-between gap-4">
+                <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-6 w-6 fill-accent text-accent" />
                       <h2 className="text-2xl font-bold tracking-tight">{messages.home.featuredListings}</h2>
                     </div>
-                    <Button asChild variant="ghost" className="gap-1 font-semibold text-primary">
+                    <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
                       <Link href={hasFilters ? '/' : '#all-listings'}>
                         {hasFilters ? messages.home.clearFilters : messages.home.viewAll}
                         <ArrowRight className="h-4 w-4" />
@@ -250,9 +250,9 @@ function HomeContent() {
 
             {latestAds.length > 0 ? (
               <section id="all-listings" className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
-                <div className="mb-8 flex items-center justify-between gap-4">
+                <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
                     <h2 className="text-2xl font-bold tracking-tight">{messages.home.recentPostings}</h2>
-                    <Button asChild variant="ghost" className="gap-1 font-semibold text-primary">
+                    <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
                       <Link href={hasFilters ? '/' : '#browse-categories'}>
                         {hasFilters ? messages.home.clearFilters : messages.home.browseAllListings}
                         <ArrowRight className="h-4 w-4" />
@@ -277,8 +277,8 @@ function HomeContent() {
           </>
         )}
 
-        <section className="rounded-[2rem] bg-[linear-gradient(120deg,_#071c55_0%,_#0b48d6_58%,_#ff730a_140%)] px-5 py-12 text-white sm:px-6">
-          <div className="grid grid-cols-1 gap-8 text-center md:grid-cols-3">
+        <section className="rounded-[2rem] bg-[linear-gradient(120deg,_#071c55_0%,_#0b48d6_58%,_#ff730a_140%)] px-5 py-10 text-white sm:px-6 sm:py-12">
+          <div className="grid grid-cols-1 gap-8 text-center min-[481px]:grid-cols-2 md:grid-cols-3">
               <div>
                 <h3 className="mb-2 text-4xl font-bold">1M+</h3>
                 <p className="text-white/70">{messages.home.activeUsers}</p>
@@ -295,8 +295,8 @@ function HomeContent() {
         </section>
 
         <footer className="rounded-[2rem] border border-white/70 bg-[rgba(255,250,242,0.82)] px-5 py-10 backdrop-blur sm:px-6">
-          <div className="mb-8 grid grid-cols-2 gap-8 md:grid-cols-5">
-            <div className="col-span-2 md:col-span-1">
+          <div className="mb-8 grid grid-cols-1 gap-8 min-[481px]:grid-cols-2 lg:grid-cols-5">
+            <div className="min-[481px]:col-span-2 lg:col-span-1">
               <BrandLogo size="md" showTagline className="mb-4" />
               <p className="text-sm text-muted-foreground">{messages.home.footerDescription}</p>
             </div>
@@ -332,7 +332,7 @@ function HomeContent() {
                 ))}
               </ul>
             </div>
-            <div className="col-span-2 md:col-span-1">
+            <div className="min-[481px]:col-span-2 lg:col-span-1">
               <h4 className="mb-4 font-bold">{messages.home.footerContact}</h4>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 <li>

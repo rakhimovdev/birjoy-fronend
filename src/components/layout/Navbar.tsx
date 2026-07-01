@@ -33,7 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 function NavbarFallback() {
   return (
     <nav className="sticky top-0 z-40 w-full border-b border-white/60 bg-[rgba(255,250,242,0.82)] shadow-[0_12px_32px_rgba(7,28,85,0.05)] backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[92rem] items-center justify-between gap-3 px-4 py-3">
+      <div className="mx-auto flex max-w-[92rem] items-center justify-between gap-3 px-3 py-3 sm:px-4">
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 rounded-full border border-white/70 bg-white/80" />
           <BrandLogo size="sm" />
@@ -114,13 +114,13 @@ function NavbarContent() {
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
           placeholder={messages.navbar.searchPlaceholder}
-          className="h-12 rounded-2xl border-white/70 bg-white/86 pl-10 pr-16 shadow-sm focus-visible:ring-primary"
+          className="h-11 rounded-2xl border-white/70 bg-white/86 pl-10 pr-20 text-sm shadow-sm focus-visible:ring-primary sm:h-12 sm:text-base"
         />
         {searchQuery ? (
           <button
             type="button"
             onClick={handleClearSearch}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground transition-colors hover:text-primary"
+            className="absolute right-3 top-1/2 max-w-20 -translate-y-1/2 truncate text-xs font-semibold text-muted-foreground transition-colors hover:text-primary"
           >
             {messages.navbar.clearSearch}
           </button>
@@ -131,21 +131,21 @@ function NavbarContent() {
 
   return (
     <nav className="sticky top-0 z-40 w-full border-b border-white/60 bg-[rgba(255,250,242,0.82)] shadow-[0_12px_32px_rgba(7,28,85,0.05)] backdrop-blur-xl supports-[backdrop-filter]:bg-[rgba(255,250,242,0.76)]">
-      <div className="mx-auto flex max-w-[92rem] flex-col gap-3 px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
+      <div className="mx-auto flex max-w-[92rem] flex-col gap-3 px-3 py-3 sm:px-4">
+        <div className="flex items-center justify-between gap-2 min-[481px]:gap-3">
+          <div className="flex min-w-0 items-center gap-2 min-[481px]:gap-3">
             <MarketplaceDrawer />
-            <Link href="/" className="flex min-w-0 items-center">
+            <Link href="/" className="flex min-w-0 items-center overflow-hidden">
               <BrandLogo size="sm" />
             </Link>
           </div>
 
           {renderSearchForm('tablet-and-up-only w-full max-w-xl')}
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 min-[481px]:gap-2">
             <div className="tablet-and-up-only">
               <Select value={locale} onValueChange={handleLocaleChange}>
-                <SelectTrigger className="h-12 w-[142px] rounded-2xl border-white/70 bg-white/82 shadow-sm">
+                <SelectTrigger className="h-11 w-[120px] rounded-2xl border-white/70 bg-white/82 shadow-sm sm:h-12 lg:w-[142px]">
                   <SelectValue placeholder={messages.navbar.language} />
                 </SelectTrigger>
                 <SelectContent>
@@ -161,7 +161,7 @@ function NavbarContent() {
             <InstallAppButton compact className="shrink-0" />
 
             <Link href={postAdHref} className="tablet-and-up-only">
-              <Button className="h-12 gap-2 rounded-2xl px-5 font-semibold">
+              <Button className="h-11 gap-2 rounded-2xl px-4 font-semibold sm:h-12 sm:px-5">
                 <PlusCircle className="h-4 w-4" />
                 {messages.navbar.postAd}
               </Button>
@@ -225,17 +225,23 @@ function NavbarContent() {
                 <Link href="/sign-in">
                   <Button
                     variant="ghost"
-                    className="h-12 rounded-2xl px-4 font-semibold tablet-and-up-only"
+                    className="h-11 rounded-2xl px-4 font-semibold tablet-and-up-only sm:h-12"
                   >
                     {messages.navbar.signIn}
                   </Button>
                 </Link>
                 <Link href="/sign-up" className="tablet-and-up-only">
-                  <Button className="h-12 rounded-2xl px-4 font-semibold">{messages.navbar.signUp}</Button>
+                  <Button className="h-11 rounded-2xl px-4 font-semibold sm:h-12">{messages.navbar.signUp}</Button>
                 </Link>
                 <Link href="/sign-in" className="phone-nav-only">
-                  <Button variant="ghost" className="h-12 rounded-2xl px-4 font-semibold">
-                    {messages.navbar.signIn}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="touch-target rounded-full border border-white/70 bg-white/82 shadow-sm"
+                    aria-label={messages.navbar.signIn}
+                  >
+                    <User className="h-5 w-5" />
+                    <span className="sr-only">{messages.navbar.signIn}</span>
                   </Button>
                 </Link>
               </>

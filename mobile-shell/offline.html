@@ -72,6 +72,26 @@
         box-shadow: 0 14px 32px rgba(11, 72, 214, 0.22);
       }
 
+      button[disabled] {
+        opacity: 0.72;
+        cursor: wait;
+      }
+
+      .secondary {
+        margin-top: 12px;
+        background: #ffffff;
+        color: var(--brand-blue);
+        border: 1px solid rgba(11, 72, 214, 0.14);
+        box-shadow: none;
+      }
+
+      .status {
+        min-height: 22px;
+        margin: 0 0 16px;
+        font-size: 0.95rem;
+        color: rgba(32, 48, 95, 0.76);
+      }
+
       small {
         display: block;
         margin-top: 18px;
@@ -104,13 +124,111 @@
         />
         <circle cx="154" cy="34" r="13" fill="url(#birjoy-orange)" />
       </svg>
-      <h1>Internet yo‘q</h1>
-      <p>
-        BirJoy’ni yuklash uchun internet aloqasi kerak. Aloqa tiklangach, qayta urinib
-        ko‘rishingiz mumkin.
+      <h1 id="status-title">BirJoy hozircha ochilmadi</h1>
+      <p id="status-message">
+        Internet aloqasi yoki BirJoy serveri vaqtincha mavjud emas. Aloqa tiklangach, qayta
+        urinib ko‘rishingiz mumkin.
       </p>
-      <button type="button" onclick="window.location.reload()">Qayta urinish</button>
+      <p class="status" id="status-text" aria-live="polite"></p>
+      <button type="button" id="retry-button">Qayta urinish</button>
+      <button type="button" class="secondary" id="browser-button">Saytni brauzerda ochish</button>
       <small>BirJoy marketplace Android ilovasi</small>
     </main>
+    <script>
+      const LIVE_SITE_URL = "https://www.bir-joy.uz";
+      const retryButton = document.getElementById("retry-button");
+      const browserButton = document.getElementById("browser-button");
+      const statusTitle = document.getElementById("status-title");
+      const statusMessage = document.getElementById("status-message");
+      const statusText = document.getElementById("status-text");
+      let retryTimer = null;
+      let retryInFlight = false;
+
+      function setStatus(message) {
+        statusText.textContent = message;
+      }
+
+      function updateOfflineCopy() {
+        if (navigator.onLine) {
+          statusTitle.textContent = "BirJoy serveriga ulanib bo‘lmadi";
+          statusMessage.textContent =
+            "Internet aloqasi mavjud, lekin live sayt hozircha javob bermayapti. Birozdan keyin yana urinib ko‘ring.";
+          return;
+        }
+
+        statusTitle.textContent = "Internet yo‘q";
+        statusMessage.textContent =
+          "BirJoy’ni yuklash uchun internet aloqasi kerak. Aloqa tiklangach, qayta urinib ko‘rishingiz mumkin.";
+      }
+
+      async function retryLoad() {
+        if (retryInFlight) {
+          return;
+        }
+
+        retryInFlight = true;
+        retryButton.disabled = true;
+        setStatus("Aloqa tekshirilmoqda...");
+
+        try {
+          await fetch(LIVE_SITE_URL, {
+            method: "GET",
+            cache: "no-store",
+            mode: "no-cors",
+          });
+          setStatus("BirJoy qayta yuklanmoqda...");
+          window.location.assign(LIVE_SITE_URL);
+          return;
+        } catch (error) {
+          setStatus(
+            navigator.onLine
+              ? "Server hali ham javob bermayapti. Keyinroq yana urinib ko‘ring."
+              : "Hozircha internet topilmadi."
+          );
+        } finally {
+          retryInFlight = false;
+          retryButton.disabled = false;
+        }
+      }
+
+      function scheduleRetry() {
+        if (retryTimer) {
+          window.clearInterval(retryTimer);
+        }
+
+        retryTimer = window.setInterval(() => {
+          if (navigator.onLine) {
+            void retryLoad();
+          }
+        }, 15000);
+      }
+
+      retryButton.addEventListener("click", () => {
+        void retryLoad();
+      });
+
+      browserButton.addEventListener("click", () => {
+        window.location.assign(LIVE_SITE_URL);
+      });
+
+      window.addEventListener("online", () => {
+        updateOfflineCopy();
+        setStatus("Aloqa tiklandi. BirJoy qayta ochilmoqda...");
+        void retryLoad();
+      });
+
+      window.addEventListener("offline", () => {
+        updateOfflineCopy();
+        setStatus("Internet aloqasi uzildi.");
+      });
+
+      updateOfflineCopy();
+      setStatus(
+        navigator.onLine
+          ? "Live sayt bilan aloqa tiklangach, ilova avtomatik qayta urinadi."
+          : "Internet ulanganidan keyin ilova avtomatik qayta urinadi."
+      );
+      scheduleRetry();
+    </script>
   </body>
 </html>

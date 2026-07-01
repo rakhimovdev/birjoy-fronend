@@ -53,12 +53,6 @@ const googleClientId =
   process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 const nextConfig: NextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   experimental: {
     // The production crash points to a useEffectEvent runtime mismatch.
     // Keeping the React compiler off avoids compiler-generated hooks

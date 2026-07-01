@@ -23,9 +23,15 @@ public class BirJoyAuthPlugin extends Plugin {
     @PluginMethod
     public void signInWithGoogle(PluginCall call) {
         String serverClientId = call.getString("serverClientId", "").trim();
+        Activity activity = getActivity();
 
         if (serverClientId.isEmpty()) {
             call.reject("Google server client ID is required.");
+            return;
+        }
+
+        if (activity == null) {
+            call.reject("Google sign-in is not available because the Android activity is missing.");
             return;
         }
 
@@ -35,13 +41,10 @@ public class BirJoyAuthPlugin extends Plugin {
             .build();
         GoogleSignInClient signInClient = GoogleSignIn.getClient(getContext(), signInOptions);
 
-        signInClient.signOut().addOnCompleteListener(
-            getActivity(),
-            task -> {
-                Intent signInIntent = signInClient.getSignInIntent();
-                startActivityForResult(call, signInIntent, "handleGoogleSignInResult");
-            }
-        );
+        signInClient.signOut().addOnCompleteListener(task -> {
+            Intent signInIntent = signInClient.getSignInIntent();
+            startActivityForResult(call, signInIntent, "handleGoogleSignInResult");
+        });
     }
 
     @ActivityCallback
@@ -80,13 +83,40 @@ public class BirJoyAuthPlugin extends Plugin {
             resultObject.put("photoUrl", account.getPhotoUrl() != null ? account.getPhotoUrl().toString() : "");
             call.resolve(resultObject);
         } catch (ApiException exception) {
-            String message = CommonStatusCodes.getStatusCodeString(exception.getStatusCode());
-
-            if (message == null || message.trim().isEmpty()) {
-                message = "Unknown Google sign-in error.";
-            }
-
+            String message = getGoogleErrorMessage(exception);
             call.reject("Google sign-in failed: " + message, exception);
         }
+    }
+
+    private String getGoogleErrorMessage(ApiException exception) {
+        int statusCode = exception.getStatusCode();
+
+        if (statusCode == 7) {
+            return "Network error. Please check your connection and try again.";
+        }
+
+        if (statusCode == 10) {
+            return "Developer configuration error. Verify the Android OAuth client, package name, and SHA-1/SHA-256 fingerprints.";
+        }
+
+        if (statusCode == 16) {
+            return "Google sign-in is unavailable on this device.";
+        }
+
+        if (statusCode == 12500) {
+            return "Google sign-in could not be completed on this device.";
+        }
+
+        if (statusCode == 12501 || statusCode == 13) {
+            return "Google sign-in was cancelled.";
+        }
+
+        String fallbackMessage = CommonStatusCodes.getStatusCodeString(statusCode);
+
+        if (fallbackMessage == null || fallbackMessage.trim().isEmpty()) {
+            return "Unknown Google sign-in error.";
+        }
+
+        return fallbackMessage;
     }
 }

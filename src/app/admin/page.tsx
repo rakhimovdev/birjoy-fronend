@@ -38,6 +38,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import {
   deleteAdminAd,
+  fallbackAdminProfile,
   fetchAdminOrders,
   getStoredAdminProfile,
   getStoredAdminToken,
@@ -326,14 +327,9 @@ export default function AdminPage() {
   const [deletingAdId, setDeletingAdId] = useState('');
   const [updatingOrderId, setUpdatingOrderId] = useState('');
   const [formData, setFormData] = useState({
-    login: 'birjoy-admin',
+    login: '',
     password: '',
   });
-  const fallbackAdminProfile: AdminProfile = {
-    login: 'birjoy-admin',
-    name: 'BirJoy Admin',
-    role: 'admin',
-  };
 
   const loadDashboard = async (currentAdmin?: AdminProfile | null) => {
     setIsRefreshing(true);
@@ -468,8 +464,8 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <main className="container mx-auto px-4 py-8">
-        <section className="mb-8 overflow-hidden rounded-[2rem] border border-white/60 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_48%,_#ff8d2a_120%)] p-8 text-white shadow-[0_28px_70px_rgba(7,28,85,0.16)]">
+      <main className="container mx-auto px-4 py-6 sm:py-8">
+        <section className="mb-8 overflow-hidden rounded-[2rem] border border-white/60 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_48%,_#ff8d2a_120%)] p-5 text-white shadow-[0_28px_70px_rgba(7,28,85,0.16)] sm:p-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-2xl">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold backdrop-blur">
@@ -505,7 +501,7 @@ export default function AdminPage() {
               <div className="flex flex-wrap gap-3">
                 <Button
                   variant="outline"
-                  className="gap-2"
+                  className="w-full gap-2 min-[481px]:w-auto"
                   onClick={() => void loadDashboard(admin)}
                   disabled={isRefreshing}
                 >
@@ -516,14 +512,14 @@ export default function AdminPage() {
                   )}
                   {copy.refresh}
                 </Button>
-                <Button variant="outline" className="gap-2" onClick={handleSignOut}>
+                <Button variant="outline" className="w-full gap-2 min-[481px]:w-auto" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4" />
                   {copy.signOut}
                 </Button>
               </div>
             </div>
 
-            <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <section className="grid grid-cols-1 gap-4 min-[481px]:grid-cols-2 xl:grid-cols-4">
               <Card className="border-none shadow-sm">
                 <CardHeader className="pb-3">
                   <CardDescription>{copy.totalOrders}</CardDescription>
@@ -607,7 +603,7 @@ export default function AdminPage() {
                                 }
                                 disabled={updatingOrderId === order.id}
                               >
-                                <SelectTrigger className="h-10 w-[170px]">
+                                <SelectTrigger className="h-10 w-full min-[481px]:w-[170px]">
                                   <SelectValue placeholder={copy.statusPlaceholder} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -693,7 +689,7 @@ export default function AdminPage() {
                               {formatDate(ad.createdAt, locale)}
                             </TableCell>
                             <TableCell className="min-w-[190px] text-right">
-                              <div className="flex justify-end gap-2">
+                              <div className="flex flex-wrap justify-end gap-2">
                                 <Button asChild variant="outline" size="sm" className="gap-2">
                                   <Link href={`/ads/${ad.id}`} target="_blank" rel="noreferrer">
                                     <ExternalLink className="h-4 w-4" />

@@ -1,80 +1,154 @@
 # BirJoy Android Release Guide
 
-Last updated: June 22, 2026
+Last updated: June 26, 2026
 
 ## Overview
 
-This project now includes a Capacitor Android wrapper for BirJoy with:
+BirJoy now includes a hardened Capacitor Android wrapper for the app package `uz.birjoy.app`.
 
-- Android app ID: `uz.birjoy.app`
 - App name: `BirJoy`
-- Native splash screen and Android launcher icons generated from the BirJoy logo
-- Android 10+ support (`minSdkVersion = 29`)
-- Offline fallback page for initial load failures
-- Native camera/gallery support for listing images
-- Native Google sign-in bridge for Android WebView reliability
-- App Links and custom deep link handling
-- Signing config templates for release builds
+- Supported Android versions: Android 10 and newer (`minSdkVersion = 29`)
+- Launch mode: opens the live website `https://www.bir-joy.uz` inside the native shell
+- Native additions: splash screen, launcher icons, offline fallback page, App Links, external browser handling, native Google sign-in bridge, native camera/gallery integration
+- Repo-side verification completed on June 26, 2026:
+  - `npm run build`
+  - `npx tsc --noEmit`
+  - `npx cap sync android`
+  - `npm run check` in `backend`
 
-## Important architectural note
+## Production architecture note
 
-BirJoy currently uses `server.url` to load the live website inside Capacitor. Capacitor's official config docs state that `server.url` and `server.allowNavigation` are intended for live reload and are **not intended for production**. This setup satisfies the current requirement to open the live website inside the app, but it remains a long-term review and reliability risk compared with bundling first-party web assets locally.
+BirJoy still uses Capacitor `server.url` because the current product requirement is to load the live BirJoy website inside the Android app. This remains a Play review and reliability risk because the official Capacitor guidance does not treat `server.url` as the preferred long-term production architecture.
 
-## Files added or changed
+What has been done to reduce that risk inside the repo:
 
-- `capacitor.config.ts`
-- `android/`
-- `mobile-shell/offline.html`
-- `public/.well-known/assetlinks.json`
-- `src/components/providers/NativeAppBridge.tsx`
-- `src/components/auth/GoogleAuthSection.tsx`
-- `src/app/ads/create/page.tsx`
-- `src/app/privacy-policy/page.tsx`
-- `src/app/account-deletion/page.tsx`
-- Backend account deletion endpoint: `DELETE /api/auth/me`
+- `frontend/mobile-shell/offline.html` now provides a native fallback when the network or live site is unavailable
+- `frontend/src/components/providers/NativeAppBridge.tsx` handles deep links and external browser redirects
+- `frontend/src/components/auth/GoogleAuthSection.tsx` uses native Google sign-in on Android instead of relying on WebView popup behavior
+- `frontend/capacitor.config.ts` now supports `CAPACITOR_LOAD_REMOTE_SITE=false` for a future migration to bundled first-party web assets
 
-## Google authentication setup
+Current release recommendation:
 
-### Required Google Cloud Console items
+- Keep `CAPACITOR_LOAD_REMOTE_SITE=true` while the live-site requirement remains
+- Plan a later migration away from `server.url` when the web app can be bundled locally
 
-1. Keep your existing **Web application OAuth client**.
-2. Create an **Android OAuth client** with:
-   - Package name: `uz.birjoy.app`
-   - SHA-1 certificate fingerprint from the signing key used by the Android build
-3. Keep `GOOGLE_CLIENT_ID` / `NEXT_PUBLIC_GOOGLE_CLIENT_ID` pointed at the **Web client ID**.
-4. Add both client IDs to `GOOGLE_CLIENT_IDS` on the backend if they differ.
+## Environment files
 
-### Why this matters
+The repo now includes:
 
-The Android wrapper uses a native Google sign-in plugin to obtain an ID token, then sends that token to the existing backend `/api/auth/google` endpoint. This avoids relying on the Google web popup inside Android WebView.
+- `backend/.env.example`
+- `frontend/.env.example`
 
-## Deep links and app links
+Important backend variables:
 
-### Configured
+- `MONGODB_URI`
+- `JWT_SECRET`
+- `ADMIN_LOGIN`
+- `ADMIN_PASSWORD`
+- `ADMIN_NAME`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_IDS`
+
+Important frontend variables:
+
+- `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_BACKEND_URL`
+- `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
+- `CAPACITOR_LOAD_REMOTE_SITE`
+- `CAPACITOR_LIVE_SITE_URL`
+
+## Android permissions and capabilities
+
+Current Android manifest intent is to stay minimal.
+
+- Declared permission: `android.permission.INTERNET`
+- Camera hardware is marked optional with `android.hardware.camera.any`
+- No location permission is declared
+- No storage/media permission is declared
+- File uploads and image selection rely on the Android system picker and Capacitor camera APIs only when the user chooses to add photos
+
+## Google authentication
+
+### Repo behavior
+
+- Web browsers keep using the existing Google web flow
+- Android native uses `BirJoyAuthPlugin` to get a Google ID token and then sends that token to the existing backend `/api/auth/google` endpoint
+- Google sign-in cancellations no longer show hard failure messages
+- Backend config is checked before showing the Google action
+
+### Manual Google Cloud Console steps
+
+1. Keep the existing **Web application OAuth client**
+2. Create an **Android OAuth client**
+3. Use package name: `uz.birjoy.app`
+4. Add the release signing certificate fingerprint for the Android client
+5. Keep `GOOGLE_CLIENT_ID` and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` set to the **Web client ID**
+6. Add every allowed client ID to `GOOGLE_CLIENT_IDS` in the backend if the Android and web client IDs differ
+
+## Deep links and App Links
+
+Configured in the app:
 
 - `https://www.bir-joy.uz/*`
 - `https://bir-joy.uz/*`
 - `birjoy://app/*`
 
-### Production note
+Public asset links file:
 
-`public/.well-known/assetlinks.json` currently uses the generated **upload key** fingerprint:
+- Path: `frontend/public/.well-known/assetlinks.json`
+- Public URL after deployment: `https://www.bir-joy.uz/.well-known/assetlinks.json`
 
-- `30:2A:10:D6:51:E3:F7:83:70:B9:C5:EF:58:9F:36:D8:7E:59:44:E9:B1:FB:BA:83:1F:DD:4E:8B:3B:7D:48:A4`
+The repo intentionally uses a placeholder value:
 
-If Google Play App Signing re-signs the release with a different **app signing certificate**, replace this fingerprint before rolling out production App Links.
+- `REPLACE_WITH_RELEASE_SHA256_FINGERPRINT`
+
+Replace it after your real signing key exists.
+
+### Exact command to get the SHA-256 fingerprint
+
+```bash
+keytool -list -v \
+  -keystore /absolute/path/outside/repo/birjoy-upload-keystore.jks \
+  -alias birjoy-upload | grep 'SHA256:'
+```
+
+### If Google Play App Signing changes the certificate
+
+If Play Console shows a different **app signing certificate** than your upload key, update `assetlinks.json` again with the Play app signing SHA-256 fingerprint before rolling out verified App Links.
+
+## Privacy policy and account deletion
+
+Public pages included in the frontend:
+
+- Privacy Policy: `https://www.bir-joy.uz/privacy-policy`
+- Account deletion instructions: `https://www.bir-joy.uz/account-deletion`
+
+In-app deletion support:
+
+- Backend endpoint: `DELETE /api/auth/me`
+- Protected by auth middleware
+- Deletes the current user
+- Deletes ads owned by that user
+- Deletes orders for those ads
+- Deletes orders linked by `customerUserId`
+- Removes deleted ad IDs from other users’ favorites
+
+Before release:
+
+- Replace or confirm the privacy support contact details on the public pages
+- Make sure support channels are actively monitored
 
 ## Play listing content
 
-### App category recommendation
+### Suggested category
 
-- Primary category: `Shopping`
+- `Shopping`
 
 ### Content rating guidance
 
-- Complete the IARC questionnaire honestly.
-- Because BirJoy includes user-generated listings, buyer/seller contact details, and marketplace interactions, a result around `Teen` is more realistic than assuming `Everyone`.
-- Do not mark the app for children.
+- Complete the IARC questionnaire honestly
+- Because BirJoy contains user-generated listings, seller contact details, and buyer interactions, expect a result closer to `Teen` than `Everyone`
+- Do not mark the app as designed for children
 
 ### Short description
 
@@ -86,85 +160,83 @@ BirJoy is a multilingual classifieds marketplace built for Uzbekistan. Discover 
 
 With BirJoy, you can:
 
-- Browse marketplace listings by category
+- Browse listings by category
 - Publish ads with photos, price, condition, and location
-- Sign in securely with email, password, or Google
-- Save favorite listings for later
-- Receive order requests tied to your listings
+- Sign in with email, password, or Google
+- Save favorite listings
+- Receive order requests connected to your listings
 - Manage your account directly from the app
 
-The Android app is designed for fast marketplace access, reliable Google authentication, native photo upload support, and smoother mobile performance on Android 10 and newer devices.
-
-### Privacy Policy URL
-
-- Recommended public URL: `https://www.bir-joy.uz/privacy-policy`
-
-### Account deletion URL
-
-- Recommended public URL: `https://www.bir-joy.uz/account-deletion`
+The Android app adds native Google sign-in support, offline recovery, deep link handling, and native image selection for a smoother experience on Android 10 and newer devices.
 
 ### Feature graphic recommendations
 
-- Use the official BirJoy wordmark and app icon mark together.
-- Keep the background bright and commerce-oriented using the existing BirJoy blue and orange gradients.
-- Show one clear message only, such as: `Buy and sell across Uzbekistan`.
-- Prepare a clean `1024 x 500` PNG for Play Store feature graphics and verify the latest asset rules inside Play Console before submission.
+- Prepare a `1024 x 500` PNG
+- Use the BirJoy wordmark and app mark together
+- Keep the composition bright and commerce-focused
+- Use one simple message such as `Buy and sell across Uzbekistan`
 
-## Privacy policy checklist
+## Signing and release bundle
 
-- Publish `https://www.bir-joy.uz/privacy-policy`
-- Add the same URL in Play Console
-- Ensure the policy matches real data collection and support channels before launch
-- Replace template contact references if your monitored privacy contact differs
+### Keep secrets outside the repo
 
-## Release signing
+- Do not commit the real keystore
+- Do not commit passwords
+- Do not keep production signing files in Git
+- `frontend/android/keystore.properties.example` now points to an absolute path outside the repo on purpose
 
-### Files
+### Example local signing file
 
-- Upload keystore: `keystore/birjoy-upload-keystore.jks`
-- Gradle properties: `android/keystore.properties`
-- Template: `android/keystore.properties.example`
+Create `frontend/android/keystore.properties` locally and keep it untracked:
 
-### Generated upload key certificate
+```properties
+storeFile=/absolute/path/outside/repo/birjoy-upload-keystore.jks
+storePassword=CHANGE_ME
+keyAlias=birjoy-upload
+keyPassword=CHANGE_ME
+```
 
-- SHA-1: `AD:24:82:E0:C1:EF:99:B9:5F:19:AB:A2:B6:53:9E:CE:3E:87:67:00`
-- SHA-256: `30:2A:10:D6:51:E3:F7:83:70:B9:C5:EF:58:9F:36:D8:7E:59:44:E9:B1:FB:BA:83:1F:DD:4E:8B:3B:7D:48:A4`
+### Create a release keystore if you do not already have one
 
-## Build steps
+```bash
+keytool -genkeypair -v \
+  -keystore /absolute/path/outside/repo/birjoy-upload-keystore.jks \
+  -alias birjoy-upload \
+  -keyalg RSA \
+  -keysize 4096 \
+  -validity 9125
+```
 
-1. Deploy the latest frontend to `https://www.bir-joy.uz`.
-2. Deploy the backend changes so `/api/auth/me` account deletion works in production.
-3. In Google Cloud Console:
-   - Create or verify the Android OAuth client
-   - Add the correct SHA-1 for the signing certificate
-4. In Play Console:
-   - Create the app
-   - Enroll in Play App Signing
-   - Compare the Play **app signing** certificate with `public/.well-known/assetlinks.json`
-   - Update `assetlinks.json` if Play uses a different certificate
-5. Sync Capacitor:
-   - `npx cap sync android`
-6. Open Android Studio on `frontend/android`.
-7. Confirm `google-services.json` is not required unless you later add Firebase-native features.
-8. Build the release bundle:
-   - `./gradlew bundleRelease`
-9. Output location:
-   - `android/app/build/outputs/bundle/release/app-release.aab`
+### Exact commands to build a signed `.aab`
 
-## Verification checklist
+```bash
+cd "/home/muhammadali/Desktop/new project/frontend"
+npx cap sync android
+cd android
+./gradlew clean bundleRelease
+```
 
-- App launches the live site
-- Offline launch shows the native fallback page
-- Native Google sign-in works on a real Android device
-- Gallery and camera listing uploads work on Android 10, 13, and a recent Pixel/Samsung device
-- App links open the app from `bir-joy.uz` URLs
-- Telegram and Instagram links open outside the app
-- Account deletion works from profile
-- Privacy policy and account deletion URLs are reachable without login
+Expected output:
+
+- `frontend/android/app/build/outputs/bundle/release/app-release.aab`
+
+## Remaining manual steps
+
+1. Put the real environment values into `backend/.env` and `frontend/.env`
+2. Move any real keystore out of the repository tree if it is currently inside the project
+3. Generate or locate the real upload keystore
+4. Fill local `frontend/android/keystore.properties`
+5. Replace the placeholder SHA-256 in `frontend/public/.well-known/assetlinks.json`
+6. Deploy the frontend so the new `assetlinks.json`, privacy policy, and account deletion page are public
+7. Deploy the backend so the hardened auth/account-deletion flow is live
+8. Create the Android OAuth client in Google Cloud Console
+9. Verify App Links against the Play app signing certificate if Play re-signs the app
+10. Build the signed `.aab` on a machine with Android SDK and Gradle access
+11. Test Google sign-in, photo upload, deep links, and offline recovery on real Android hardware
 
 ## Known residual risks
 
-1. `server.url` is still a production risk because Capacitor does not recommend this pattern for production apps.
-2. `next.config.ts` currently ignores TypeScript and ESLint errors during web builds, which increases regression risk.
-3. The app depends on the public website uptime and mobile-web compatibility for every production session.
-4. `assetlinks.json` must be updated if Play App Signing uses a different certificate than the upload key.
+1. `server.url` remains a production architecture risk until BirJoy stops depending on the live site for every session
+2. App stability still depends on the uptime and mobile compatibility of `https://www.bir-joy.uz`
+3. Auth tokens are still stored in browser local storage, which is common for web apps but weaker than a more hardened mobile-native session model
+4. `assetlinks.json` will not verify until the placeholder SHA-256 is replaced with the real certificate fingerprint

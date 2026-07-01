@@ -16,13 +16,13 @@ export default function AccountDeletionPage() {
       <Navbar />
 
       <main className="container mx-auto max-w-4xl px-4 py-10 md:py-14">
-        <section className="overflow-hidden rounded-[2rem] border border-[#dbe4ff] bg-white p-8 shadow-[0_18px_50px_rgba(7,28,85,0.08)] md:p-10">
+        <section className="overflow-hidden rounded-[2rem] border border-[#dbe4ff] bg-white p-5 shadow-[0_18px_50px_rgba(7,28,85,0.08)] sm:p-8 md:p-10">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#dbe4ff] bg-[#f8fbff] px-4 py-1.5 text-sm font-semibold text-[#071c55]">
             <Trash2 className="h-4 w-4" />
             BirJoy account deletion
           </div>
 
-          <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-[#071c55] md:text-5xl">
+          <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-[#071c55] min-[481px]:text-4xl md:text-5xl">
             Delete your BirJoy account and associated marketplace data
           </h1>
           <p className="mt-4 max-w-3xl text-base leading-8 text-[#20305f] md:text-lg">
@@ -58,11 +58,11 @@ export default function AccountDeletionPage() {
             </article>
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Button asChild>
+          <div className="mt-8 flex flex-col gap-3 min-[481px]:flex-row min-[481px]:flex-wrap">
+            <Button asChild className="w-full min-[481px]:w-auto">
               <Link href="/profile">Open profile</Link>
             </Button>
-            <Button asChild variant="outline" className="gap-2">
+            <Button asChild variant="outline" className="w-full gap-2 min-[481px]:w-auto">
               <Link href="/">
                 <ArrowLeft className="h-4 w-4" />
                 Back to BirJoy

@@ -6,6 +6,11 @@ import type { AdminProfile, OrderRequest, OrderRequestStatus } from '@/lib/types
 export const adminTokenStorageKey = 'birjoy-admin-token';
 export const adminProfileStorageKey = 'birjoy-admin-profile';
 export const adminSyncEventName = 'birjoy-admin-sync';
+export const fallbackAdminProfile: AdminProfile = {
+  login: 'admin',
+  name: 'Administrator',
+  role: 'admin',
+};
 
 type RemoteAdmin = Partial<AdminProfile>;
 type RemoteOrder = Partial<OrderRequest>;
@@ -37,8 +42,8 @@ function notifyAdminSync() {
 
 function normalizeAdmin(admin: RemoteAdmin | undefined): AdminProfile {
   return {
-    login: admin?.login || 'birjoy-admin',
-    name: admin?.name || 'BirJoy Admin',
+    login: admin?.login?.trim() || fallbackAdminProfile.login,
+    name: admin?.name?.trim() || fallbackAdminProfile.name,
     role: 'admin',
   };
 }

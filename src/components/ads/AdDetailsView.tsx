@@ -297,14 +297,14 @@ export function AdDetailsView({ adId }: { adId: string }) {
   return (
     <MarketplaceShell>
       <main className="marketplace-main">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-2 flex flex-col items-start justify-between gap-3 min-[481px]:mb-4 min-[481px]:flex-row min-[481px]:items-center">
           <Button asChild variant="ghost" className="px-0 text-primary hover:bg-transparent">
             <Link href="/">{messages.adDetails.backToListings}</Link>
           </Button>
           {isAdmin ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="gap-2" disabled={isDeleting}>
+                <Button variant="destructive" className="w-full gap-2 min-[481px]:w-auto" disabled={isDeleting}>
                   {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                   {deleteCopy.action}
                 </Button>
@@ -331,7 +331,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
 
         <div className="detail-grid">
           <div className="space-y-6">
-            <div className="surface-card relative aspect-[16/10] overflow-hidden rounded-[1.9rem]">
+            <div className="surface-card relative aspect-[4/3] overflow-hidden rounded-[1.75rem] sm:aspect-[16/10] sm:rounded-[1.9rem]">
               <Image
                 src={selectedImage}
                 alt={localizedTitle}
@@ -348,7 +348,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
               ) : null}
             </div>
             {ad.images.length > 1 ? (
-              <div className="grid grid-cols-4 gap-3 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5">
+              <div className="grid grid-cols-3 gap-3 min-[481px]:grid-cols-4 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5">
                 {ad.images.map((image, index) => (
                   <button
                     key={`${image.slice(0, 32)}-${index}`}
@@ -371,18 +371,18 @@ export function AdDetailsView({ adId }: { adId: string }) {
               </div>
             ) : null}
 
-            <div className="surface-card rounded-[1.9rem] p-5 sm:p-6">
-              <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="surface-card rounded-[1.75rem] p-5 sm:rounded-[1.9rem] sm:p-6">
+              <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                   <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-primary">
                     {localizedCategory}
                   </p>
                   <h1 className="page-title font-bold">{localizedTitle}</h1>
                 </div>
-                <div className="text-2xl font-bold text-primary sm:text-3xl">{formattedPrice}</div>
+                <div className="text-xl font-bold text-primary min-[481px]:text-2xl sm:text-3xl">{formattedPrice}</div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 border-y py-5 text-sm text-muted-foreground md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 border-y py-5 text-sm text-muted-foreground min-[481px]:grid-cols-2 xl:grid-cols-4">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-primary" />
                   <div>
@@ -421,7 +421,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
           </div>
 
           <div className="space-y-6">
-            <Card className="surface-card border-none shadow-none lg:sticky lg:top-24">
+            <Card className="surface-card border-none shadow-none min-[900px]:sticky min-[900px]:top-24">
               <CardHeader>
                 <CardTitle>{messages.adDetails.overview}</CardTitle>
               </CardHeader>
@@ -567,9 +567,9 @@ export function AdDetailsView({ adId }: { adId: string }) {
 
         {relatedAds.length > 0 ? (
           <section className="mt-12">
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex flex-col items-start justify-between gap-3 min-[481px]:flex-row min-[481px]:items-center">
               <h2 className="text-2xl font-bold tracking-tight">{messages.adDetails.relatedListings}</h2>
-              <Button asChild variant="ghost" className="text-primary">
+              <Button asChild variant="ghost" className="px-0 text-primary hover:bg-transparent">
                 <Link href="/">{messages.adDetails.browseMore}</Link>
               </Button>
             </div>

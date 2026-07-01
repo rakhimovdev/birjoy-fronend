@@ -21,6 +21,8 @@ type PublicConfigResponse = {
   googleClientId?: string;
 };
 
+type GoogleConfigState = 'idle' | 'loading' | 'ready' | 'disabled' | 'error';
+
 type GoogleIdConfiguration = {
   callback: (response: GoogleCredentialResponse) => void;
   cancel_on_tap_outside?: boolean;
@@ -57,6 +59,16 @@ type GoogleAuthSectionProps = {
   redirectTo: string;
 };
 
+function isGoogleFlowCancellation(message: string) {
+  const normalizedMessage = message.trim().toLowerCase();
+
+  return (
+    normalizedMessage.includes('cancelled') ||
+    normalizedMessage.includes('canceled') ||
+    normalizedMessage.includes('dismissed')
+  );
+}
+
 export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
   const embeddedGoogleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() || '';
   const { signInWithGoogle } = useAuth();
@@ -65,22 +77,17 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
   const router = useRouter();
   const buttonRef = useRef<HTMLDivElement | null>(null);
   const [googleClientId, setGoogleClientId] = useState(embeddedGoogleClientId);
-  const [configState, setConfigState] = useState<'idle' | 'loading' | 'ready' | 'error'>(
-    embeddedGoogleClientId ? 'ready' : 'idle'
+  const [configState, setConfigState] = useState<GoogleConfigState>(
+    backendApiBaseUrl ? 'loading' : embeddedGoogleClientId ? 'ready' : 'error'
   );
   const [scriptState, setScriptState] = useState<'idle' | 'ready' | 'error'>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const nativeGoogleAuth = isNativeAndroidApp();
 
   useEffect(() => {
-    if (embeddedGoogleClientId) {
-      setGoogleClientId(embeddedGoogleClientId);
-      setConfigState('ready');
-      return;
-    }
-
     if (!backendApiBaseUrl) {
-      setConfigState('error');
+      setGoogleClientId(embeddedGoogleClientId);
+      setConfigState(embeddedGoogleClientId ? 'ready' : 'error');
       return;
     }
 
@@ -99,21 +106,29 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
         const data = (await response.json().catch(() => ({}))) as PublicConfigResponse;
         const runtimeGoogleClientId =
           typeof data.googleClientId === 'string' ? data.googleClientId.trim() : '';
+        const resolvedGoogleClientId = runtimeGoogleClientId || embeddedGoogleClientId;
+        const googleAuthEnabled = data.googleAuthEnabled !== false;
 
         if (!isActive) {
           return;
         }
 
-        setGoogleClientId(runtimeGoogleClientId);
-        setConfigState(runtimeGoogleClientId ? 'ready' : 'error');
+        setGoogleClientId(resolvedGoogleClientId);
+        setConfigState(
+          googleAuthEnabled && resolvedGoogleClientId
+            ? 'ready'
+            : googleAuthEnabled
+              ? 'error'
+              : 'disabled'
+        );
       })
       .catch(() => {
         if (!isActive) {
           return;
         }
 
-        setGoogleClientId('');
-        setConfigState('error');
+        setGoogleClientId(embeddedGoogleClientId);
+        setConfigState(embeddedGoogleClientId ? 'ready' : 'error');
       });
 
     return () => {
@@ -141,11 +156,6 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
       callback: (response) => {
         void (async () => {
           if (!response.credential) {
-            toast({
-              title: messages.auth.requestFailedTitle,
-              description: messages.auth.requestFailedDescription,
-              variant: 'destructive',
-            });
             return;
           }
 
@@ -187,6 +197,10 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
       logo_alignment: 'left',
       width: buttonWidth,
     });
+
+    return () => {
+      container.innerHTML = '';
+    };
   }, [googleClientId, messages, nativeGoogleAuth, redirectTo, router, scriptState, signInWithGoogle, toast]);
 
   const handleNativeGoogleSignIn = async () => {
@@ -234,6 +248,10 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
 
       router.replace(redirectTo);
     } catch (error) {
+      if (error instanceof Error && isGoogleFlowCancellation(error.message)) {
+        return;
+      }
+
       toast({
         title: messages.auth.requestFailedTitle,
         description:
@@ -245,7 +263,10 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
     }
   };
 
-  const isGoogleUnavailable = configState === 'error' || (!nativeGoogleAuth && scriptState === 'error');
+  const isGoogleUnavailable =
+    configState === 'disabled' ||
+    configState === 'error' ||
+    (!nativeGoogleAuth && scriptState === 'error');
   const isLoadingGoogle = configState !== 'ready' || (!nativeGoogleAuth && scriptState !== 'ready');
 
   return (

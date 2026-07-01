@@ -380,7 +380,7 @@ function CreateAdPageContent() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-4 min-[481px]:grid-cols-2 xl:grid-cols-3">
                       <div className="space-y-2">
                         <Label htmlFor="category">{messages.createAd.category}</Label>
                         <Select
@@ -439,7 +439,7 @@ function CreateAdPageContent() {
                 </Card>
 
                 <Card className="surface-card rounded-[1.75rem] border-none shadow-none">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                  <CardHeader className="flex flex-col items-start justify-between gap-3 space-y-0 min-[640px]:flex-row min-[640px]:items-center">
                     <div className="space-y-1">
                       <CardTitle>{messages.createAd.descriptionTitle}</CardTitle>
                       <CardDescription>{messages.createAd.descriptionHelp}</CardDescription>
@@ -476,7 +476,7 @@ function CreateAdPageContent() {
                   <CardContent className="space-y-4">
                     <Textarea
                       placeholder={messages.createAd.descriptionPlaceholder}
-                      className="min-h-[200px]"
+                      className="min-h-[180px] sm:min-h-[200px]"
                       value={formData.description}
                       onChange={(event) =>
                         setFormData((previous) => ({ ...previous, description: event.target.value }))
@@ -502,7 +502,7 @@ function CreateAdPageContent() {
                   <CardHeader>
                     <CardTitle>{messages.createAd.location}</CardTitle>
                   </CardHeader>
-                  <CardContent className="grid gap-4 sm:grid-cols-2">
+                  <CardContent className="grid gap-4 min-[481px]:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="location">{messages.createAd.location}</Label>
                       <Input
@@ -538,7 +538,7 @@ function CreateAdPageContent() {
                     <CardDescription>{messages.createAd.mediaDescription}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-3 min-[481px]:grid-cols-3 min-[900px]:grid-cols-2 xl:grid-cols-3">
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -551,7 +551,7 @@ function CreateAdPageContent() {
                         <>
                           <button
                             type="button"
-                            className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed text-muted-foreground transition-colors hover:bg-muted/50"
+                            className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3 text-center text-muted-foreground transition-colors hover:bg-muted/50"
                             onClick={() => void handleNativeGalleryUpload()}
                           >
                             <ImagePlus className="h-6 w-6" />
@@ -559,7 +559,7 @@ function CreateAdPageContent() {
                           </button>
                           <button
                             type="button"
-                            className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed text-muted-foreground transition-colors hover:bg-muted/50"
+                            className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3 text-center text-muted-foreground transition-colors hover:bg-muted/50"
                             onClick={() => void handleNativeCameraUpload()}
                           >
                             <ShieldCheck className="h-6 w-6" />
@@ -569,7 +569,7 @@ function CreateAdPageContent() {
                       ) : (
                         <button
                           type="button"
-                          className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed text-muted-foreground transition-colors hover:bg-muted/50"
+                          className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3 text-center text-muted-foreground transition-colors hover:bg-muted/50"
                           onClick={() => fileInputRef.current?.click()}
                         >
                           <ImagePlus className="h-6 w-6" />
@@ -603,7 +603,7 @@ function CreateAdPageContent() {
                   </CardContent>
                 </Card>
 
-                <div className="surface-card rounded-[1.75rem] p-4 lg:sticky lg:top-24">
+                <div className="surface-card rounded-[1.75rem] p-4 min-[900px]:sticky min-[900px]:top-24">
                   <Button type="submit" className="h-12 w-full gap-2 rounded-2xl text-lg font-bold" disabled={loading}>
                     {loading ? (
                       <Loader2 className="h-5 w-5 animate-spin" />

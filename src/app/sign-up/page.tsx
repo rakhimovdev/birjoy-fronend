@@ -136,7 +136,7 @@ function SignUpPageContent() {
               required
             />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 min-[481px]:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="email">{messages.auth.emailLabel}</Label>
               <Input
@@ -183,7 +183,7 @@ function SignUpPageContent() {
               }
             />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 min-[481px]:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="password">{messages.auth.passwordLabel}</Label>
               <Input

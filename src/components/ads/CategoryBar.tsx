@@ -29,48 +29,45 @@ export function CategoryBar() {
   };
 
   return (
-    <>
-      <div id="browse-categories" className="h-[6.4rem] md:h-[5.8rem]" aria-hidden="true" />
+    <section
+      id="browse-categories"
+      className="sticky top-[var(--sticky-top)] z-30 scroll-mt-[var(--category-scroll-offset)]"
+    >
+      <div className="surface-card rounded-[1.35rem] px-3 py-3 sm:rounded-[1.5rem] sm:px-4">
+        <div className="category-bar-grid">
+          <button
+            type="button"
+            onClick={() => updateCategory('all')}
+            className="category-pill"
+            data-active={activeCategory === 'all'}
+          >
+            <span className="category-pill__icon">
+              <LayoutGrid className="h-5 w-5" />
+            </span>
+            <span className="category-pill__label">{messages.categoryBar.all}</span>
+          </button>
 
-      <section className="fixed inset-x-0 top-[7.5rem] z-30 md:top-[5.5rem]">
-        <div className="mx-auto w-full max-w-[95rem] px-4">
-          <div className="surface-card rounded-[1.5rem] px-3 py-3 sm:px-4">
-            <div className="category-bar-grid">
+          {CATEGORIES.map((category) => {
+            const Icon = (Icons as unknown as Record<string, LucideIcon>)[category.icon];
+            const isActive = activeCategory === category.slug;
+
+            return (
               <button
+                key={category.id}
                 type="button"
-                onClick={() => updateCategory('all')}
-                className="category-pill"
-                data-active={activeCategory === 'all'}
+                onClick={() => updateCategory(category.slug)}
+                className={cn('category-pill', isActive && 'text-primary')}
+                data-active={isActive}
               >
                 <span className="category-pill__icon">
-                  <LayoutGrid className="h-5 w-5" />
+                  {Icon ? <Icon className="h-5 w-5" /> : null}
                 </span>
-                <span className="category-pill__label">{messages.categoryBar.all}</span>
+                <span className="category-pill__label">{getLocalizedText(category.name, locale)}</span>
               </button>
-
-              {CATEGORIES.map((category) => {
-                const Icon = (Icons as unknown as Record<string, LucideIcon>)[category.icon];
-                const isActive = activeCategory === category.slug;
-
-                return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => updateCategory(category.slug)}
-                    className={cn('category-pill', isActive && 'text-primary')}
-                    data-active={isActive}
-                  >
-                    <span className="category-pill__icon">
-                      {Icon ? <Icon className="h-5 w-5" /> : null}
-                    </span>
-                    <span className="category-pill__label">{getLocalizedText(category.name, locale)}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+            );
+          })}
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }

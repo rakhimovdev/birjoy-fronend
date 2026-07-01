@@ -1,7 +1,21 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
-const liveSiteUrl = 'https://www.bir-joy.uz';
+function normalizeUrl(value: string | undefined) {
+  return String(value || '').trim().replace(/\/$/, '');
+}
+
+function getHostname(value: string) {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return '';
+  }
+}
+
+const liveSiteUrl = normalizeUrl(process.env.CAPACITOR_LIVE_SITE_URL) || 'https://www.bir-joy.uz';
 const apiHost = 'birjoy-backend.onrender.com';
+const remoteSiteEnabled = String(process.env.CAPACITOR_LOAD_REMOTE_SITE || 'true').trim() !== 'false';
+const allowedHosts = [...new Set(['www.bir-joy.uz', 'bir-joy.uz', getHostname(liveSiteUrl), apiHost].filter(Boolean))];
 
 const config: CapacitorConfig = {
   appId: 'uz.birjoy.app',
@@ -10,13 +24,6 @@ const config: CapacitorConfig = {
   backgroundColor: '#FFFAF2',
   appendUserAgent: ' BirJoyAndroidApp/1.0.0 Capacitor',
   loggingBehavior: 'none',
-  server: {
-    androidScheme: 'https',
-    url: liveSiteUrl,
-    cleartext: false,
-    allowNavigation: ['www.bir-joy.uz', 'bir-joy.uz', apiHost],
-    errorPath: 'offline.html',
-  },
   android: {
     allowMixedContent: false,
     backgroundColor: '#FFFAF2',
@@ -37,6 +44,20 @@ const config: CapacitorConfig = {
     },
     Camera: {},
   },
+  ...(remoteSiteEnabled
+    ? {
+        // The Android app currently needs to open the live BirJoy website in-app.
+        // We keep a local mobile shell only for offline/error handling and future
+        // migration toward bundled first-party web assets.
+        server: {
+          androidScheme: 'https',
+          url: liveSiteUrl,
+          cleartext: false,
+          allowNavigation: allowedHosts,
+          errorPath: 'offline.html',
+        },
+      }
+    : {}),
 };
 
 export default config;

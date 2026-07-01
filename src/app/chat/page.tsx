@@ -228,7 +228,7 @@ function ChatPageContent() {
             <div className="surface-card rounded-[1.75rem] p-4 sm:p-5">
               {selectedConversation ? (
                 <div className="page-stack">
-                  <div className="flex flex-col gap-4 rounded-[1.5rem] border border-border/70 bg-white/76 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-4 rounded-[1.5rem] border border-border/70 bg-white/76 p-4 min-[481px]:flex-row min-[481px]:items-center min-[481px]:justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-14 w-14 border border-primary/10">
                         <AvatarImage src={selectedConversation.avatar} alt={selectedConversation.seller} />
@@ -248,7 +248,7 @@ function ChatPageContent() {
                         </div>
                       </div>
                     </div>
-                    <Button className="min-h-12 rounded-2xl gap-2">
+                    <Button className="min-h-12 w-full rounded-2xl gap-2 min-[481px]:w-auto">
                       <Phone className="h-4 w-4" />
                       {copy.quickCall}
                     </Button>
@@ -283,9 +283,9 @@ function ChatPageContent() {
                         <p className="mt-1">{copy.safetyDescription}</p>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-3 sm:flex-row">
+                    <div className="flex flex-col gap-3 min-[481px]:flex-row">
                       <Input className="h-12 rounded-2xl" placeholder={copy.composerPlaceholder} />
-                      <Button className="h-12 rounded-2xl px-6">{copy.sendLabel}</Button>
+                      <Button className="h-12 w-full rounded-2xl px-6 min-[481px]:w-auto">{copy.sendLabel}</Button>
                     </div>
                   </div>
                 </div>

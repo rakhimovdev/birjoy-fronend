@@ -198,7 +198,7 @@ function ProfilePageContent() {
           <div className="page-grid profile-grid">
             <div className="page-stack">
               <Card className="surface-card rounded-[1.75rem] border-none shadow-none">
-                <CardContent className="flex flex-col items-center pt-8 text-center">
+                <CardContent className="flex flex-col items-center p-5 pt-8 text-center sm:p-6 sm:pt-8">
                   <Avatar className="mb-4 h-24 w-24 border-4 border-primary/10">
                     <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
@@ -212,7 +212,7 @@ function ProfilePageContent() {
                   <div className="w-full space-y-3 px-2 text-left text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Mail className="h-4 w-4" />
-                      <span>{user.email}</span>
+                      <span className="break-all">{user.email}</span>
                     </div>
                     {user.phone ? (
                       <div className="flex items-center gap-2 text-muted-foreground">
@@ -228,7 +228,7 @@ function ProfilePageContent() {
                     ) : null}
                   </div>
 
-                  <Button className="mt-8 w-full gap-2" variant="outline">
+                  <Button className="mt-8 min-h-12 w-full gap-2" variant="outline">
                     <Edit className="h-4 w-4" />
                     {messages.profile.editProfile}
                   </Button>
@@ -240,13 +240,13 @@ function ProfilePageContent() {
                   <CardTitle className="text-sm">{messages.profile.accountSettings}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1 p-2 pt-0">
-                  <Button variant="ghost" className="h-9 w-full justify-start gap-2 text-sm">
+                  <Button variant="ghost" className="min-h-11 w-full justify-start gap-2 text-sm">
                     <Settings className="h-4 w-4" />
                     {messages.profile.settings}
                   </Button>
                   <Button
                     variant="ghost"
-                    className="h-9 w-full justify-start gap-2 text-sm"
+                    className="min-h-11 w-full justify-start gap-2 text-sm"
                     onClick={handleDownloadData}
                   >
                     <Download className="h-4 w-4" />
@@ -256,7 +256,7 @@ function ProfilePageContent() {
                     <AlertDialogTrigger asChild>
                       <Button
                         variant="ghost"
-                        className="h-9 w-full justify-start gap-2 text-sm text-destructive hover:text-destructive"
+                        className="min-h-11 w-full justify-start gap-2 text-sm text-destructive hover:text-destructive"
                       >
                         {messages.profile.deleteAccount}
                       </Button>
@@ -286,7 +286,7 @@ function ProfilePageContent() {
 
             <div className="min-w-0">
               <Tabs defaultValue={defaultTab} className="w-full">
-                <TabsList className="mb-6 grid h-auto w-full grid-cols-2 gap-2 rounded-[1.25rem] border bg-white p-1.5">
+                <TabsList className="mb-6 grid h-auto w-full grid-cols-1 gap-2 rounded-[1.25rem] border bg-white p-1.5 min-[481px]:grid-cols-2">
                   <TabsTrigger
                     value="ads"
                     className="min-h-12 gap-2 rounded-[1rem] data-[state=active]:bg-primary data-[state=active]:text-white"

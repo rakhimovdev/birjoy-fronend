@@ -8,6 +8,8 @@ import { Network } from '@capacitor/network';
 import { Button } from '@/components/ui/button';
 import { extractInAppPath, isNativeApp, isOwnedSiteUrl } from '@/lib/native-app';
 
+const supportedExternalProtocols = new Set(['http:', 'https:']);
+
 function getHrefFromElement(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
     return null;
@@ -32,26 +34,53 @@ export function NativeAppBridge() {
     const originalOpen = window.open.bind(window);
     const cleanupTasks: Array<() => void> = [];
 
+    const openExternally = (urlValue: string) => {
+      try {
+        const resolvedUrl = new URL(urlValue, window.location.href);
+
+        if (!supportedExternalProtocols.has(resolvedUrl.protocol)) {
+          return;
+        }
+
+        void Browser.open({
+          url: resolvedUrl.toString(),
+        });
+      } catch {
+        return;
+      }
+    };
+
     const navigateInApp = (url: string) => {
       const appPath = extractInAppPath(url);
 
       if (!appPath) {
-        return;
+        return false;
       }
 
       router.push(appPath);
+      return true;
     };
 
     const handleDocumentClick = (event: MouseEvent) => {
+      if (event.defaultPrevented) {
+        return;
+      }
+
       const anchor = getHrefFromElement(event.target);
 
-      if (!anchor || anchor.dataset.nativeIgnore === 'true') {
+      if (!anchor || anchor.dataset.nativeIgnore === 'true' || anchor.hasAttribute('download')) {
         return;
       }
 
       const rawHref = anchor.getAttribute('href') || '';
 
-      if (!rawHref || rawHref.startsWith('#') || rawHref.startsWith('mailto:') || rawHref.startsWith('tel:')) {
+      if (
+        !rawHref ||
+        rawHref.startsWith('#') ||
+        rawHref.startsWith('mailto:') ||
+        rawHref.startsWith('tel:') ||
+        rawHref.startsWith('sms:')
+      ) {
         return;
       }
 
@@ -60,6 +89,10 @@ export function NativeAppBridge() {
       try {
         resolvedUrl = new URL(anchor.href, window.location.href);
       } catch {
+        return;
+      }
+
+      if (!supportedExternalProtocols.has(resolvedUrl.protocol)) {
         return;
       }
 
@@ -74,9 +107,7 @@ export function NativeAppBridge() {
 
       if (!isSameOrigin && !isOwnedSiteUrl(resolvedUrl)) {
         event.preventDefault();
-        void Browser.open({
-          url: resolvedUrl.toString(),
-        });
+        openExternally(resolvedUrl.toString());
       }
     };
 
@@ -88,15 +119,16 @@ export function NativeAppBridge() {
       try {
         const resolvedUrl = new URL(String(url), window.location.href);
 
-        if (isOwnedSiteUrl(resolvedUrl)) {
-          navigateInApp(resolvedUrl.toString());
+        if (!supportedExternalProtocols.has(resolvedUrl.protocol)) {
+          return originalOpen(url, target);
+        }
+
+        if (isOwnedSiteUrl(resolvedUrl) && navigateInApp(resolvedUrl.toString())) {
           return window;
         }
 
         if (resolvedUrl.origin !== window.location.origin || target === '_blank') {
-          void Browser.open({
-            url: resolvedUrl.toString(),
-          });
+          openExternally(resolvedUrl.toString());
           return null;
         }
       } catch {
@@ -113,12 +145,20 @@ export function NativeAppBridge() {
 
     void App.getLaunchUrl().then((launchData) => {
       if (launchData?.url) {
-        navigateInApp(launchData.url);
+        const handled = navigateInApp(launchData.url);
+
+        if (!handled) {
+          openExternally(launchData.url);
+        }
       }
     });
 
     void App.addListener('appUrlOpen', ({ url }) => {
-      navigateInApp(url);
+      const handled = navigateInApp(url);
+
+      if (!handled) {
+        openExternally(url);
+      }
     }).then((listener) => {
       cleanupTasks.push(() => {
         void listener.remove();
@@ -139,6 +179,21 @@ export function NativeAppBridge() {
 
     void Network.getStatus().then((status) => {
       setIsOffline(!status.connected);
+    });
+
+    const handleOnline = () => {
+      setIsOffline(false);
+    };
+
+    const handleOffline = () => {
+      setIsOffline(true);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    cleanupTasks.push(() => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     });
 
     void Network.addListener('networkStatusChange', (status) => {
