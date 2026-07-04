@@ -147,10 +147,9 @@ function resolveUploadFileName(source: File | string, index = 0) {
 
 export async function uploadAdImageToImageKit(
   source: File | string,
-  session?: ImageKitUploadSession,
   index = 0
 ) {
-  const activeSession = session || (await createImageKitUploadSession());
+  const activeSession = await createImageKitUploadSession();
   const formData = new FormData();
 
   formData.append('file', source);
@@ -175,32 +174,26 @@ export async function uploadAdImagesToImageKit(sources: Array<File | string>) {
     return [];
   }
 
-  const session = await createImageKitUploadSession();
-  const uploads = await Promise.allSettled(
-    sources.map((source, index) => uploadAdImageToImageKit(source, session, index))
-  );
-  const successfulUploads = uploads
-    .filter((result): result is PromiseFulfilledResult<UploadedAdImage> => result.status === 'fulfilled')
-    .map((result) => result.value);
-  const failedUploads = uploads
-    .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
-    .map((result) => result.reason);
+  const uploadedImages: UploadedAdImage[] = [];
 
-  if (failedUploads.length > 0) {
-    if (successfulUploads.length > 0) {
+  try {
+    for (const [index, source] of sources.entries()) {
+      const uploadedImage = await uploadAdImageToImageKit(source, index);
+      uploadedImages.push(uploadedImage);
+    }
+  } catch (error) {
+    if (uploadedImages.length > 0) {
       await Promise.allSettled(
-        successfulUploads.map((image) => deleteUploadedAdImage(image.fileId))
+        uploadedImages.map((image) => deleteUploadedAdImage(image.fileId))
       );
     }
 
-    throw new Error(
-      failedUploads[0] instanceof Error
-        ? failedUploads[0].message
-        : 'One or more images could not be uploaded.'
-    );
+    throw error instanceof Error
+      ? error
+      : new Error('One or more images could not be uploaded.');
   }
 
-  return successfulUploads;
+  return uploadedImages;
 }
 
 export async function deleteUploadedAdImage(fileId: string) {
