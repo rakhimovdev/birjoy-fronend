@@ -23,6 +23,11 @@ import { formatMessage, getLocalizedText, languageMeta } from '@/lib/i18n';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { AD_CONDITIONS, createAd } from '@/lib/ads';
+import {
+  deleteUploadedAdImage,
+  uploadAdImagesToImageKit,
+  type UploadedAdImage,
+} from '@/lib/imagekit-upload';
 import { syncStoredUser } from '@/lib/auth';
 import { chooseNativeImages, takeNativePhoto } from '@/lib/native-media';
 import { isNativeAndroidApp } from '@/lib/native-app';
@@ -43,6 +48,7 @@ function CreateAdPageContent() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [moderationResult, setModerationResult] = useState<{ flagged: boolean; reason: string } | null>(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -54,7 +60,7 @@ function CreateAdPageContent() {
     contactPhone: '',
   });
   const [keywords, setKeywords] = useState<string[]>([]);
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<UploadedAdImage[]>([]);
   const nativeAndroidApp = isNativeAndroidApp();
 
   const nativeMediaCopy = {
@@ -174,36 +180,18 @@ function CreateAdPageContent() {
     const filesToProcess = selectedFiles.slice(0, availableSlots);
 
     try {
-      const nextImages = await Promise.all(
-        filesToProcess.map(
-          (file) =>
-            new Promise<string>((resolve, reject) => {
-              if (!file.type.startsWith('image/')) {
-                reject(new Error(messages.createAd.imageFormatError));
-                return;
-              }
+      filesToProcess.forEach((file) => {
+        if (!file.type.startsWith('image/')) {
+          throw new Error(messages.createAd.imageFormatError);
+        }
 
-              if (file.size > 800 * 1024) {
-                reject(new Error(messages.createAd.imageSizeError));
-                return;
-              }
+        if (file.size > 800 * 1024) {
+          throw new Error(messages.createAd.imageSizeError);
+        }
+      });
 
-              const reader = new FileReader();
-
-              reader.onload = () => {
-                if (typeof reader.result === 'string') {
-                  resolve(reader.result);
-                  return;
-                }
-
-                reject(new Error(messages.createAd.imageReadError));
-              };
-
-              reader.onerror = () => reject(new Error(messages.createAd.imageReadError));
-              reader.readAsDataURL(file);
-            })
-        )
-      );
+      setIsUploadingImages(true);
+      const nextImages = await uploadAdImagesToImageKit(filesToProcess);
 
       setUploadedImages((previous) => [...previous, ...nextImages]);
 
@@ -221,12 +209,21 @@ function CreateAdPageContent() {
         variant: 'destructive',
       });
     } finally {
+      setIsUploadingImages(false);
       event.target.value = '';
     }
   };
 
   const removeImage = (imageIndex: number) => {
+    const image = uploadedImages[imageIndex];
+
     setUploadedImages((previous) => previous.filter((_, index) => index !== imageIndex));
+
+    if (image?.fileId) {
+      void deleteUploadedAdImage(image.fileId).catch((error) => {
+        console.error('Failed to delete uploaded image:', error);
+      });
+    }
   };
 
   const getAvailableSlots = () => 10 - uploadedImages.length;
@@ -244,7 +241,9 @@ function CreateAdPageContent() {
     }
 
     try {
-      const nextImages = await chooseNativeImages(availableSlots);
+      setIsUploadingImages(true);
+      const selectedImages = await chooseNativeImages(availableSlots);
+      const nextImages = await uploadAdImagesToImageKit(selectedImages);
       setUploadedImages((previous) => [...previous, ...nextImages]);
     } catch (error) {
       toast({
@@ -252,6 +251,8 @@ function CreateAdPageContent() {
         description: error instanceof Error ? error.message : messages.createAd.imageReadError,
         variant: 'destructive',
       });
+    } finally {
+      setIsUploadingImages(false);
     }
   };
 
@@ -268,14 +269,23 @@ function CreateAdPageContent() {
     }
 
     try {
+      setIsUploadingImages(true);
       const photo = await takeNativePhoto();
-      setUploadedImages((previous) => [...previous, photo]);
+      const [nextImage] = await uploadAdImagesToImageKit([photo]);
+
+      if (!nextImage) {
+        throw new Error(messages.createAd.imageReadError);
+      }
+
+      setUploadedImages((previous) => [...previous, nextImage]);
     } catch (error) {
       toast({
         title: messages.createAd.imageUploadErrorTitle,
         description: error instanceof Error ? error.message : messages.createAd.imageReadError,
         variant: 'destructive',
       });
+    } finally {
+      setIsUploadingImages(false);
     }
   };
 
@@ -549,37 +559,52 @@ function CreateAdPageContent() {
                       />
                       {nativeAndroidApp ? (
                         <>
-                          <button
-                            type="button"
-                            className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3 text-center text-muted-foreground transition-colors hover:bg-muted/50"
-                            onClick={() => void handleNativeGalleryUpload()}
-                          >
-                            <ImagePlus className="h-6 w-6" />
-                            <span className="text-xs">{nativeMediaCopy[locale].gallery}</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3 text-center text-muted-foreground transition-colors hover:bg-muted/50"
-                            onClick={() => void handleNativeCameraUpload()}
-                          >
-                            <ShieldCheck className="h-6 w-6" />
-                            <span className="text-xs">{nativeMediaCopy[locale].camera}</span>
-                          </button>
-                        </>
-                      ) : (
                         <button
                           type="button"
-                          className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3 text-center text-muted-foreground transition-colors hover:bg-muted/50"
-                          onClick={() => fileInputRef.current?.click()}
+                          className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3 text-center text-muted-foreground transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
+                          onClick={() => void handleNativeGalleryUpload()}
+                          disabled={isUploadingImages}
                         >
-                          <ImagePlus className="h-6 w-6" />
-                          <span className="text-xs">{messages.createAd.addPhoto}</span>
+                          {isUploadingImages ? (
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                          ) : (
+                            <ImagePlus className="h-6 w-6" />
+                          )}
+                          <span className="text-xs">{nativeMediaCopy[locale].gallery}</span>
                         </button>
-                      )}
-                      {uploadedImages.map((image, index) => (
-                        <div key={`${image.slice(0, 32)}-${index}`} className="relative aspect-square overflow-hidden rounded-2xl border bg-muted/30">
+                        <button
+                          type="button"
+                          className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3 text-center text-muted-foreground transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
+                          onClick={() => void handleNativeCameraUpload()}
+                          disabled={isUploadingImages}
+                        >
+                          {isUploadingImages ? (
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                          ) : (
+                            <ShieldCheck className="h-6 w-6" />
+                          )}
+                          <span className="text-xs">{nativeMediaCopy[locale].camera}</span>
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3 text-center text-muted-foreground transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingImages}
+                      >
+                        {isUploadingImages ? (
+                          <Loader2 className="h-6 w-6 animate-spin" />
+                        ) : (
+                          <ImagePlus className="h-6 w-6" />
+                        )}
+                        <span className="text-xs">{messages.createAd.addPhoto}</span>
+                      </button>
+                    )}
+                    {uploadedImages.map((image, index) => (
+                        <div key={`${image.fileId || image.url.slice(0, 32)}-${index}`} className="relative aspect-square overflow-hidden rounded-2xl border bg-muted/30">
                           <Image
-                            src={image}
+                            src={image.thumbnailUrl || image.url}
                             alt={`${messages.createAd.addPhoto} ${index + 1}`}
                             fill
                             className="object-cover"
@@ -604,7 +629,7 @@ function CreateAdPageContent() {
                 </Card>
 
                 <div className="surface-card rounded-[1.75rem] p-4 min-[900px]:sticky min-[900px]:top-24">
-                  <Button type="submit" className="h-12 w-full gap-2 rounded-2xl text-lg font-bold" disabled={loading}>
+                  <Button type="submit" className="h-12 w-full gap-2 rounded-2xl text-lg font-bold" disabled={loading || isUploadingImages}>
                     {loading ? (
                       <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (

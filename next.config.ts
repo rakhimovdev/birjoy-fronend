@@ -51,6 +51,15 @@ const backendUrl = pickPublicUrl(
 );
 const googleClientId =
   process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+const imageKitUrlEndpoint =
+  process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || process.env.IMAGEKIT_URL_ENDPOINT || '';
+const imageKitHostname = (() => {
+  try {
+    return normalizeUrl(imageKitUrlEndpoint) ? new URL(normalizeUrl(imageKitUrlEndpoint)).hostname : '';
+  } catch {
+    return '';
+  }
+})();
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -82,6 +91,22 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'ik.imagekit.io',
+        port: '',
+        pathname: '/**',
+      },
+      ...(imageKitHostname
+        ? [
+            {
+              protocol: 'https' as const,
+              hostname: imageKitHostname,
+              port: '',
+              pathname: '/**',
+            },
+          ]
+        : []),
     ],
   },
   env: {

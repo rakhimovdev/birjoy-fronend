@@ -2,6 +2,7 @@
 
 import { getStoredAuthToken, signOutUser } from '@/lib/auth';
 import { backendApiBaseUrl } from '@/lib/api';
+import type { UploadedAdImage } from '@/lib/imagekit-upload';
 import type { LocalizedText, Language } from '@/lib/i18n';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { Ad } from '@/lib/types';
@@ -17,7 +18,7 @@ type RemoteAd = {
   category?: string;
   condition?: string;
   location?: string | LocalizedText;
-  images?: string[];
+  images?: Array<string | { url?: string; fileId?: string; name?: string; thumbnailUrl?: string }>;
   userId?: string;
   userName?: string;
   sellerName?: string;
@@ -43,7 +44,7 @@ export type CreateAdInput = {
   location: string;
   condition: AdCondition;
   contactPhone: string;
-  images: string[];
+  images: UploadedAdImage[];
 };
 
 export const AD_CONDITIONS: Array<{ value: AdCondition; label: LocalizedText }> = [
@@ -125,7 +126,29 @@ function getFallbackImage() {
   return PlaceHolderImages[1]?.imageUrl || PlaceHolderImages[0]?.imageUrl || '';
 }
 
+function normalizeImageUrls(images: RemoteAd['images']) {
+  if (!Array.isArray(images)) {
+    return [];
+  }
+
+  return images
+    .map((image) => {
+      if (typeof image === 'string') {
+        return image.trim();
+      }
+
+      if (image && typeof image.url === 'string') {
+        return image.url.trim();
+      }
+
+      return '';
+    })
+    .filter(Boolean);
+}
+
 function normalizeRemoteAd(ad: RemoteAd): Ad {
+  const imageUrls = normalizeImageUrls(ad.images);
+
   return {
     id: ad.id || ad._id || '',
     title: normalizeText(ad.title, ''),
@@ -134,7 +157,7 @@ function normalizeRemoteAd(ad: RemoteAd): Ad {
     category: ad.category || '',
     condition: normalizeCondition(ad.condition),
     location: normalizeText(ad.location, ''),
-    images: Array.isArray(ad.images) && ad.images.length > 0 ? ad.images : [getFallbackImage()],
+    images: imageUrls.length > 0 ? imageUrls : [getFallbackImage()],
     userId: ad.userId || '',
     userName: ad.userName || ad.sellerName || '',
     sellerPhone: ad.sellerPhone || ad.contactPhone || '',
