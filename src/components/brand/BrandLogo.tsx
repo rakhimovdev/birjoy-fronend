@@ -89,15 +89,15 @@ export function BrandLogo({
 
       <div className="min-w-0 flex flex-col justify-center leading-none">
         <div className={cn('font-headline font-extrabold tracking-tight', styles.title)}>
-          <span className="text-[#071C55]">Bir</span>
+          <span className="[color:var(--brand-wordmark-primary)]">Bir</span>
           <span className="text-[#FF730A]">Joy</span>
         </div>
 
         {showTagline ? (
-          <div className="mt-2 flex items-center gap-2 sm:gap-3 text-[#20305F]/78">
-            <span className={cn('h-px rounded-full bg-[#AEB8CE]', styles.line)} />
+          <div className="mt-2 flex items-center gap-2 sm:gap-3 [color:var(--brand-tagline-color)]">
+            <span className={cn('h-px rounded-full [background:var(--brand-tagline-line)]', styles.line)} />
             <span className={cn('font-body uppercase', styles.tagline)}>{tagline}</span>
-            <span className={cn('h-px rounded-full bg-[#AEB8CE]', styles.line)} />
+            <span className={cn('h-px rounded-full [background:var(--brand-tagline-line)]', styles.line)} />
           </div>
         ) : null}
       </div>

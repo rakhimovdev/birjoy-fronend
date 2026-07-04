@@ -30,7 +30,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!isReady) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center px-4">
-        <div className="flex items-center gap-3 rounded-full border bg-white px-5 py-3 text-sm text-muted-foreground shadow-sm">
+        <div className="flex items-center gap-3 rounded-full border border-border/70 bg-card/92 px-5 py-3 text-sm text-muted-foreground shadow-sm">
           <Loader2 className="h-4 w-4 animate-spin" />
           {messages.auth.loading}
         </div>

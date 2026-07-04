@@ -70,7 +70,7 @@ const sections = [
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,_#fffaf2_0%,_#f7f9ff_48%,_#ffffff_100%)]">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
       <main className="container mx-auto max-w-4xl px-4 py-10 md:py-14">
@@ -96,8 +96,8 @@ export default function PrivacyPolicyPage() {
           </div>
         </section>
 
-        <section className="mt-8 rounded-[2rem] border border-[#dbe4ff] bg-white p-5 shadow-[0_18px_50px_rgba(7,28,85,0.08)] sm:p-8 md:p-10">
-          <div className="mb-8 flex items-center gap-3 text-[#071c55]">
+        <section className="surface-card mt-8 rounded-[2rem] p-5 sm:p-8 md:p-10">
+          <div className="mb-8 flex items-center gap-3 text-foreground">
             <ShieldCheck className="h-5 w-5" />
             <p className="text-sm font-semibold uppercase tracking-[0.22em]">
               Recommended public privacy URL for Play Console
@@ -107,8 +107,8 @@ export default function PrivacyPolicyPage() {
           <div className="space-y-8">
             {sections.map((section) => (
               <article key={section.title}>
-                <h2 className="text-xl font-bold tracking-tight text-[#071c55]">{section.title}</h2>
-                <p className="mt-3 text-base leading-8 text-[#20305f]">{section.body}</p>
+                <h2 className="text-xl font-bold tracking-tight text-foreground">{section.title}</h2>
+                <p className="mt-3 text-base leading-8 text-muted-foreground">{section.body}</p>
               </article>
             ))}
           </div>

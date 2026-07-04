@@ -139,7 +139,7 @@ export function MarketplaceDrawer() {
         <Button
           variant="ghost"
           size="icon"
-          className="touch-target shrink-0 rounded-full border border-white/70 bg-white/82 shadow-sm hover:bg-white"
+          className="touch-target shrink-0 rounded-full border shadow-sm marketplace-glass-button"
           aria-label={messages.navbar.openNavigation}
         >
           <Menu className="h-5 w-5" />
@@ -147,7 +147,7 @@ export function MarketplaceDrawer() {
       </SheetTrigger>
       <SheetContent
         side="left"
-        className="w-[min(94vw,23.5rem)] border-r border-white/70 bg-[rgba(255,250,242,0.98)] p-0 shadow-[0_28px_80px_rgba(7,28,85,0.16)]"
+        className="marketplace-drawer-surface w-[min(94vw,23.5rem)] border-r p-0 shadow-[0_28px_80px_rgba(7,28,85,0.16)]"
       >
         <div className="tablet-drawer-scroll flex h-full flex-col">
           <SheetHeader className="border-b border-border/70 px-5 py-5 text-left">
@@ -176,7 +176,7 @@ export function MarketplaceDrawer() {
                           'flex min-h-12 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors',
                           link.active
                             ? 'border-primary/15 bg-primary/10 text-primary'
-                            : 'border-white/80 bg-white/80 text-foreground hover:bg-primary/5 hover:text-primary'
+                            : 'marketplace-drawer-card text-foreground hover:bg-primary/5 hover:text-primary'
                         )}
                         aria-current={link.active ? 'page' : undefined}
                       >
@@ -203,7 +203,7 @@ export function MarketplaceDrawer() {
                       'rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors',
                       activeCategory === 'all'
                         ? 'border-primary/15 bg-primary/10 text-primary'
-                        : 'border-white/80 bg-white/80 hover:bg-primary/5 hover:text-primary'
+                        : 'marketplace-drawer-card hover:bg-primary/5 hover:text-primary'
                     )}
                   >
                     {messages.categoryBar.all}
@@ -214,13 +214,13 @@ export function MarketplaceDrawer() {
                     <Link
                       href={buildCategoryHref(category.slug, currentQuery)}
                       className={cn(
-                        'rounded-2xl border px-4 py-3 text-sm font-medium transition-colors',
-                        activeCategory === category.slug
-                          ? 'border-primary/15 bg-primary/10 text-primary'
-                          : 'border-white/80 bg-white/80 hover:bg-primary/5 hover:text-primary'
-                      )}
-                    >
-                      {getLocalizedText(category.name, locale)}
+                      'rounded-2xl border px-4 py-3 text-sm font-medium transition-colors',
+                      activeCategory === category.slug
+                        ? 'border-primary/15 bg-primary/10 text-primary'
+                        : 'marketplace-drawer-card hover:bg-primary/5 hover:text-primary'
+                    )}
+                  >
+                    {getLocalizedText(category.name, locale)}
                     </Link>
                   </SheetClose>
                 ))}
@@ -232,7 +232,7 @@ export function MarketplaceDrawer() {
                 {messages.navbar.language}
               </p>
               <Select value={locale} onValueChange={handleLocaleChange}>
-                <SelectTrigger className="h-12 rounded-2xl border-white/80 bg-white/80 shadow-sm">
+                <SelectTrigger className="marketplace-drawer-card h-12 rounded-2xl shadow-sm">
                   <SelectValue placeholder={messages.navbar.language} />
                 </SelectTrigger>
                 <SelectContent>
@@ -249,7 +249,7 @@ export function MarketplaceDrawer() {
           <div className="border-t border-border/70 px-5 py-4">
             <a
               href="tel:+998332580404"
-              className="flex min-h-12 items-center justify-center rounded-2xl bg-[#071c55] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0b48d6]"
+              className="flex min-h-12 items-center justify-center rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               {messages.navbar.callSupport}
             </a>

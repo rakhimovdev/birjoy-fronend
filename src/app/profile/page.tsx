@@ -286,17 +286,17 @@ function ProfilePageContent() {
 
             <div className="min-w-0">
               <Tabs defaultValue={defaultTab} className="w-full">
-                <TabsList className="mb-6 grid h-auto w-full grid-cols-1 gap-2 rounded-[1.25rem] border bg-white p-1.5 min-[481px]:grid-cols-2">
+                <TabsList className="mb-6 grid h-auto w-full grid-cols-1 gap-2 rounded-[1.25rem] border border-border/70 bg-card/80 p-1.5 min-[481px]:grid-cols-2">
                   <TabsTrigger
                     value="ads"
-                    className="min-h-12 gap-2 rounded-[1rem] data-[state=active]:bg-primary data-[state=active]:text-white"
+                    className="min-h-12 gap-2 rounded-[1rem] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     <Package className="h-4 w-4" />
                     {messages.profile.myAdsTab} ({myAds.length})
                   </TabsTrigger>
                   <TabsTrigger
                     value="favorites"
-                    className="min-h-12 gap-2 rounded-[1rem] data-[state=active]:bg-primary data-[state=active]:text-white"
+                    className="min-h-12 gap-2 rounded-[1rem] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     <Heart className="h-4 w-4" />
                     {messages.profile.favoritesTab} ({favoriteAds.length})

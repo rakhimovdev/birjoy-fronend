@@ -11,7 +11,7 @@ export default function AboutPage() {
   const { messages } = useI18n();
 
   return (
-    <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,_#fffaf2_0%,_#f7f9ff_48%,_#ffffff_100%)]">
+    <div className="flex min-h-screen flex-col bg-background">
       <Navbar />
 
       <main className="flex-1">
@@ -66,34 +66,34 @@ export default function AboutPage() {
 
         <section className="py-14 md:py-20">
           <div className="container mx-auto grid gap-8 px-4 md:grid-cols-[minmax(0,1fr)_320px]">
-            <article className="rounded-[2rem] border border-[#dbe4ff] bg-white p-6 shadow-[0_18px_50px_rgba(7,28,85,0.08)] md:p-8 lg:p-10">
-              <div className="space-y-6 text-base leading-8 text-[#20305f] md:text-lg">
+            <article className="surface-card rounded-[2rem] p-6 md:p-8 lg:p-10">
+              <div className="space-y-6 text-base leading-8 text-muted-foreground md:text-lg">
                 <p>{messages.about.paragraphOne}</p>
                 <p>{messages.about.paragraphTwo}</p>
               </div>
             </article>
 
-            <aside className="rounded-[2rem] border border-[#dbe4ff] bg-[linear-gradient(180deg,_#f8fbff_0%,_#eef4ff_100%)] p-6 shadow-[0_18px_50px_rgba(7,28,85,0.08)] md:p-8">
-              <h2 className="text-2xl font-bold tracking-tight text-[#071c55]">{messages.about.contactTitle}</h2>
-              <p className="mt-3 text-sm leading-7 text-[#4d5c86]">
+            <aside className="rounded-[2rem] border border-border/70 bg-secondary/55 p-6 shadow-[var(--surface-shadow)] md:p-8">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">{messages.about.contactTitle}</h2>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
                 {messages.about.contactDescription}
               </p>
 
               <div className="mt-8 space-y-4">
                 <a
                   href="tel:+998332580404"
-                  className="flex items-start gap-3 rounded-2xl border border-[#dbe4ff] bg-white px-4 py-4 text-sm font-semibold text-[#071c55] transition-transform hover:-translate-y-0.5"
+                  className="flex items-start gap-3 rounded-2xl border border-border/70 bg-card/90 px-4 py-4 text-sm font-semibold text-foreground transition-transform hover:-translate-y-0.5 hover:bg-card"
                 >
-                  <Phone className="h-5 w-5 text-[#0b48d6]" />
+                  <Phone className="h-5 w-5 text-primary" />
                   <span>{messages.about.phoneLabel}: +998 33 258 04 04</span>
                 </a>
                 <a
                   href="https://t.me/bir_joyuz"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-start gap-3 rounded-2xl border border-[#dbe4ff] bg-white px-4 py-4 text-sm font-semibold text-[#071c55] transition-transform hover:-translate-y-0.5"
+                  className="flex items-start gap-3 rounded-2xl border border-border/70 bg-card/90 px-4 py-4 text-sm font-semibold text-foreground transition-transform hover:-translate-y-0.5 hover:bg-card"
                 >
-                  <Send className="h-5 w-5 text-[#0b48d6]" />
+                  <Send className="h-5 w-5 text-primary" />
                   <span>{messages.about.telegramLabel}: @bir_joyuz</span>
                 </a>
               </div>

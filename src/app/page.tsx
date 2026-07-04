@@ -160,9 +160,9 @@ function HomeContent() {
                       <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/65">BirJoy</p>
                       <p className="mt-2 text-sm leading-6 text-white/85">Online Platforma</p>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-[#fff7ef]/90 p-4 text-[#071c55]">
-                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#ff730a]">Brand Focus</p>
-                      <p className="mt-2 text-sm leading-6 text-[#20305f]">Kirishdan e’lon ko‘rishgacha butun interfeys endi BirJoy logotipidagi kayfiyatga moslandi.</p>
+                    <div className="rounded-2xl border border-white/10 bg-background/92 p-4 text-foreground">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">Brand Focus</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">Kirishdan e’lon ko‘rishgacha butun interfeys endi BirJoy logotipidagi kayfiyatga moslandi.</p>
                     </div>
                   </div>
                 </div>
@@ -221,17 +221,17 @@ function HomeContent() {
             {featuredAds.length > 0 ? (
               <section id="featured-listings" className="surface-card rounded-[1.75rem] px-5 py-8 backdrop-blur-sm sm:px-6">
                 <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-6 w-6 fill-accent text-accent" />
-                      <h2 className="text-2xl font-bold tracking-tight">{messages.home.featuredListings}</h2>
-                    </div>
-                    <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
-                      <Link href={hasFilters ? '/' : '#all-listings'}>
-                        {hasFilters ? messages.home.clearFilters : messages.home.viewAll}
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-6 w-6 fill-accent text-accent" />
+                    <h2 className="text-2xl font-bold tracking-tight">{messages.home.featuredListings}</h2>
                   </div>
+                  <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
+                    <Link href={hasFilters ? '/' : '#all-listings'}>
+                      {hasFilters ? messages.home.clearFilters : messages.home.viewAll}
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
                 <div className="listing-grid">
                   {featuredAds.map((ad) => (
                     <AdCard
@@ -251,14 +251,14 @@ function HomeContent() {
             {latestAds.length > 0 ? (
               <section id="all-listings" className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
                 <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
-                    <h2 className="text-2xl font-bold tracking-tight">{messages.home.recentPostings}</h2>
-                    <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
-                      <Link href={hasFilters ? '/' : '#browse-categories'}>
-                        {hasFilters ? messages.home.clearFilters : messages.home.browseAllListings}
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
+                  <h2 className="text-2xl font-bold tracking-tight">{messages.home.recentPostings}</h2>
+                  <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
+                    <Link href={hasFilters ? '/' : '#browse-categories'}>
+                      {hasFilters ? messages.home.clearFilters : messages.home.browseAllListings}
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
                 <div className="listing-grid">
                   {latestAds.map((ad) => (
                     <AdCard
@@ -279,22 +279,22 @@ function HomeContent() {
 
         <section className="rounded-[2rem] bg-[linear-gradient(120deg,_#071c55_0%,_#0b48d6_58%,_#ff730a_140%)] px-5 py-10 text-white sm:px-6 sm:py-12">
           <div className="grid grid-cols-1 gap-8 text-center min-[481px]:grid-cols-2 md:grid-cols-3">
-              <div>
-                <h3 className="mb-2 text-4xl font-bold">1M+</h3>
-                <p className="text-white/70">{messages.home.activeUsers}</p>
-              </div>
-              <div>
-                <h3 className="mb-2 text-4xl font-bold">500k+</h3>
-                <p className="text-white/70">{messages.home.monthlyAds}</p>
-              </div>
-              <div>
-                <h3 className="mb-2 text-4xl font-bold">100+</h3>
-                <p className="text-white/70">{messages.home.supportedCities}</p>
-              </div>
+            <div>
+              <h3 className="mb-2 text-4xl font-bold">1M+</h3>
+              <p className="text-white/70">{messages.home.activeUsers}</p>
+            </div>
+            <div>
+              <h3 className="mb-2 text-4xl font-bold">500k+</h3>
+              <p className="text-white/70">{messages.home.monthlyAds}</p>
+            </div>
+            <div>
+              <h3 className="mb-2 text-4xl font-bold">100+</h3>
+              <p className="text-white/70">{messages.home.supportedCities}</p>
+            </div>
           </div>
         </section>
 
-        <footer className="rounded-[2rem] border border-white/70 bg-[rgba(255,250,242,0.82)] px-5 py-10 backdrop-blur sm:px-6">
+        <footer className="surface-card rounded-[2rem] px-5 py-10 backdrop-blur sm:px-6">
           <div className="mb-8 grid grid-cols-1 gap-8 min-[481px]:grid-cols-2 lg:grid-cols-5">
             <div className="min-[481px]:col-span-2 lg:col-span-1">
               <BrandLogo size="md" showTagline className="mb-4" />

@@ -396,7 +396,7 @@ function ChatPageContent() {
 
           <section className="chat-layout">
             <div className="surface-card rounded-[1.75rem] p-4 sm:p-5">
-              <div className="mb-4 flex items-center gap-3 rounded-2xl border border-border/70 bg-white/86 px-4 py-3">
+              <div className="mb-4 flex items-center gap-3 rounded-2xl border border-border/70 bg-background/70 px-4 py-3">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
                   className="h-auto border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
@@ -407,7 +407,7 @@ function ChatPageContent() {
               </div>
 
               {isLoadingList ? (
-                <div className="flex min-h-[18rem] items-center justify-center rounded-[1.5rem] border border-dashed border-border/70 bg-white/76 px-4 text-center text-sm text-muted-foreground">
+                <div className="flex min-h-[18rem] items-center justify-center rounded-[1.5rem] border border-dashed border-border/70 bg-background/62 px-4 text-center text-sm text-muted-foreground">
                   <div className="flex items-center gap-3">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     {copy.loading}
@@ -429,7 +429,7 @@ function ChatPageContent() {
                         className={`flex w-full items-start gap-3 rounded-[1.25rem] border p-4 text-left transition-colors ${
                           isActive
                             ? 'border-primary/15 bg-primary/8 shadow-sm'
-                            : 'border-border/70 bg-white/72 hover:bg-primary/5'
+                            : 'border-border/70 bg-background/62 hover:bg-primary/5'
                         }`}
                       >
                         <Avatar className="h-12 w-12 border border-primary/10">
@@ -464,7 +464,7 @@ function ChatPageContent() {
                   })}
                 </div>
               ) : (
-                <div className="flex min-h-[18rem] items-center justify-center rounded-[1.5rem] border border-dashed border-border/70 bg-white/76 px-4 text-center">
+                <div className="flex min-h-[18rem] items-center justify-center rounded-[1.5rem] border border-dashed border-border/70 bg-background/62 px-4 text-center">
                   <div>
                     <MessageCircleMore className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                     <p className="text-lg font-semibold text-foreground">
@@ -491,7 +491,7 @@ function ChatPageContent() {
             <div className="surface-card rounded-[1.75rem] p-4 sm:p-5">
               {conversationView ? (
                 <div className="page-stack">
-                  <div className="flex flex-col gap-4 rounded-[1.5rem] border border-border/70 bg-white/76 p-4 min-[481px]:flex-row min-[481px]:items-center min-[481px]:justify-between">
+                  <div className="flex flex-col gap-4 rounded-[1.5rem] border border-border/70 bg-background/66 p-4 min-[481px]:flex-row min-[481px]:items-center min-[481px]:justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-14 w-14 border border-primary/10">
                         <AvatarImage
@@ -537,7 +537,7 @@ function ChatPageContent() {
                     </div>
                   </div>
 
-                  <div className="page-stack rounded-[1.5rem] border border-border/70 bg-[linear-gradient(180deg,_rgba(239,245,255,0.55),_rgba(255,255,255,0.9))] p-4 sm:p-5">
+                  <div className="page-stack rounded-[1.5rem] border border-border/70 bg-background/72 p-4 sm:p-5">
                     {isLoadingConversation ? (
                       <div className="flex min-h-[18rem] items-center justify-center text-sm text-muted-foreground">
                         <div className="flex items-center gap-3">
@@ -555,7 +555,7 @@ function ChatPageContent() {
                             className={`max-w-[90%] rounded-[1.25rem] px-4 py-3 text-sm leading-6 shadow-sm ${
                               fromViewer
                                 ? 'ml-auto bg-primary text-primary-foreground'
-                                : 'bg-white text-foreground'
+                                : 'bg-card text-card-foreground'
                             }`}
                           >
                             <p>{message.text}</p>
@@ -580,7 +580,7 @@ function ChatPageContent() {
                     )}
                   </div>
 
-                  <div className="rounded-[1.5rem] border border-border/70 bg-white/82 p-4">
+                  <div className="rounded-[1.5rem] border border-border/70 bg-card/84 p-4">
                     <div className="mb-4 flex items-start gap-3 rounded-[1.25rem] bg-muted/40 p-4 text-sm text-muted-foreground">
                       <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                       <div>
@@ -610,7 +610,7 @@ function ChatPageContent() {
                   </div>
                 </div>
               ) : (
-                <div className="flex min-h-[24rem] items-center justify-center rounded-[1.5rem] border border-dashed border-border/70 bg-white/76 text-center">
+                <div className="flex min-h-[24rem] items-center justify-center rounded-[1.5rem] border border-dashed border-border/70 bg-background/62 text-center">
                   <div>
                     <MessageCircleMore className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                     <p className="text-lg font-semibold text-foreground">{copy.empty}</p>

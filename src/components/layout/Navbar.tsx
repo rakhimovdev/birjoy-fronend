@@ -25,6 +25,7 @@ import {
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { InstallAppButton } from '@/components/pwa/InstallAppButton';
 import { MarketplaceDrawer } from '@/components/layout/MarketplaceNavigation';
+import { ThemeToggleButton } from '@/components/layout/ThemeToggleButton';
 import { languageMeta, languages, isLanguage, type Language } from '@/lib/i18n';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
@@ -32,10 +33,10 @@ import { useToast } from '@/hooks/use-toast';
 
 function NavbarFallback() {
   return (
-    <nav className="sticky top-0 z-40 w-full border-b border-white/60 bg-[rgba(255,250,242,0.82)] shadow-[0_12px_32px_rgba(7,28,85,0.05)] backdrop-blur-xl">
+    <nav className="marketplace-top-nav sticky top-0 z-40 w-full">
       <div className="mx-auto flex max-w-[92rem] items-center justify-between gap-3 px-3 py-3 sm:px-4">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-full border border-white/70 bg-white/80" />
+          <div className="h-12 w-12 rounded-full border marketplace-glass-button" />
           <BrandLogo size="sm" />
         </div>
       </div>
@@ -114,7 +115,7 @@ function NavbarContent() {
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
           placeholder={messages.navbar.searchPlaceholder}
-          className="h-11 rounded-2xl border-white/70 bg-white/86 pl-10 pr-20 text-sm shadow-sm focus-visible:ring-primary sm:h-12 sm:text-base"
+          className="h-11 rounded-2xl pl-10 pr-20 text-sm shadow-sm focus-visible:ring-primary sm:h-12 sm:text-base [border-color:var(--glass-button-border-color)] [background:var(--glass-button-background)]"
         />
         {searchQuery ? (
           <button
@@ -130,7 +131,7 @@ function NavbarContent() {
   );
 
   return (
-    <nav className="sticky top-0 z-40 w-full border-b border-white/60 bg-[rgba(255,250,242,0.82)] shadow-[0_12px_32px_rgba(7,28,85,0.05)] backdrop-blur-xl supports-[backdrop-filter]:bg-[rgba(255,250,242,0.76)]">
+    <nav className="marketplace-top-nav sticky top-0 z-40 w-full">
       <div className="mx-auto flex max-w-[92rem] flex-col gap-3 px-3 py-3 sm:px-4">
         <div className="flex items-center justify-between gap-2 min-[481px]:gap-3">
           <div className="flex min-w-0 items-center gap-2 min-[481px]:gap-3">
@@ -145,7 +146,7 @@ function NavbarContent() {
           <div className="flex shrink-0 items-center gap-1.5 min-[481px]:gap-2">
             <div className="tablet-and-up-only">
               <Select value={locale} onValueChange={handleLocaleChange}>
-                <SelectTrigger className="h-11 w-[120px] rounded-2xl border-white/70 bg-white/82 shadow-sm sm:h-12 lg:w-[142px]">
+                <SelectTrigger className="h-11 w-[120px] rounded-2xl shadow-sm sm:h-12 lg:w-[142px] [border-color:var(--glass-button-border-color)] [background:var(--glass-button-background)]">
                   <SelectValue placeholder={messages.navbar.language} />
                 </SelectTrigger>
                 <SelectContent>
@@ -158,7 +159,9 @@ function NavbarContent() {
               </Select>
             </div>
 
-            <InstallAppButton compact className="shrink-0" />
+            <ThemeToggleButton className="shrink-0" />
+
+            <InstallAppButton compact className="shrink-0 marketplace-glass-button" />
 
             <Link href={postAdHref} className="tablet-and-up-only">
               <Button className="h-11 gap-2 rounded-2xl px-4 font-semibold sm:h-12 sm:px-5">
@@ -171,7 +174,7 @@ function NavbarContent() {
               <>
                 <Link
                   href={favoritesHref}
-                  className="tablet-and-up-only touch-target items-center justify-center rounded-full border border-white/70 bg-white/82 text-muted-foreground shadow-sm transition-colors hover:text-primary"
+                  className="tablet-and-up-only touch-target items-center justify-center rounded-full border text-muted-foreground shadow-sm transition-colors hover:text-primary marketplace-glass-button"
                   aria-label={messages.navbar.favorites}
                 >
                   <Heart className="h-5 w-5" />
@@ -179,7 +182,7 @@ function NavbarContent() {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-12 w-12 rounded-full border border-white/70 bg-white/82 p-0 shadow-sm">
+                    <Button variant="ghost" className="relative h-12 w-12 rounded-full border p-0 shadow-sm marketplace-glass-button">
                       <Avatar className="h-11 w-11 border-2 border-primary/10">
                         <AvatarImage src={user.avatar} alt={user.name} />
                         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
@@ -237,7 +240,7 @@ function NavbarContent() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="touch-target rounded-full border border-white/70 bg-white/82 shadow-sm"
+                    className="touch-target rounded-full border shadow-sm marketplace-glass-button"
                     aria-label={messages.navbar.signIn}
                   >
                     <User className="h-5 w-5" />

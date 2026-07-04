@@ -319,11 +319,11 @@ export function NativeAppBridge() {
   }
 
   return (
-    <div className="fixed inset-x-4 top-4 z-[70] rounded-2xl border border-amber-200 bg-white/95 p-4 shadow-[0_20px_45px_rgba(7,28,85,0.16)] backdrop-blur">
+    <div className="fixed inset-x-4 top-4 z-[70] rounded-2xl border border-amber-500/30 bg-card/95 p-4 shadow-[var(--surface-shadow)] backdrop-blur">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-semibold text-[#071C55]">Internet aloqasi uzildi</p>
-          <p className="text-sm text-[#4d5c86]">
+          <p className="text-sm font-semibold text-foreground">Internet aloqasi uzildi</p>
+          <p className="text-sm text-muted-foreground">
             Aloqa qaytgach, BirJoy avtomatik ishlashda davom etadi.
           </p>
         </div>

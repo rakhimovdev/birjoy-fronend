@@ -186,7 +186,7 @@ export function InstallAppButton({
       onClick={() => void handleInstall()}
       disabled={isInstalling}
       className={cn(
-        'border-primary/20 bg-white/75 font-semibold text-primary shadow-sm transition-colors hover:bg-primary/10 hover:text-primary',
+        'border border-primary/20 font-semibold text-primary shadow-sm transition-colors hover:text-primary [background:var(--glass-button-background)] hover:[background:var(--glass-button-hover-background)]',
         compact ? 'h-10 gap-2 px-3 sm:px-4' : 'h-10 gap-2 px-4',
         className
       )}

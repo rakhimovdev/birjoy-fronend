@@ -487,7 +487,7 @@ export default function AdminPage() {
         </section>
 
         {!isReady ? (
-          <div className="rounded-3xl border bg-white px-6 py-16 text-center shadow-sm">
+          <div className="rounded-3xl border border-border/70 bg-card/92 px-6 py-16 text-center shadow-sm">
             <Loader2 className="mx-auto mb-4 h-6 w-6 animate-spin text-primary" />
             <p className="text-muted-foreground">{copy.loading}</p>
           </div>

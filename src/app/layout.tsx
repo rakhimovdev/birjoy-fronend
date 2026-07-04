@@ -4,6 +4,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { LocaleProvider } from '@/components/providers/LocaleProvider';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { NativeAppBridge } from '@/components/providers/NativeAppBridge';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { getThemeInlineScript, themeColorByMode } from '@/lib/theme';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.bir-joy.uz';
 
@@ -38,7 +40,6 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#0B48D6',
 };
 
 export default function RootLayout({
@@ -47,15 +48,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="uz">
+    <html lang="uz" suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content={themeColorByMode.light} />
+        <script dangerouslySetInnerHTML={{ __html: getThemeInlineScript() }} />
+      </head>
       <body className="font-body antialiased bg-background">
-        <AuthProvider>
-          <LocaleProvider>
-            <NativeAppBridge />
-            {children}
-            <Toaster />
-          </LocaleProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <LocaleProvider>
+              <NativeAppBridge />
+              {children}
+              <Toaster />
+            </LocaleProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
