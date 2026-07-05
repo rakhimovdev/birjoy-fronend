@@ -3,18 +3,15 @@
 import Link from 'next/link';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowRight, Loader2 } from 'lucide-react';
-import { AdCard } from '@/components/ads/AdCard';
+import { ArrowRight } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
-import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useAdminSession } from '@/hooks/use-admin-session';
 import { fetchAds } from '@/lib/ads';
-import { filterAds } from '@/lib/listing-utils';
 import { getLocalizedText } from '@/lib/i18n';
+import { filterAds } from '@/lib/listing-utils';
 import { MARKETPLACE_VERTICALS, getVerticalHref } from '@/lib/mock-data';
 import type { Ad } from '@/lib/types';
 
@@ -28,12 +25,8 @@ export default function Home() {
 
 function HomeContent() {
   const searchParams = useSearchParams();
-  const { isFavorite } = useAuth();
   const { locale, messages } = useI18n();
-  const { isAdmin } = useAdminSession();
   const [ads, setAds] = useState<Ad[]>([]);
-  const [isLoadingAds, setIsLoadingAds] = useState(true);
-  const [adsError, setAdsError] = useState<string | null>(null);
   const query = searchParams.get('q')?.trim() ?? '';
 
   const homeCopy =
@@ -44,10 +37,11 @@ function HomeContent() {
           description:
             'Сначала выбирайте нужный вертикаль, затем переходите в специализированный каталог с фильтрами, карточками и быстрым выходом на детали.',
           exploreLabel: 'Открыть витрины',
+          aboutLabel: 'О нас',
+          aboutCta: 'Подробнее',
           verticalTitle: 'Главные вертикали',
-          verticalDescription: 'Каждый раздел получает собственную структуру, категории и сценарий поиска.',
-          featuredTitle: 'Популярно сейчас',
-          latestTitle: 'Новые объявления со всех вертикалей',
+          verticalDescription:
+            'Каждый раздел получает собственную структуру, категории и сценарий поиска.',
         }
       : locale === 'en'
         ? {
@@ -56,11 +50,11 @@ function HomeContent() {
             description:
               'Start with a top-level vertical, then drop into a specialized catalog with its own categories, cards, and detail flow.',
             exploreLabel: 'Open verticals',
+            aboutLabel: 'About Us',
+            aboutCta: 'Learn more',
             verticalTitle: 'Main verticals',
             verticalDescription:
               'Each vertical gets its own structure, category model, and browsing behavior.',
-            featuredTitle: 'Popular right now',
-            latestTitle: 'Fresh listings across every vertical',
           }
         : {
             eyebrow: 'KO‘P VERTIKALLI MARKETPLACE',
@@ -68,11 +62,11 @@ function HomeContent() {
             description:
               'Avval kerakli vertikalni tanlang, keyin o‘sha bo‘limga mos kategoriyalar, kartalar va batafsil sahifalarga o‘ting.',
             exploreLabel: 'Vitrinalarni ochish',
+            aboutLabel: 'Biz haqimizda',
+            aboutCta: 'Batafsil',
             verticalTitle: 'Asosiy vertikallar',
             verticalDescription:
               'Har bir bo‘lim endi o‘z tuzilmasi, kategoriyalari va ko‘rish ssenariysiga ega.',
-            featuredTitle: 'Hozir mashhur',
-            latestTitle: 'Barcha vertikallardan yangi e’lonlar',
           };
 
   useEffect(() => {
@@ -80,21 +74,14 @@ function HomeContent() {
 
     async function loadAds() {
       try {
-        setIsLoadingAds(true);
         const response = await fetchAds();
 
         if (!cancelled) {
           setAds(response);
-          setAdsError(null);
         }
-      } catch (error) {
+      } catch {
         if (!cancelled) {
           setAds([]);
-          setAdsError(error instanceof Error ? error.message : 'Unable to load ads.');
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoadingAds(false);
         }
       }
     }
@@ -113,8 +100,6 @@ function HomeContent() {
       }),
     [ads, query]
   );
-  const featuredAds = matchingAds.filter((ad) => ad.isFeatured).slice(0, 4);
-  const latestAds = matchingAds.filter((ad) => !ad.isFeatured).slice(0, 8);
 
   return (
     <MarketplaceShell>
@@ -130,7 +115,10 @@ function HomeContent() {
                 <p className="body-lead max-w-3xl text-white/82">{homeCopy.description}</p>
               </div>
               <div className="flex flex-col gap-3 min-[481px]:flex-row">
-                <Button asChild className="min-h-12 rounded-2xl bg-accent px-6 font-semibold text-accent-foreground hover:bg-accent/90">
+                <Button
+                  asChild
+                  className="min-h-12 rounded-2xl bg-accent px-6 font-semibold text-accent-foreground hover:bg-accent/90"
+                >
                   <Link href="/market">{homeCopy.exploreLabel}</Link>
                 </Button>
                 <Button
@@ -144,18 +132,38 @@ function HomeContent() {
             </div>
 
             <div className="rounded-[1.85rem] border border-white/15 bg-white/10 p-5 backdrop-blur-xl">
-              <BrandLogo size="hero" showTagline tagline="Online Platforma" className="justify-center text-center" />
-              <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                {MARKETPLACE_VERTICALS.map((vertical) => (
-                  <div key={vertical.id} className="rounded-[1.25rem] border border-white/12 bg-white/10 p-4">
-                    <p className="text-sm font-semibold text-white">
-                      {getLocalizedText(vertical.name, locale)}
-                    </p>
-                    <p className="mt-2 text-sm text-white/72">
-                      {getLocalizedText(vertical.tagline, locale)}
-                    </p>
-                  </div>
-                ))}
+              <BrandLogo
+                size="hero"
+                showTagline
+                tagline="Online Platforma"
+                className="justify-center text-center"
+              />
+              <div className="mt-8 rounded-[1.5rem] border border-white/12 bg-white/10 p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-white/72">
+                    {homeCopy.aboutLabel}
+                  </p>
+                  <Badge className="border-white/15 bg-white/10 text-white">BirJoy</Badge>
+                </div>
+                <h2 className="mt-4 text-2xl font-bold text-white">{messages.about.description}</h2>
+                <p className="mt-4 text-sm leading-7 text-white/78">{messages.about.paragraphTwo}</p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {messages.about.valuesItems.map((value) => (
+                    <span
+                      key={value}
+                      className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/88"
+                    >
+                      {value}
+                    </span>
+                  ))}
+                </div>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="mt-6 min-h-11 rounded-2xl border-white/20 bg-white/10 text-white hover:bg-white/15"
+                >
+                  <Link href="/about">{homeCopy.aboutCta}</Link>
+                </Button>
               </div>
             </div>
           </div>
@@ -176,7 +184,7 @@ function HomeContent() {
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {MARKETPLACE_VERTICALS.map((vertical) => {
-              const verticalAds = ads.filter((ad) => ad.vertical === vertical.id);
+              const verticalAds = matchingAds.filter((ad) => ad.vertical === vertical.id);
 
               return (
                 <Link
@@ -209,95 +217,6 @@ function HomeContent() {
             })}
           </div>
         </section>
-
-        {isLoadingAds ? (
-          <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
-            <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-primary" />
-            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
-              {messages.home.loadingListings}
-            </h2>
-          </section>
-        ) : adsError ? (
-          <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
-            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
-              {messages.createAd.submitError}
-            </h2>
-            <p className="mx-auto max-w-2xl text-muted-foreground">{adsError}</p>
-          </section>
-        ) : matchingAds.length === 0 ? (
-          <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
-            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
-              {messages.home.noResultsTitle}
-            </h2>
-            <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
-              {messages.home.noResultsDescription}
-            </p>
-            <div className="flex flex-col justify-center gap-3 min-[481px]:flex-row">
-              <Button asChild className="w-full min-[481px]:w-auto">
-                <Link href="/">{messages.home.clearFilters}</Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full min-[481px]:w-auto">
-                <Link href="/ads/create">{messages.home.startSelling}</Link>
-              </Button>
-            </div>
-          </section>
-        ) : (
-          <>
-            {featuredAds.length > 0 ? (
-              <section className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
-                <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
-                  <h2 className="text-2xl font-bold tracking-tight">{homeCopy.featuredTitle}</h2>
-                  <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
-                    <Link href="/market">
-                      {messages.home.viewAll}
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-                <div className="listing-grid">
-                  {featuredAds.map((ad) => (
-                    <AdCard
-                      key={ad.id}
-                      ad={ad}
-                      isFavorite={isFavorite(ad.id)}
-                      canDelete={isAdmin}
-                      onDeleted={(adId) => {
-                        setAds((previous) => previous.filter((item) => item.id !== adId));
-                      }}
-                    />
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
-            {latestAds.length > 0 ? (
-              <section className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
-                <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
-                  <h2 className="text-2xl font-bold tracking-tight">{homeCopy.latestTitle}</h2>
-                  <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
-                    <Link href="/market">
-                      {messages.home.browseAllListings}
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-                <div className="listing-grid">
-                  {latestAds.map((ad) => (
-                    <AdCard
-                      key={ad.id}
-                      ad={ad}
-                      isFavorite={isFavorite(ad.id)}
-                      canDelete={isAdmin}
-                      onDeleted={(adId) => {
-                        setAds((previous) => previous.filter((item) => item.id !== adId));
-                      }}
-                    />
-                  ))}
-                </div>
-              </section>
-            ) : null}
-          </>
-        )}
       </main>
     </MarketplaceShell>
   );
