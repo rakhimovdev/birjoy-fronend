@@ -3,6 +3,7 @@ function normalizeBaseUrl(value: string | undefined) {
 }
 
 const productionBackendOrigin = 'https://birjoy-backend.onrender.com';
+const browserBackendProxyBaseUrl = '/api/backend';
 
 function isLocalHostName(hostname: string) {
   return (
@@ -30,10 +31,12 @@ const safeConfiguredBackendUrl =
   isPublicBrowserSession && isLocalUrl(configuredBackendUrl) ? '' : configuredBackendUrl;
 const defaultBackendUrl =
   process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : productionBackendOrigin;
-const backendBaseUrl = safeConfiguredBackendUrl || defaultBackendUrl;
+const directBackendBaseUrl = safeConfiguredBackendUrl || defaultBackendUrl;
+const backendBaseUrl =
+  typeof window !== 'undefined' ? browserBackendProxyBaseUrl : directBackendBaseUrl;
 
 export const backendApiBaseUrl = backendBaseUrl
-  ? backendBaseUrl.endsWith('/api')
+  ? backendBaseUrl === browserBackendProxyBaseUrl || backendBaseUrl.endsWith('/api')
     ? backendBaseUrl
     : `${backendBaseUrl}/api`
   : '';
