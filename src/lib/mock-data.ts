@@ -1,150 +1,267 @@
-import { Category, Ad, UserProfile } from './types';
-import { PlaceHolderImages } from './placeholder-images';
+import type { LocalizedText } from './i18n';
+import type { AdVertical, Category } from './types';
 
-export const CATEGORIES: Category[] = [
-  { id: '1', name: { uz: 'Elektronika', ru: 'Электроника', en: 'Electronics' }, icon: 'Smartphone', slug: 'electronics' },
-  { id: '2', name: { uz: 'Transport', ru: 'Транспорт', en: 'Vehicles' }, icon: 'Car', slug: 'vehicles' },
-  { id: '3', name: { uz: 'Ko‘chmas mulk', ru: 'Недвижимость', en: 'Real Estate' }, icon: 'Home', slug: 'real-estate' },
-  { id: '4', name: { uz: 'Ish', ru: 'Работа', en: 'Jobs' }, icon: 'Briefcase', slug: 'jobs' },
-  { id: '5', name: { uz: 'Moda', ru: 'Мода', en: 'Fashion' }, icon: 'Shirt', slug: 'fashion' },
-  { id: '6', name: { uz: 'Uy va bog‘', ru: 'Дом и сад', en: 'Home & Garden' }, icon: 'Lamp', slug: 'home-garden' },
-  { id: '7', name: { uz: 'Xizmatlar', ru: 'Услуги', en: 'Services' }, icon: 'Wrench', slug: 'services' },
-  { id: '8', name: { uz: 'Hobbi va sport', ru: 'Хобби и спорт', en: 'Hobby & Sport' }, icon: 'Dumbbell', slug: 'hobby-sport' },
-];
-
-export const MOCK_ADS: Ad[] = [
-  {
-    id: 'a1',
-    title: {
-      uz: 'iPhone 15 Pro Max - 256GB - Moviy titanium',
-      ru: 'iPhone 15 Pro Max - 256GB - синий титан',
-      en: 'iPhone 15 Pro Max - 256GB - Blue Titanium',
-    },
-    description: {
-      uz: 'Holati a’lo, deyarli yangi. Faqat 2 hafta ishlatilgan. Barcha aksessuarlar va qutisi bilan beriladi.',
-      ru: 'Идеальное состояние, почти новый. Использовался только 2 недели. В комплекте все аксессуары и коробка.',
-      en: 'Perfect condition, like new. Only used for 2 weeks. Comes with all accessories and box.',
-    },
-    price: 1150,
-    category: 'electronics',
-    condition: 'like-new',
-    location: {
-      uz: 'Toshkent, Chilonzor',
-      ru: 'Ташкент, Чиланзар',
-      en: 'Tashkent, Chilonzor',
-    },
-    images: [PlaceHolderImages[1].imageUrl],
-    userId: 'u1',
-    userName: 'Akmal R.',
-    sellerPhone: '+998 90 123 45 67',
-    createdAt: '2024-03-20T10:00:00Z',
-    isFeatured: true,
-    status: 'active'
-  },
-  {
-    id: 'a2',
-    title: {
-      uz: 'Tesla Model 3 Performance 2023',
-      ru: 'Tesla Model 3 Performance 2023',
-      en: 'Tesla Model 3 Performance 2023',
-    },
-    description: {
-      uz: 'Yurgani kam, avariyasiz. To‘liq self-driving funksiyasi mavjud. Maxsus disklar o‘rnatilgan.',
-      ru: 'Небольшой пробег, без аварий. Полный self-driving включён. Установлены кастомные диски.',
-      en: 'Low mileage, zero accidents. Full self-driving capability included. Custom wheels.',
-    },
-    price: 45000,
-    category: 'vehicles',
-    condition: 'used',
-    location: {
-      uz: 'Toshkent, Mirobod',
-      ru: 'Ташкент, Мирабад',
-      en: 'Tashkent, Mirabad',
-    },
-    images: [PlaceHolderImages[2].imageUrl],
-    userId: 'u2',
-    userName: 'Sarah K.',
-    sellerPhone: '+998 91 222 33 44',
-    createdAt: '2024-03-19T14:30:00Z',
-    status: 'active'
-  },
-  {
-    id: 'a3',
-    title: {
-      uz: 'Shahar markazida zamonaviy 2 xonali kvartira',
-      ru: 'Современная 2-комнатная квартира в центре города',
-      en: 'Modern 2-Bedroom Apartment in City Center',
-    },
-    description: {
-      uz: 'Chiroyli manzara, ta’mirlangan oshxona, yerosti parkovkasi bor. Tinch va qulay hudud.',
-      ru: 'Красивый вид, обновлённая кухня, есть подземная парковка. Тихий район.',
-      en: 'Beautiful views, renovated kitchen, underground parking included. Quiet neighborhood.',
-    },
-    price: 1200,
-    category: 'real-estate',
-    condition: 'like-new',
-    location: {
-      uz: 'Toshkent, Yunusobod',
-      ru: 'Ташкент, Юнусабад',
-      en: 'Tashkent, Yunusabad',
-    },
-    images: [PlaceHolderImages[3].imageUrl],
-    userId: 'u3',
-    userName: 'Jamshid T.',
-    sellerPhone: '+998 93 777 88 99',
-    createdAt: '2024-03-18T09:15:00Z',
-    isFeatured: true,
-    status: 'active'
-  },
-  {
-    id: 'a4',
-    title: {
-      uz: 'MacBook Pro M3 Max 14 dyuym',
-      ru: 'MacBook Pro M3 Max 14 дюймов',
-      en: 'MacBook Pro M3 Max 14-inch',
-    },
-    description: {
-      uz: 'Zavod qadoqda. 36GB RAM, 1TB SSD. Space Black rang. To‘liq kafolat bilan.',
-      ru: 'Заводская упаковка. 36GB RAM, 1TB SSD. Цвет Space Black. Полная гарантия.',
-      en: 'Factory sealed. 36GB RAM, 1TB SSD. Space Black color. Full warranty.',
-    },
-    price: 3200,
-    category: 'electronics',
-    condition: 'new',
-    location: {
-      uz: 'Samarqand',
-      ru: 'Самарканд',
-      en: 'Samarkand',
-    },
-    images: [PlaceHolderImages[4].imageUrl],
-    userId: 'u1',
-    userName: 'Akmal R.',
-    sellerPhone: '+998 90 123 45 67',
-    createdAt: '2024-03-21T11:45:00Z',
-    status: 'active'
-  }
-];
-
-export const CURRENT_USER: UserProfile = {
-  id: 'u1',
-  name: 'Akmal Rahimov',
-  email: 'akmal@example.com',
-  avatar: PlaceHolderImages[5].imageUrl,
-  role: 'user',
-  createdAt: '2024-03-01T00:00:00Z',
-  phone: '+998 90 123 45 67',
-  location: {
-    uz: 'Toshkent',
-    ru: 'Ташкент',
-    en: 'Tashkent',
-  },
-  favorites: ['a2', 'a3']
+export type MarketplaceVerticalConfig = {
+  id: AdVertical;
+  slug: string;
+  icon: string;
+  name: LocalizedText;
+  tagline: LocalizedText;
+  description: LocalizedText;
 };
 
-export function getCategoryBySlug(slug: string) {
-  return CATEGORIES.find((category) => category.slug === slug);
+function createCategory(
+  id: string,
+  vertical: AdVertical,
+  slug: string,
+  icon: string,
+  name: LocalizedText
+): Category {
+  return {
+    id,
+    vertical,
+    slug,
+    icon,
+    name,
+  };
 }
 
-export function getAdById(id: string) {
-  return MOCK_ADS.find((ad) => ad.id === id);
+export const MARKETPLACE_VERTICALS: MarketplaceVerticalConfig[] = [
+  {
+    id: 'real_estate',
+    slug: 'uy-joy',
+    icon: 'Building2',
+    name: {
+      uz: 'Uy-joy',
+      ru: 'Жильё',
+      en: 'Real Estate',
+    },
+    tagline: {
+      uz: 'Kvartira, hovli va ofislar',
+      ru: 'Квартиры, дома и офисы',
+      en: 'Apartments, homes, and offices',
+    },
+    description: {
+      uz: 'Har bir eʼlon xaritada, aniq manzil va narx bilan ko‘rinadi.',
+      ru: 'Каждое объявление видно на карте с точным адресом и ценой.',
+      en: 'Every listing appears on the map with a clear address and price.',
+    },
+  },
+  {
+    id: 'market',
+    slug: 'market',
+    icon: 'ShoppingBasket',
+    name: {
+      uz: 'Market',
+      ru: 'Маркет',
+      en: 'Market',
+    },
+    tagline: {
+      uz: 'Elektronika, moda va kundalik xaridlar',
+      ru: 'Электроника, мода и повседневные товары',
+      en: 'Electronics, fashion, and everyday goods',
+    },
+    description: {
+      uz: 'Hozirgi marketplace katalogi shu yerda saqlanadi.',
+      ru: 'Текущий каталог маркетплейса остаётся здесь.',
+      en: 'The current marketplace catalog lives here.',
+    },
+  },
+  {
+    id: 'food',
+    slug: 'taomlar',
+    icon: 'UtensilsCrossed',
+    name: {
+      uz: 'Taomlar',
+      ru: 'Еда',
+      en: 'Food',
+    },
+    tagline: {
+      uz: 'Restoranlar, uy oshxonasi va grocery',
+      ru: 'Рестораны, домашняя кухня и продукты',
+      en: 'Restaurants, home kitchens, and groceries',
+    },
+    description: {
+      uz: 'Yetkazib berishga tayyor taom va mahsulotlarni alohida to‘plang.',
+      ru: 'Соберите предложения по еде и продуктам в отдельной витрине.',
+      en: 'Group food and grocery offers into a dedicated surface.',
+    },
+  },
+  {
+    id: 'auto',
+    slug: 'avtomobil',
+    icon: 'CarFront',
+    name: {
+      uz: 'Avtomobil',
+      ru: 'Авто',
+      en: 'Auto',
+    },
+    tagline: {
+      uz: 'Mashina, moto va ehtiyot qismlar',
+      ru: 'Авто, мото и запчасти',
+      en: 'Cars, motorcycles, and parts',
+    },
+    description: {
+      uz: 'Transport uchun alohida vertikal va aniq kategoriyalar.',
+      ru: 'Отдельный вертикаль и точные категории для транспорта.',
+      en: 'A dedicated transport vertical with focused categories.',
+    },
+  },
+];
+
+export const MARKET_CATEGORIES: Category[] = [
+  createCategory('market-1', 'market', 'electronics', 'Smartphone', {
+    uz: 'Elektronika',
+    ru: 'Электроника',
+    en: 'Electronics',
+  }),
+  createCategory('market-2', 'market', 'fashion', 'Shirt', {
+    uz: 'Moda',
+    ru: 'Мода',
+    en: 'Fashion',
+  }),
+  createCategory('market-3', 'market', 'hobby-sport', 'Dumbbell', {
+    uz: 'Sport',
+    ru: 'Спорт',
+    en: 'Sport',
+  }),
+  createCategory('market-4', 'market', 'home-garden', 'Lamp', {
+    uz: 'Uy va bog‘',
+    ru: 'Дом и сад',
+    en: 'Home & Garden',
+  }),
+  createCategory('market-5', 'market', 'services', 'Wrench', {
+    uz: 'Xizmatlar',
+    ru: 'Услуги',
+    en: 'Services',
+  }),
+  createCategory('market-6', 'market', 'jobs', 'Briefcase', {
+    uz: 'Ish',
+    ru: 'Работа',
+    en: 'Jobs',
+  }),
+];
+
+export const REAL_ESTATE_CATEGORIES: Category[] = [
+  createCategory('estate-1', 'real_estate', 'apartment', 'Building2', {
+    uz: 'Kvartira',
+    ru: 'Квартира',
+    en: 'Apartment',
+  }),
+  createCategory('estate-2', 'real_estate', 'house', 'House', {
+    uz: 'Hovli',
+    ru: 'Дом',
+    en: 'House',
+  }),
+  createCategory('estate-3', 'real_estate', 'land', 'Trees', {
+    uz: 'Yer uchastkasi',
+    ru: 'Участок',
+    en: 'Land',
+  }),
+  createCategory('estate-4', 'real_estate', 'commercial', 'Building', {
+    uz: 'Tijorat',
+    ru: 'Коммерческая',
+    en: 'Commercial',
+  }),
+];
+
+export const FOOD_CATEGORIES: Category[] = [
+  createCategory('food-1', 'food', 'restaurants', 'Store', {
+    uz: 'Restoranlar',
+    ru: 'Рестораны',
+    en: 'Restaurants',
+  }),
+  createCategory('food-2', 'food', 'home-cooking', 'ChefHat', {
+    uz: 'Uy oshxonasi',
+    ru: 'Домашняя кухня',
+    en: 'Home Cooking',
+  }),
+  createCategory('food-3', 'food', 'groceries', 'PackageSearch', {
+    uz: 'Grocery',
+    ru: 'Продукты',
+    en: 'Groceries',
+  }),
+];
+
+export const AUTO_CATEGORIES: Category[] = [
+  createCategory('auto-1', 'auto', 'cars', 'CarFront', {
+    uz: 'Yengil avtomobil',
+    ru: 'Легковые авто',
+    en: 'Cars',
+  }),
+  createCategory('auto-2', 'auto', 'motorcycles', 'Bike', {
+    uz: 'Moto',
+    ru: 'Мото',
+    en: 'Motorcycles',
+  }),
+  createCategory('auto-3', 'auto', 'parts', 'Cog', {
+    uz: 'Ehtiyot qismlar',
+    ru: 'Запчасти',
+    en: 'Parts',
+  }),
+  createCategory('auto-4', 'auto', 'commercial-transport', 'Truck', {
+    uz: 'Tijoriy transport',
+    ru: 'Коммерческий транспорт',
+    en: 'Commercial Transport',
+  }),
+];
+
+const LEGACY_MARKET_CATEGORIES: Category[] = [
+  createCategory('legacy-1', 'market', 'vehicles', 'Car', {
+    uz: 'Transport',
+    ru: 'Транспорт',
+    en: 'Vehicles',
+  }),
+  createCategory('legacy-2', 'market', 'real-estate', 'Home', {
+    uz: 'Ko‘chmas mulk',
+    ru: 'Недвижимость',
+    en: 'Real Estate',
+  }),
+];
+
+export const CATEGORIES = MARKET_CATEGORIES;
+export const ALL_CATEGORIES: Category[] = [
+  ...MARKET_CATEGORIES,
+  ...REAL_ESTATE_CATEGORIES,
+  ...FOOD_CATEGORIES,
+  ...AUTO_CATEGORIES,
+  ...LEGACY_MARKET_CATEGORIES,
+];
+
+export const REAL_ESTATE_DEFAULT_CENTER = {
+  lat: 41.3111,
+  lng: 69.2797,
+};
+
+export function getVerticalById(verticalId: AdVertical) {
+  return MARKETPLACE_VERTICALS.find((vertical) => vertical.id === verticalId);
+}
+
+export function getVerticalBySlug(slug: string) {
+  return MARKETPLACE_VERTICALS.find((vertical) => vertical.slug === slug);
+}
+
+export function getVerticalHref(verticalId: AdVertical) {
+  const vertical = getVerticalById(verticalId);
+  return vertical ? `/${vertical.slug}` : '/market';
+}
+
+export function getCategoriesForVertical(verticalId: AdVertical) {
+  if (verticalId === 'real_estate') {
+    return REAL_ESTATE_CATEGORIES;
+  }
+
+  if (verticalId === 'food') {
+    return FOOD_CATEGORIES;
+  }
+
+  if (verticalId === 'auto') {
+    return AUTO_CATEGORIES;
+  }
+
+  return MARKET_CATEGORIES;
+}
+
+export function getCategoryBySlug(slug: string) {
+  return ALL_CATEGORIES.find((category) => category.slug === slug);
 }

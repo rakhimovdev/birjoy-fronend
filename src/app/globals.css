@@ -483,6 +483,74 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  .leaflet-map-shell {
+    height: 25rem;
+    overflow: hidden;
+    border-radius: 1.35rem;
+    border: 1px solid var(--surface-border-color);
+    background: rgba(255, 255, 255, 0.66);
+  }
+
+  .leaflet-map-shell .leaflet-container {
+    height: 100%;
+    width: 100%;
+    background: rgba(218, 232, 255, 0.45);
+  }
+
+  .leaflet-map-shell .leaflet-control-attribution {
+    border-radius: 0.8rem 0 0 0;
+    background: rgba(255, 255, 255, 0.86);
+    font-size: 0.66rem;
+  }
+
+  .leaflet-price-marker-wrapper,
+  .leaflet-picker-marker-wrapper {
+    background: transparent;
+    border: none;
+  }
+
+  .leaflet-price-marker {
+    display: inline-flex;
+    min-width: 4.5rem;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1px solid rgba(7, 28, 85, 0.12);
+    background: rgba(255, 255, 255, 0.96);
+    padding: 0.42rem 0.72rem;
+    color: #071c55;
+    font-size: 0.74rem;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow: 0 12px 24px rgba(7, 28, 85, 0.18);
+    white-space: nowrap;
+  }
+
+  .leaflet-price-marker--selected {
+    background: linear-gradient(135deg, #0b48d6, #ff730a);
+    border-color: transparent;
+    color: white;
+  }
+
+  .leaflet-picker-marker {
+    display: block;
+    height: 1.2rem;
+    width: 1.2rem;
+    border-radius: 9999px;
+    border: 3px solid white;
+    background: linear-gradient(135deg, #0b48d6, #0f766e);
+    box-shadow: 0 0 0 8px rgba(11, 72, 214, 0.12), 0 12px 24px rgba(7, 28, 85, 0.18);
+  }
+
+  .real-estate-shell {
+    display: grid;
+    gap: clamp(1rem, 2vw, 1.5rem);
+  }
+
+  .real-estate-list-panel {
+    display: grid;
+    gap: clamp(0.8rem, 1.8vw, 1.25rem);
+  }
+
   .list-clamp-2 {
     display: -webkit-box;
     overflow: hidden;
@@ -512,6 +580,10 @@
 
     .category-pill {
       padding-inline: 0.85rem;
+    }
+
+    .leaflet-map-shell {
+      height: 19rem;
     }
   }
 
@@ -576,6 +648,16 @@
 
     .chat-layout {
       grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+    }
+
+    .real-estate-shell {
+      grid-template-columns: minmax(0, 1.18fr) minmax(20rem, 0.82fr);
+      align-items: start;
+    }
+
+    .real-estate-map-panel {
+      position: sticky;
+      top: 5.9rem;
     }
   }
 

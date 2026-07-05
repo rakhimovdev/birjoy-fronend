@@ -5,7 +5,7 @@ import { backendApiBaseUrl } from '@/lib/api';
 import type { UploadedAdImage } from '@/lib/imagekit-upload';
 import type { LocalizedText, Language } from '@/lib/i18n';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { Ad } from '@/lib/types';
+import type { Ad, AdVertical, RealEstatePropertyType } from '@/lib/types';
 
 export type AdCondition = 'new' | 'like-new' | 'used' | 'needs-repair';
 
@@ -16,8 +16,16 @@ type RemoteAd = {
   description?: string | LocalizedText;
   price?: number;
   category?: string;
+  vertical?: string;
   condition?: string;
   location?: string | LocalizedText;
+  address?: string | LocalizedText;
+  latitude?: number | null;
+  longitude?: number | null;
+  propertyType?: string;
+  rooms?: number | null;
+  area?: number | null;
+  floor?: number | null;
   images?: Array<string | { url?: string; fileId?: string; name?: string; thumbnailUrl?: string }>;
   userId?: string;
   userName?: string;
@@ -39,9 +47,17 @@ type AdsApiResponse = {
 export type CreateAdInput = {
   title: string;
   category: string;
+  vertical: AdVertical;
   price: number;
   description: string;
   location: string;
+  address?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  propertyType?: RealEstatePropertyType | '';
+  rooms?: number | null;
+  area?: number | null;
+  floor?: number | null;
   condition: AdCondition;
   contactPhone: string;
   images: UploadedAdImage[];
@@ -114,6 +130,22 @@ function normalizeCondition(value: string | undefined): AdCondition {
   return 'used';
 }
 
+function normalizeVertical(value: string | undefined): AdVertical {
+  if (value === 'market' || value === 'real_estate' || value === 'food' || value === 'auto') {
+    return value;
+  }
+
+  return 'market';
+}
+
+function normalizePropertyType(value: string | undefined): RealEstatePropertyType | '' {
+  if (value === 'apartment' || value === 'house' || value === 'land' || value === 'commercial') {
+    return value;
+  }
+
+  return '';
+}
+
 function normalizeStatus(value: string | undefined): Ad['status'] {
   if (value === 'active' || value === 'pending' || value === 'flagged') {
     return value;
@@ -124,6 +156,10 @@ function normalizeStatus(value: string | undefined): Ad['status'] {
 
 function getFallbackImage() {
   return PlaceHolderImages[1]?.imageUrl || PlaceHolderImages[0]?.imageUrl || '';
+}
+
+function normalizeNullableNumber(value: number | null | undefined) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
 function normalizeImageUrls(images: RemoteAd['images']) {
@@ -155,8 +191,16 @@ function normalizeRemoteAd(ad: RemoteAd): Ad {
     description: normalizeText(ad.description, ''),
     price: typeof ad.price === 'number' ? ad.price : 0,
     category: ad.category || '',
+    vertical: normalizeVertical(ad.vertical),
     condition: normalizeCondition(ad.condition),
-    location: normalizeText(ad.location, ''),
+    location: normalizeText(ad.location || ad.address, ''),
+    address: normalizeText(ad.address || ad.location, ''),
+    latitude: normalizeNullableNumber(ad.latitude),
+    longitude: normalizeNullableNumber(ad.longitude),
+    propertyType: normalizePropertyType(ad.propertyType),
+    rooms: normalizeNullableNumber(ad.rooms),
+    area: normalizeNullableNumber(ad.area),
+    floor: normalizeNullableNumber(ad.floor),
     images: imageUrls.length > 0 ? imageUrls : [getFallbackImage()],
     userId: ad.userId || '',
     userName: ad.userName || ad.sellerName || '',
@@ -222,6 +266,19 @@ export async function createAd(input: CreateAdInput) {
 
   if (!data.ad) {
     throw new Error('Ad was not created.');
+  }
+
+  return normalizeRemoteAd(data.ad);
+}
+
+export async function updateAd(id: string, input: CreateAdInput) {
+  const data = await requestAdsApi(`/ads/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+
+  if (!data.ad) {
+    throw new Error('Ad was not updated.');
   }
 
   return normalizeRemoteAd(data.ad);

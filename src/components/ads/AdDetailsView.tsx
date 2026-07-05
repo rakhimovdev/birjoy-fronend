@@ -3,11 +3,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Clock, Loader2, MapPin, MessageSquare, Phone, Tag, Trash2, User } from 'lucide-react';
+import { Building2, Clock, Loader2, MapPin, MessageSquare, PencilLine, Phone, Square, Tag, Trash2, User, type LucideIcon } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { AdCard } from '@/components/ads/AdCard';
+import { RealEstateListingsMap } from '@/components/maps/RealEstateListingsMap';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getCategoryBySlug } from '@/lib/mock-data';
+import { getVerticalHref } from '@/lib/mock-data';
 import { Ad } from '@/lib/types';
 import { getLocalizedText, languageMeta } from '@/lib/i18n';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -36,6 +38,7 @@ import { deleteAdminAd } from '@/lib/admin';
 import { createChatConversation } from '@/lib/chat';
 import { createOrderRequest } from '@/lib/orders';
 import { useAdminSession } from '@/hooks/use-admin-session';
+import { getAdDisplayLocation } from '@/lib/listing-utils';
 
 export function AdDetailsView({ adId }: { adId: string }) {
   const router = useRouter();
@@ -70,7 +73,14 @@ export function AdDetailsView({ adId }: { adId: string }) {
           setAd(currentAd);
           setSelectedImageIndex(0);
           setRelatedAds(
-            allAds.filter((item) => item.id !== currentAd.id && item.category === currentAd.category).slice(0, 3)
+            allAds
+              .filter(
+                (item) =>
+                  item.id !== currentAd.id &&
+                  item.vertical === currentAd.vertical &&
+                  item.category === currentAd.category
+              )
+              .slice(0, 3)
           );
           setError(null);
         }
@@ -138,9 +148,37 @@ export function AdDetailsView({ adId }: { adId: string }) {
   const category = getCategoryBySlug(ad.category);
   const localizedTitle = getLocalizedText(ad.title, locale);
   const localizedDescription = getLocalizedText(ad.description, locale);
-  const localizedLocation = getLocalizedText(ad.location, locale);
+  const localizedLocation = getLocalizedText(getAdDisplayLocation(ad), locale);
   const localizedCategory = category ? getLocalizedText(category.name, locale) : messages.adDetails.category;
   const localizedCondition = getConditionLabel(ad.condition, locale);
+  const isRealEstate = ad.vertical === 'real_estate';
+  const realEstateFacts = [
+    isRealEstate && ad.rooms !== null
+      ? {
+          icon: Building2,
+          label: locale === 'ru' ? 'Комнаты' : locale === 'en' ? 'Rooms' : 'Xonalar',
+          value: String(ad.rooms),
+        }
+      : null,
+    isRealEstate && ad.area !== null
+      ? {
+          icon: Square,
+          label: locale === 'ru' ? 'Площадь' : locale === 'en' ? 'Area' : 'Maydon',
+          value: `${ad.area} m²`,
+        }
+      : null,
+    isRealEstate && ad.floor !== null
+      ? {
+          icon: Building2,
+          label: locale === 'ru' ? 'Этаж' : locale === 'en' ? 'Floor' : 'Qavat',
+          value: String(ad.floor),
+        }
+      : null,
+  ].filter(Boolean) as Array<{
+    icon: LucideIcon;
+    label: string;
+    value: string;
+  }>;
   const selectedImage = ad.images[selectedImageIndex] || ad.images[0];
   const isOwnListing = user?.id === ad.userId;
   const shouldDisableOptimization =
@@ -357,7 +395,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
       <main className="marketplace-main">
         <div className="mb-2 flex flex-col items-start justify-between gap-3 min-[481px]:mb-4 min-[481px]:flex-row min-[481px]:items-center">
           <Button asChild variant="ghost" className="px-0 text-primary hover:bg-transparent">
-            <Link href="/">{messages.adDetails.backToListings}</Link>
+            <Link href={getVerticalHref(ad.vertical)}>{messages.adDetails.backToListings}</Link>
           </Button>
           {isAdmin ? (
             <AlertDialog>
@@ -440,7 +478,11 @@ export function AdDetailsView({ adId }: { adId: string }) {
                 <div className="text-xl font-bold text-primary min-[481px]:text-2xl sm:text-3xl">{formattedPrice}</div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 border-y py-5 text-sm text-muted-foreground min-[481px]:grid-cols-2 xl:grid-cols-4">
+              <div
+                className={`grid grid-cols-1 gap-4 border-y py-5 text-sm text-muted-foreground min-[481px]:grid-cols-2 ${
+                  isRealEstate ? 'xl:grid-cols-3' : 'xl:grid-cols-4'
+                }`}
+              >
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-primary" />
                   <div>
@@ -469,12 +511,41 @@ export function AdDetailsView({ adId }: { adId: string }) {
                     <p>{localizedCondition}</p>
                   </div>
                 </div>
+                {isRealEstate
+                  ? realEstateFacts.map((fact) => {
+                      const Icon = fact.icon;
+
+                      return (
+                        <div key={fact.label} className="flex items-center gap-2">
+                          <Icon className="h-4 w-4 text-primary" />
+                          <div>
+                            <p className="font-medium text-foreground">{fact.label}</p>
+                            <p>{fact.value}</p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  : null}
               </div>
 
               <div className="pt-6">
                 <h2 className="mb-3 text-xl font-semibold">{messages.adDetails.description}</h2>
                 <p className="body-lead whitespace-pre-line text-muted-foreground">{localizedDescription}</p>
               </div>
+
+              {isRealEstate && typeof ad.latitude === 'number' && typeof ad.longitude === 'number' ? (
+                <div className="pt-6">
+                  <h2 className="mb-3 text-xl font-semibold">
+                    {locale === 'ru' ? 'Локация на карте' : locale === 'en' ? 'Map location' : 'Xaritadagi joylashuv'}
+                  </h2>
+                  <RealEstateListingsMap
+                    ads={[ad]}
+                    locale={locale}
+                    selectedAdId={ad.id}
+                    onSelectAd={() => undefined}
+                  />
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -507,6 +578,30 @@ export function AdDetailsView({ adId }: { adId: string }) {
                     <span className="font-medium text-foreground">{messages.adDetails.location}: </span>
                     {localizedLocation}
                   </p>
+                  {isRealEstate && ad.area !== null ? (
+                    <p>
+                      <span className="font-medium text-foreground">
+                        {locale === 'ru' ? 'Площадь: ' : locale === 'en' ? 'Area: ' : 'Maydon: '}
+                      </span>
+                      {ad.area} m²
+                    </p>
+                  ) : null}
+                  {isRealEstate && ad.rooms !== null ? (
+                    <p>
+                      <span className="font-medium text-foreground">
+                        {locale === 'ru' ? 'Комнаты: ' : locale === 'en' ? 'Rooms: ' : 'Xonalar: '}
+                      </span>
+                      {ad.rooms}
+                    </p>
+                  ) : null}
+                  {isRealEstate && ad.floor !== null ? (
+                    <p>
+                      <span className="font-medium text-foreground">
+                        {locale === 'ru' ? 'Этаж: ' : locale === 'en' ? 'Floor: ' : 'Qavat: '}
+                      </span>
+                      {ad.floor}
+                    </p>
+                  ) : null}
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-primary" />
                     <p>
@@ -531,11 +626,19 @@ export function AdDetailsView({ adId }: { adId: string }) {
                       {chatCopy.ownListing}
                     </div>
                   )}
+                  {isOwnListing ? (
+                    <Button asChild variant="outline" className="h-11">
+                      <Link href={`/ads/${ad.id}/edit`}>
+                        <PencilLine className="mr-2 h-4 w-4" />
+                        {locale === 'ru' ? 'Редактировать объявление' : locale === 'en' ? 'Edit listing' : 'E’lonni tahrirlash'}
+                      </Link>
+                    </Button>
+                  ) : null}
                   <Button asChild className="h-11">
-                    <Link href="/ads/create">{messages.adDetails.createSimilar}</Link>
+                    <Link href={`/ads/create?vertical=${ad.vertical}`}>{messages.adDetails.createSimilar}</Link>
                   </Button>
                   <Button asChild variant="outline" className="h-11">
-                    <Link href="/">{messages.adDetails.browseMore}</Link>
+                    <Link href={getVerticalHref(ad.vertical)}>{messages.adDetails.browseMore}</Link>
                   </Button>
                 </div>
                 {!isOwnListing ? (
@@ -643,7 +746,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
             <div className="mb-6 flex flex-col items-start justify-between gap-3 min-[481px]:flex-row min-[481px]:items-center">
               <h2 className="text-2xl font-bold tracking-tight">{messages.adDetails.relatedListings}</h2>
               <Button asChild variant="ghost" className="px-0 text-primary hover:bg-transparent">
-                <Link href="/">{messages.adDetails.browseMore}</Link>
+                <Link href={getVerticalHref(ad.vertical)}>{messages.adDetails.browseMore}</Link>
               </Button>
             </div>
             <div className="listing-grid">

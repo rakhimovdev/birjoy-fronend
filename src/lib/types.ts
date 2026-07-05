@@ -1,10 +1,14 @@
 import type { LocalizedText } from './i18n';
 
+export type AdVertical = 'market' | 'real_estate' | 'food' | 'auto';
+export type RealEstatePropertyType = 'apartment' | 'house' | 'land' | 'commercial';
+
 export type Category = {
   id: string;
   name: LocalizedText;
   icon: string;
   slug: string;
+  vertical: AdVertical;
 };
 
 export type Ad = {
@@ -13,8 +17,16 @@ export type Ad = {
   description: LocalizedText;
   price: number;
   category: string;
+  vertical: AdVertical;
   condition: 'new' | 'like-new' | 'used' | 'needs-repair';
   location: LocalizedText;
+  address: LocalizedText;
+  latitude: number | null;
+  longitude: number | null;
+  propertyType: RealEstatePropertyType | '';
+  rooms: number | null;
+  area: number | null;
+  floor: number | null;
   images: string[];
   userId: string;
   userName: string;

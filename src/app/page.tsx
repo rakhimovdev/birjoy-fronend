@@ -1,21 +1,21 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
-import { CategoryBar } from '@/components/ads/CategoryBar';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { AdCard } from '@/components/ads/AdCard';
 import { BrandLogo } from '@/components/brand/BrandLogo';
-import { CATEGORIES, getCategoryBySlug } from '@/lib/mock-data';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { getLocalizedText } from '@/lib/i18n';
+import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
-import { fetchAds, getConditionLabel } from '@/lib/ads';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useAdminSession } from '@/hooks/use-admin-session';
+import { fetchAds } from '@/lib/ads';
+import { filterAds } from '@/lib/listing-utils';
+import { getLocalizedText } from '@/lib/i18n';
+import { MARKETPLACE_VERTICALS, getVerticalHref } from '@/lib/mock-data';
 import type { Ad } from '@/lib/types';
 
 export default function Home() {
@@ -35,10 +35,45 @@ function HomeContent() {
   const [isLoadingAds, setIsLoadingAds] = useState(true);
   const [adsError, setAdsError] = useState<string | null>(null);
   const query = searchParams.get('q')?.trim() ?? '';
-  const selectedCategory = searchParams.get('category');
-  const lowerQuery = query.toLowerCase();
-  const featuredCategoryNames = CATEGORIES.slice(0, 4);
-  const selectedCategoryObject = selectedCategory ? getCategoryBySlug(selectedCategory) : null;
+
+  const homeCopy =
+    locale === 'ru'
+      ? {
+          eyebrow: 'МУЛЬТИ-ВЕРТИКАЛЬНЫЙ MARKETPLACE',
+          title: 'BirJoy теперь собирает жильё, маркет, еду и авто в одной экосистеме.',
+          description:
+            'Сначала выбирайте нужный вертикаль, затем переходите в специализированный каталог с фильтрами, карточками и быстрым выходом на детали.',
+          exploreLabel: 'Открыть витрины',
+          verticalTitle: 'Главные вертикали',
+          verticalDescription: 'Каждый раздел получает собственную структуру, категории и сценарий поиска.',
+          featuredTitle: 'Популярно сейчас',
+          latestTitle: 'Новые объявления со всех вертикалей',
+        }
+      : locale === 'en'
+        ? {
+            eyebrow: 'MULTI-VERTICAL MARKETPLACE',
+            title: 'BirJoy now brings real estate, market, food, and auto into one ecosystem.',
+            description:
+              'Start with a top-level vertical, then drop into a specialized catalog with its own categories, cards, and detail flow.',
+            exploreLabel: 'Open verticals',
+            verticalTitle: 'Main verticals',
+            verticalDescription:
+              'Each vertical gets its own structure, category model, and browsing behavior.',
+            featuredTitle: 'Popular right now',
+            latestTitle: 'Fresh listings across every vertical',
+          }
+        : {
+            eyebrow: 'KO‘P VERTIKALLI MARKETPLACE',
+            title: 'BirJoy endi uy-joy, market, taomlar va avtomobilni bitta ekotizimda jamlaydi.',
+            description:
+              'Avval kerakli vertikalni tanlang, keyin o‘sha bo‘limga mos kategoriyalar, kartalar va batafsil sahifalarga o‘ting.',
+            exploreLabel: 'Vitrinalarni ochish',
+            verticalTitle: 'Asosiy vertikallar',
+            verticalDescription:
+              'Har bir bo‘lim endi o‘z tuzilmasi, kategoriyalari va ko‘rish ssenariysiga ega.',
+            featuredTitle: 'Hozir mashhur',
+            latestTitle: 'Barcha vertikallardan yangi e’lonlar',
+          };
 
   useEffect(() => {
     let cancelled = false;
@@ -54,8 +89,8 @@ function HomeContent() {
         }
       } catch (error) {
         if (!cancelled) {
-          setAdsError(error instanceof Error ? error.message : 'Unable to load ads.');
           setAds([]);
+          setAdsError(error instanceof Error ? error.message : 'Unable to load ads.');
         }
       } finally {
         if (!cancelled) {
@@ -71,143 +106,133 @@ function HomeContent() {
     };
   }, []);
 
-  const matchingAds = ads.filter((ad) => {
-    const matchesCategory = selectedCategory ? ad.category === selectedCategory : true;
-
-    if (!matchesCategory) {
-      return false;
-    }
-
-    if (!lowerQuery) {
-      return true;
-    }
-
-    const category = getCategoryBySlug(ad.category);
-    const searchableValues = [
-      ...Object.values(ad.title),
-      ...Object.values(ad.description),
-      ...Object.values(ad.location),
-      ad.userName,
-      ad.sellerPhone,
-      getConditionLabel(ad.condition, locale),
-      ...(category ? Object.values(category.name) : []),
-    ];
-
-    return searchableValues.some((value) => value.toLowerCase().includes(lowerQuery));
-  });
-
-  const featuredAds = matchingAds.filter((ad) => ad.isFeatured);
-  const latestAds = matchingAds.filter((ad) => !ad.isFeatured);
-  const hasFilters = Boolean(query || selectedCategory);
-  const shouldShowHero = !selectedCategory;
-  const selectedCategoryLabel = selectedCategoryObject
-    ? getLocalizedText(selectedCategoryObject.name, locale)
-    : null;
+  const matchingAds = useMemo(
+    () =>
+      filterAds(ads, {
+        query,
+      }),
+    [ads, query]
+  );
+  const featuredAds = matchingAds.filter((ad) => ad.isFeatured).slice(0, 4);
+  const latestAds = matchingAds.filter((ad) => !ad.isFeatured).slice(0, 8);
 
   return (
     <MarketplaceShell>
       <main className="marketplace-main">
-        <CategoryBar />
-
-        {shouldShowHero ? (
-          <section className="relative overflow-hidden rounded-[2rem] border border-white/20 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_46%,_#ff730a_108%)] py-10 text-white sm:py-12 md:py-14 lg:py-16">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.14),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.12),_transparent_28%)]" />
-            <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[linear-gradient(180deg,_rgba(255,255,255,0.05),_transparent)] lg:block" />
-            <div className="relative z-10 grid items-center gap-8 px-5 sm:px-6 md:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)] lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] lg:px-8">
-              <div className="max-w-3xl">
-                <div className="mb-5 inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold text-white/90 backdrop-blur">
-                  BirJoy Marketplace
-                </div>
-                <h1 className="hero-display mb-4 font-headline font-extrabold">
-                  {messages.home.heroTitlePrefix}{' '}
-                  <span className="text-[#ffd7b5]">{messages.home.heroTitleAccent}</span>
-                  {messages.home.heroTitleSuffix ? ` ${messages.home.heroTitleSuffix}` : ''}
-                </h1>
-                <p className="body-lead mb-8 max-w-2xl font-medium text-white/82">
-                  {messages.home.heroDescription}
-                </p>
-                <div className="flex flex-col gap-3 min-[481px]:flex-row min-[481px]:flex-wrap">
-                  <Button
-                    asChild
-                    size="lg"
-                    className="min-h-12 w-full rounded-2xl bg-accent px-6 font-bold text-accent-foreground shadow-[0_18px_36px_rgba(255,115,10,0.28)] hover:bg-accent/90 min-[481px]:w-auto sm:px-8"
-                  >
-                    <Link href="/ads/create">{messages.home.startSelling}</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    size="lg"
-                    variant="outline"
-                    className="min-h-12 w-full rounded-2xl border-white/25 bg-white/10 text-white backdrop-blur-md hover:bg-white/18 min-[481px]:w-auto"
-                  >
-                    <Link href="#browse-categories">{messages.home.exploreCategories}</Link>
-                  </Button>
-                </div>
+        <section className="overflow-hidden rounded-[2rem] border border-white/20 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_44%,_#0f766e_78%,_#ff730a_118%)] px-5 py-10 text-white sm:px-6 sm:py-12 lg:px-8 lg:py-14">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(18rem,0.88fr)]">
+            <div className="space-y-5">
+              <Badge className="rounded-full border border-white/15 bg-white/10 text-white">
+                {homeCopy.eyebrow}
+              </Badge>
+              <div className="space-y-4">
+                <h1 className="hero-display font-bold text-white">{homeCopy.title}</h1>
+                <p className="body-lead max-w-3xl text-white/82">{homeCopy.description}</p>
               </div>
+              <div className="flex flex-col gap-3 min-[481px]:flex-row">
+                <Button asChild className="min-h-12 rounded-2xl bg-accent px-6 font-semibold text-accent-foreground hover:bg-accent/90">
+                  <Link href="/market">{homeCopy.exploreLabel}</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="min-h-12 rounded-2xl border-white/20 bg-white/10 text-white hover:bg-white/15"
+                >
+                  <Link href="/ads/create">{messages.home.startSelling}</Link>
+                </Button>
+              </div>
+            </div>
 
-              <div className="relative mx-auto w-full max-w-xl md:max-w-none">
-                <div className="absolute -left-6 top-8 h-28 w-28 rounded-full bg-white/12 blur-2xl" />
-                <div className="absolute -bottom-8 right-4 h-32 w-32 rounded-full bg-[#ffb26d]/25 blur-3xl" />
-                <div className="relative rounded-[2rem] border border-white/15 bg-white/10 p-5 shadow-[0_30px_80px_rgba(4,18,58,0.35)] backdrop-blur-2xl sm:p-6">
-                  <BrandLogo
-                    size="hero"
-                    showTagline
-                    tagline="Online Platforma"
-                    className="justify-center text-center"
-                  />
-                  <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/65">BirJoy</p>
-                      <p className="mt-2 text-sm leading-6 text-white/85">Online Platforma</p>
+            <div className="rounded-[1.85rem] border border-white/15 bg-white/10 p-5 backdrop-blur-xl">
+              <BrandLogo size="hero" showTagline tagline="Online Platforma" className="justify-center text-center" />
+              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                {MARKETPLACE_VERTICALS.map((vertical) => (
+                  <div key={vertical.id} className="rounded-[1.25rem] border border-white/12 bg-white/10 p-4">
+                    <p className="text-sm font-semibold text-white">
+                      {getLocalizedText(vertical.name, locale)}
+                    </p>
+                    <p className="mt-2 text-sm text-white/72">
+                      {getLocalizedText(vertical.tagline, locale)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="surface-card rounded-[1.8rem] px-5 py-6 sm:px-6">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">{homeCopy.verticalTitle}</h2>
+              <p className="text-sm text-muted-foreground">{homeCopy.verticalDescription}</p>
+            </div>
+            {query ? (
+              <Badge variant="secondary" className="w-fit">
+                {query}
+              </Badge>
+            ) : null}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {MARKETPLACE_VERTICALS.map((vertical) => {
+              const verticalAds = ads.filter((ad) => ad.vertical === vertical.id);
+
+              return (
+                <Link
+                  key={vertical.id}
+                  href={getVerticalHref(vertical.id)}
+                  className="group rounded-[1.55rem] border border-border/70 bg-card/90 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-[0_20px_42px_rgba(7,28,85,0.12)]"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary/75">
+                          {getLocalizedText(vertical.name, locale)}
+                        </p>
+                        <h3 className="mt-2 text-xl font-bold text-foreground">
+                          {getLocalizedText(vertical.tagline, locale)}
+                        </h3>
+                      </div>
+                      <Badge variant="secondary">{verticalAds.length}</Badge>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-background/92 p-4 text-foreground">
-                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">Brand Focus</p>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">Kirishdan e’lon ko‘rishgacha butun interfeys endi BirJoy logotipidagi kayfiyatga moslandi.</p>
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      {getLocalizedText(vertical.description, locale)}
+                    </p>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                      <span>{messages.home.viewAll}</span>
+                      <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        ) : null}
-
-        {hasFilters ? (
-          <section className="surface-card rounded-[1.75rem] px-5 py-5 sm:px-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight">{messages.home.resultsTitle}</h2>
-                <p className="text-sm text-muted-foreground">{messages.home.resultsDescription}</p>
-                <div className="flex flex-wrap gap-2">
-                  {query ? <Badge variant="secondary">{query}</Badge> : null}
-                  {selectedCategoryLabel ? <Badge variant="secondary">{selectedCategoryLabel}</Badge> : null}
-                </div>
-              </div>
-              <Button asChild variant="outline" className="w-full min-[481px]:w-auto">
-                <Link href="/">{messages.home.clearFilters}</Link>
-              </Button>
-            </div>
-          </section>
-        ) : null}
+                </Link>
+              );
+            })}
+          </div>
+        </section>
 
         {isLoadingAds ? (
           <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
-            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">{messages.home.loadingListings}</h2>
-            <p className="mx-auto max-w-2xl text-muted-foreground">
-              {messages.home.resultsDescription}
-            </p>
+            <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-primary" />
+            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
+              {messages.home.loadingListings}
+            </h2>
           </section>
         ) : adsError ? (
           <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
-            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">{messages.createAd.submitError}</h2>
+            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
+              {messages.createAd.submitError}
+            </h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">{adsError}</p>
           </section>
         ) : matchingAds.length === 0 ? (
           <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
-            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">{messages.home.noResultsTitle}</h2>
+            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
+              {messages.home.noResultsTitle}
+            </h2>
             <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
               {messages.home.noResultsDescription}
             </p>
-            <div className="flex flex-col justify-center gap-3 min-[481px]:flex-row min-[481px]:flex-wrap">
+            <div className="flex flex-col justify-center gap-3 min-[481px]:flex-row">
               <Button asChild className="w-full min-[481px]:w-auto">
                 <Link href="/">{messages.home.clearFilters}</Link>
               </Button>
@@ -219,15 +244,12 @@ function HomeContent() {
         ) : (
           <>
             {featuredAds.length > 0 ? (
-              <section id="featured-listings" className="surface-card rounded-[1.75rem] px-5 py-8 backdrop-blur-sm sm:px-6">
+              <section className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
                 <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-6 w-6 fill-accent text-accent" />
-                    <h2 className="text-2xl font-bold tracking-tight">{messages.home.featuredListings}</h2>
-                  </div>
+                  <h2 className="text-2xl font-bold tracking-tight">{homeCopy.featuredTitle}</h2>
                   <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
-                    <Link href={hasFilters ? '/' : '#all-listings'}>
-                      {hasFilters ? messages.home.clearFilters : messages.home.viewAll}
+                    <Link href="/market">
+                      {messages.home.viewAll}
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -249,12 +271,12 @@ function HomeContent() {
             ) : null}
 
             {latestAds.length > 0 ? (
-              <section id="all-listings" className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
+              <section className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
                 <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
-                  <h2 className="text-2xl font-bold tracking-tight">{messages.home.recentPostings}</h2>
+                  <h2 className="text-2xl font-bold tracking-tight">{homeCopy.latestTitle}</h2>
                   <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
-                    <Link href={hasFilters ? '/' : '#browse-categories'}>
-                      {hasFilters ? messages.home.clearFilters : messages.home.browseAllListings}
+                    <Link href="/market">
+                      {messages.home.browseAllListings}
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -276,92 +298,6 @@ function HomeContent() {
             ) : null}
           </>
         )}
-
-        <section className="rounded-[2rem] bg-[linear-gradient(120deg,_#071c55_0%,_#0b48d6_58%,_#ff730a_140%)] px-5 py-10 text-white sm:px-6 sm:py-12">
-          <div className="grid grid-cols-1 gap-8 text-center min-[481px]:grid-cols-2 md:grid-cols-3">
-            <div>
-              <h3 className="mb-2 text-4xl font-bold">1M+</h3>
-              <p className="text-white/70">{messages.home.activeUsers}</p>
-            </div>
-            <div>
-              <h3 className="mb-2 text-4xl font-bold">500k+</h3>
-              <p className="text-white/70">{messages.home.monthlyAds}</p>
-            </div>
-            <div>
-              <h3 className="mb-2 text-4xl font-bold">100+</h3>
-              <p className="text-white/70">{messages.home.supportedCities}</p>
-            </div>
-          </div>
-        </section>
-
-        <footer className="surface-card rounded-[2rem] px-5 py-10 backdrop-blur sm:px-6">
-          <div className="mb-8 grid grid-cols-1 gap-8 min-[481px]:grid-cols-2 lg:grid-cols-5">
-            <div className="min-[481px]:col-span-2 lg:col-span-1">
-              <BrandLogo size="md" showTagline className="mb-4" />
-              <p className="text-sm text-muted-foreground">{messages.home.footerDescription}</p>
-            </div>
-            <div>
-              <h4 className="mb-4 font-bold">{messages.home.footerCategories}</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {featuredCategoryNames.map((category) => (
-                  <li key={category.id}>{getLocalizedText(category.name, locale)}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-4 font-bold">{messages.home.footerSupport}</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {messages.home.footerSupportItems.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-4 font-bold">{messages.home.footerCompany}</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {messages.home.footerCompanyItems.map((item, index) => (
-                  <li key={`${item}-${index}`}>
-                    {index === 0 ? (
-                      <Link href="/about" className="transition-colors hover:text-primary">
-                        {item}
-                      </Link>
-                    ) : (
-                      item
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="min-[481px]:col-span-2 lg:col-span-1">
-              <h4 className="mb-4 font-bold">{messages.home.footerContact}</h4>
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                <li>
-                  <a
-                    href="https://t.me/bir_joyuz"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="transition-colors hover:text-primary"
-                  >
-                    Telegram: @bir_joyuz
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://www.instagram.com/1birjoy?igsh=MWZpeDNvdzcwNTRrdQ=="
-                    target="_blank"
-                    rel="noreferrer"
-                    className="break-all transition-colors hover:text-primary"
-                  >
-                    Instagram: @1birjoy
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t pt-8 text-center text-sm text-muted-foreground">
-            © 2024 BirJoy. {messages.home.footerRights}
-          </div>
-        </footer>
       </main>
     </MarketplaceShell>
   );

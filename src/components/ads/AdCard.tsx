@@ -30,6 +30,7 @@ import { useI18n } from '@/components/providers/LocaleProvider';
 import { useToast } from '@/hooks/use-toast';
 import { getConditionLabel } from '@/lib/ads';
 import { deleteAdminAd } from '@/lib/admin';
+import { getAdDisplayLocation } from '@/lib/listing-utils';
 
 interface AdCardProps {
   ad: Ad;
@@ -57,11 +58,15 @@ export function AdCard({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const category = getCategoryBySlug(ad.category);
   const localizedTitle = getLocalizedText(ad.title, locale);
-  const localizedLocation = getLocalizedText(ad.location, locale);
+  const localizedLocation = getLocalizedText(getAdDisplayLocation(ad), locale);
   const localizedCategory = category
     ? getLocalizedText(category.name, locale)
     : messages.adCard.categoryFallback;
   const localizedCondition = getConditionLabel(ad.condition, locale);
+  const realEstateMeta =
+    ad.vertical === 'real_estate'
+      ? [ad.rooms ? `${ad.rooms}R` : '', ad.area ? `${ad.area} m²` : ''].filter(Boolean).join(' · ')
+      : '';
   const deleteCopy =
     locale === 'ru'
       ? {
@@ -344,7 +349,7 @@ export function AdCard({
                 {localizedCategory}
               </Badge>
               <Badge variant="outline" className="hidden rounded-full px-2.5 py-1 text-[0.68rem] font-semibold sm:inline-flex">
-                {localizedCondition}
+                {ad.vertical === 'real_estate' && realEstateMeta ? realEstateMeta : localizedCondition}
               </Badge>
             </div>
           </div>

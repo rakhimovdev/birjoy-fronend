@@ -27,6 +27,7 @@ import { InstallAppButton } from '@/components/pwa/InstallAppButton';
 import { MarketplaceDrawer } from '@/components/layout/MarketplaceNavigation';
 import { ThemeToggleButton } from '@/components/layout/ThemeToggleButton';
 import { languageMeta, languages, isLanguage, type Language } from '@/lib/i18n';
+import { MARKETPLACE_VERTICALS } from '@/lib/mock-data';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { useToast } from '@/hooks/use-toast';
@@ -64,6 +65,9 @@ function NavbarContent() {
     setSearchQuery(searchParams.get('q') ?? '');
   }, [searchParams]);
 
+  const verticalPaths = new Set(['/', ...MARKETPLACE_VERTICALS.map((vertical) => `/${vertical.slug}`)]);
+  const activeMarketplacePath = verticalPaths.has(pathname) ? pathname : '/market';
+
   const buildMarketplaceUrl = (query: string) => {
     const params = new URLSearchParams();
     const trimmedQuery = query.trim();
@@ -72,14 +76,16 @@ function NavbarContent() {
       params.set('q', trimmedQuery);
     }
 
-    const selectedCategory = pathname === '/' ? searchParams.get('category') : null;
+    const selectedCategory = verticalPaths.has(activeMarketplacePath)
+      ? searchParams.get('category')
+      : null;
 
     if (selectedCategory) {
       params.set('category', selectedCategory);
     }
 
     const queryString = params.toString();
-    return queryString ? `/?${queryString}` : '/';
+    return queryString ? `${activeMarketplacePath}?${queryString}` : activeMarketplacePath;
   };
 
   const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {

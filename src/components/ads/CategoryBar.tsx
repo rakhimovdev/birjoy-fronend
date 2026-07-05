@@ -7,13 +7,21 @@ import { CATEGORIES } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { getLocalizedText } from '@/lib/i18n';
+import type { Category } from '@/lib/types';
 
-export function CategoryBar() {
+export function CategoryBar({
+  categories = CATEGORIES,
+  basePath,
+}: {
+  categories?: Category[];
+  basePath?: string;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { locale, messages } = useI18n();
-  const activeCategory = pathname === '/' ? searchParams.get('category') ?? 'all' : 'all';
+  const currentBasePath = basePath || pathname || '/';
+  const activeCategory = searchParams.get('category') ?? 'all';
 
   const updateCategory = (categorySlug: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -25,7 +33,7 @@ export function CategoryBar() {
     }
 
     const queryString = params.toString();
-    router.push(queryString ? `/?${queryString}` : '/');
+    router.push(queryString ? `${currentBasePath}?${queryString}` : currentBasePath);
   };
 
   return (
@@ -47,7 +55,7 @@ export function CategoryBar() {
             <span className="category-pill__label">{messages.categoryBar.all}</span>
           </button>
 
-          {CATEGORIES.map((category) => {
+          {categories.map((category) => {
             const Icon = (Icons as unknown as Record<string, LucideIcon>)[category.icon];
             const isActive = activeCategory === category.slug;
 

@@ -22,7 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Mail, Phone, MapPin, Package, Heart, Settings, Download } from 'lucide-react';
-import { getCategoryBySlug } from '@/lib/mock-data';
+import { getCategoryBySlug, getVerticalById } from '@/lib/mock-data';
 import { AdCard } from '@/components/ads/AdCard';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
@@ -136,9 +136,13 @@ function ProfilePageContent() {
       title: getLocalizedText(ad.title, locale),
       description: getLocalizedText(ad.description, locale),
       price: ad.price,
+      vertical: getLocalizedText(getVerticalById(ad.vertical)?.name ?? { uz: '', ru: '', en: '' }, locale),
       category: getLocalizedText(getCategoryBySlug(ad.category)?.name ?? { uz: '', ru: '', en: '' }, locale),
       condition: getConditionLabel(ad.condition, locale),
       location: getLocalizedText(ad.location, locale),
+      address: getLocalizedText(ad.address, locale),
+      latitude: ad.latitude,
+      longitude: ad.longitude,
       sellerPhone: ad.sellerPhone,
       createdAt: ad.createdAt,
       status: ad.status,
