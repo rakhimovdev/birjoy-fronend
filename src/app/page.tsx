@@ -37,8 +37,6 @@ function HomeContent() {
           description:
             'Сначала выбирайте нужный вертикаль, затем переходите в специализированный каталог с фильтрами, карточками и быстрым выходом на детали.',
           exploreLabel: 'Открыть витрины',
-          aboutLabel: 'О нас',
-          aboutCta: 'Подробнее',
           verticalTitle: 'Главные вертикали',
           verticalDescription:
             'Каждый раздел получает собственную структуру, категории и сценарий поиска.',
@@ -50,8 +48,6 @@ function HomeContent() {
             description:
               'Start with a top-level vertical, then drop into a specialized catalog with its own categories, cards, and detail flow.',
             exploreLabel: 'Open verticals',
-            aboutLabel: 'About Us',
-            aboutCta: 'Learn more',
             verticalTitle: 'Main verticals',
             verticalDescription:
               'Each vertical gets its own structure, category model, and browsing behavior.',
@@ -62,8 +58,6 @@ function HomeContent() {
             description:
               'Avval kerakli vertikalni tanlang, keyin o‘sha bo‘limga mos kategoriyalar, kartalar va batafsil sahifalarga o‘ting.',
             exploreLabel: 'Vitrinalarni ochish',
-            aboutLabel: 'Biz haqimizda',
-            aboutCta: 'Batafsil',
             verticalTitle: 'Asosiy vertikallar',
             verticalDescription:
               'Har bir bo‘lim endi o‘z tuzilmasi, kategoriyalari va ko‘rish ssenariysiga ega.',
@@ -100,12 +94,13 @@ function HomeContent() {
       }),
     [ads, query]
   );
+  const footerCategories = MARKETPLACE_VERTICALS.slice(0, 4);
 
   return (
     <MarketplaceShell>
       <main className="marketplace-main">
         <section className="overflow-hidden rounded-[2rem] border border-white/20 bg-[linear-gradient(135deg,_#071c55_0%,_#0b48d6_44%,_#0f766e_78%,_#ff730a_118%)] px-5 py-10 text-white sm:px-6 sm:py-12 lg:px-8 lg:py-14">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(18rem,0.88fr)]">
+          <div className="max-w-4xl space-y-5">
             <div className="space-y-5">
               <Badge className="rounded-full border border-white/15 bg-white/10 text-white">
                 {homeCopy.eyebrow}
@@ -127,42 +122,6 @@ function HomeContent() {
                   className="min-h-12 rounded-2xl border-white/20 bg-white/10 text-white hover:bg-white/15"
                 >
                   <Link href="/ads/create">{messages.home.startSelling}</Link>
-                </Button>
-              </div>
-            </div>
-
-            <div className="rounded-[1.85rem] border border-white/15 bg-white/10 p-5 backdrop-blur-xl">
-              <BrandLogo
-                size="hero"
-                showTagline
-                tagline="Online Platforma"
-                className="justify-center text-center"
-              />
-              <div className="mt-8 rounded-[1.5rem] border border-white/12 bg-white/10 p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-white/72">
-                    {homeCopy.aboutLabel}
-                  </p>
-                  <Badge className="border-white/15 bg-white/10 text-white">BirJoy</Badge>
-                </div>
-                <h2 className="mt-4 text-2xl font-bold text-white">{messages.about.description}</h2>
-                <p className="mt-4 text-sm leading-7 text-white/78">{messages.about.paragraphTwo}</p>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {messages.about.valuesItems.map((value) => (
-                    <span
-                      key={value}
-                      className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/88"
-                    >
-                      {value}
-                    </span>
-                  ))}
-                </div>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="mt-6 min-h-11 rounded-2xl border-white/20 bg-white/10 text-white hover:bg-white/15"
-                >
-                  <Link href="/about">{homeCopy.aboutCta}</Link>
                 </Button>
               </div>
             </div>
@@ -217,6 +176,75 @@ function HomeContent() {
             })}
           </div>
         </section>
+
+        <footer className="surface-card rounded-[2rem] px-5 py-10 backdrop-blur sm:px-6">
+          <div className="mb-8 grid grid-cols-1 gap-8 min-[481px]:grid-cols-2 lg:grid-cols-5">
+            <div className="min-[481px]:col-span-2 lg:col-span-1">
+              <BrandLogo size="md" showTagline className="mb-4" />
+              <p className="text-sm text-muted-foreground">{messages.home.footerDescription}</p>
+            </div>
+            <div>
+              <h4 className="mb-4 font-bold">{messages.home.footerCategories}</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {footerCategories.map((vertical) => (
+                  <li key={vertical.id}>{getLocalizedText(vertical.name, locale)}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="mb-4 font-bold">{messages.home.footerSupport}</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {messages.home.footerSupportItems.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="mb-4 font-bold">{messages.home.footerCompany}</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {messages.home.footerCompanyItems.map((item, index) => (
+                  <li key={`${item}-${index}`}>
+                    {index === 0 ? (
+                      <Link href="/about" className="transition-colors hover:text-primary">
+                        {item}
+                      </Link>
+                    ) : (
+                      item
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="min-[481px]:col-span-2 lg:col-span-1">
+              <h4 className="mb-4 font-bold">{messages.home.footerContact}</h4>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                <li>
+                  <a
+                    href="https://t.me/bir_joyuz"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="transition-colors hover:text-primary"
+                  >
+                    Telegram: @bir_joyuz
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://www.instagram.com/1birjoy?igsh=MWZpeDNvdzcwNTRrdQ=="
+                    target="_blank"
+                    rel="noreferrer"
+                    className="break-all transition-colors hover:text-primary"
+                  >
+                    Instagram: @1birjoy
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t pt-8 text-center text-sm text-muted-foreground">
+            © 2024 BirJoy. {messages.home.footerRights}
+          </div>
+        </footer>
       </main>
     </MarketplaceShell>
   );
