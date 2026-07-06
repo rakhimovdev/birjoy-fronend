@@ -6,7 +6,6 @@ import { useSearchParams } from 'next/navigation';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { VerticalBar } from '@/components/layout/VerticalBar';
-import { CategoryBar } from '@/components/ads/CategoryBar';
 import { AdCard } from '@/components/ads/AdCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,12 +15,7 @@ import { useAdminSession } from '@/hooks/use-admin-session';
 import { fetchAds } from '@/lib/ads';
 import { getLocalizedText } from '@/lib/i18n';
 import { filterAds } from '@/lib/listing-utils';
-import {
-  getCategoriesForVertical,
-  getCategoryBySlug,
-  getVerticalById,
-  getVerticalHref,
-} from '@/lib/mock-data';
+import { getCategoryBySlug, getVerticalHref } from '@/lib/mock-data';
 import type { Ad, AdVertical } from '@/lib/types';
 
 export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) {
@@ -34,8 +28,6 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
   const [adsError, setAdsError] = useState<string | null>(null);
   const query = searchParams.get('q')?.trim() ?? '';
   const selectedCategory = searchParams.get('category');
-  const categories = getCategoriesForVertical(vertical);
-  const verticalConfig = getVerticalById(vertical);
   const basePath = getVerticalHref(vertical);
   const selectedCategoryObject = selectedCategory ? getCategoryBySlug(selectedCategory) : null;
 
@@ -78,13 +70,6 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
   const featuredAds = filteredAds.filter((ad) => ad.isFeatured);
   const latestAds = filteredAds.filter((ad) => !ad.isFeatured);
   const hasFilters = Boolean(query || selectedCategory);
-  const localizedVerticalName = verticalConfig ? getLocalizedText(verticalConfig.name, locale) : '';
-  const localizedVerticalTagline = verticalConfig
-    ? getLocalizedText(verticalConfig.tagline, locale)
-    : '';
-  const localizedVerticalDescription = verticalConfig
-    ? getLocalizedText(verticalConfig.description, locale)
-    : '';
   const selectedCategoryLabel = selectedCategoryObject
     ? getLocalizedText(selectedCategoryObject.name, locale)
     : null;
@@ -93,54 +78,6 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
     <MarketplaceShell>
       <main className="marketplace-main">
         <VerticalBar activeVertical={vertical} />
-        <CategoryBar categories={categories} basePath={basePath} />
-
-        <section className="surface-card rounded-[1.8rem] overflow-hidden">
-          <div className="grid gap-6 bg-[linear-gradient(135deg,_rgba(7,28,85,0.98),_rgba(11,72,214,0.9)_58%,_rgba(255,115,10,0.8))] px-5 py-8 text-white sm:px-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(16rem,0.88fr)] lg:px-8">
-            <div className="space-y-4">
-              <Badge className="w-fit rounded-full border border-white/15 bg-white/10 text-white">
-                {localizedVerticalName}
-              </Badge>
-              <div className="space-y-3">
-                <h1 className="page-title font-bold text-white">{localizedVerticalTagline}</h1>
-                <p className="body-lead max-w-2xl text-white/80">{localizedVerticalDescription}</p>
-              </div>
-              <div className="flex flex-col gap-3 min-[481px]:flex-row">
-                <Button asChild className="min-h-12 rounded-2xl bg-accent font-semibold text-accent-foreground hover:bg-accent/90">
-                  <Link href={`/ads/create?vertical=${vertical}`}>{messages.home.startSelling}</Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="min-h-12 rounded-2xl border-white/20 bg-white/10 text-white hover:bg-white/15"
-                >
-                  <Link href={basePath}>{messages.home.clearFilters}</Link>
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <div className="rounded-[1.5rem] border border-white/15 bg-white/10 p-4">
-                <p className="text-sm uppercase tracking-[0.24em] text-white/65">
-                  {messages.home.featuredListings}
-                </p>
-                <p className="mt-3 text-3xl font-bold">{featuredAds.length}</p>
-              </div>
-              <div className="rounded-[1.5rem] border border-white/15 bg-white/10 p-4">
-                <p className="text-sm uppercase tracking-[0.24em] text-white/65">
-                  {messages.home.recentPostings}
-                </p>
-                <p className="mt-3 text-3xl font-bold">{latestAds.length}</p>
-              </div>
-              <div className="rounded-[1.5rem] border border-white/15 bg-white/10 p-4">
-                <p className="text-sm uppercase tracking-[0.24em] text-white/65">
-                  {messages.home.resultsTitle}
-                </p>
-                <p className="mt-3 text-3xl font-bold">{filteredAds.length}</p>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {hasFilters ? (
           <section className="surface-card rounded-[1.75rem] px-5 py-5 sm:px-6">
