@@ -154,6 +154,15 @@ export function RealEstateMarketplacePage() {
       }),
     [ads, query]
   );
+  const featuredAds = useMemo(
+    () => filteredAds.filter((ad) => ad.isFeatured),
+    [filteredAds]
+  );
+  const regularAds = useMemo(
+    () => filteredAds.filter((ad) => !ad.isFeatured),
+    [filteredAds]
+  );
+  const galleryAds = featuredAds.length > 0 ? regularAds : filteredAds;
 
   const mapEligibleAds = useMemo(
     () => filteredAds.filter(hasCoordinates),
@@ -235,6 +244,10 @@ export function RealEstateMarketplacePage() {
           map: 'Карта',
           galleryTitle: 'Галерея жилья',
           galleryDescription: 'Все объявления о жилье собраны в одной ленте.',
+          vipTitle: 'VIP объявления',
+          vipDescription: 'Лучшие предложения собраны в горизонтальной витрине.',
+          regularTitle: 'Остальные объявления',
+          regularDescription: 'Ниже показаны все остальные предложения по жилью.',
           mapTitle: 'Жильё рядом с вами',
           mapDescription: 'Нажмите на ценник на карте, чтобы открыть детали объявления.',
           homesLabel: 'Объявления',
@@ -263,6 +276,10 @@ export function RealEstateMarketplacePage() {
             map: 'Map',
             galleryTitle: 'Home gallery',
             galleryDescription: 'All housing listings are collected in one feed.',
+            vipTitle: 'VIP listings',
+            vipDescription: 'Featured homes appear first in a side-scrolling carousel.',
+            regularTitle: 'Other listings',
+            regularDescription: 'Browse the rest of the home listings below.',
             mapTitle: 'Homes near you',
             mapDescription: 'Tap the price badge on the map to open more listing details.',
             homesLabel: 'Listings',
@@ -290,6 +307,10 @@ export function RealEstateMarketplacePage() {
             map: 'Xarita',
             galleryTitle: 'Uy-joy galereyasi',
             galleryDescription: 'Barcha uy-joy eʼlonlari shu yerda jamlandi.',
+            vipTitle: 'VIP eʼlonlar',
+            vipDescription: 'Tanlangan uylar tepada yonlama karuselda ko‘rsatiladi.',
+            regularTitle: 'Boshqa eʼlonlar',
+            regularDescription: 'Quyida qolgan barcha uy-joy eʼlonlari chiqadi.',
             mapTitle: 'Sizga yaqin uylar',
             mapDescription: 'Xaritadagi narx tugmasini bossangiz, eʼlon tafsilotlari ochiladi.',
             homesLabel: 'Uy eʼlonlari',
@@ -412,33 +433,67 @@ export function RealEstateMarketplacePage() {
             </section>
 
             <TabsContent value="gallery" className="mt-0">
-              <section className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
-                <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
-                  <div>
-                    <h2 className="text-2xl font-bold tracking-tight">{viewCopy.galleryTitle}</h2>
-                    <p className="text-sm text-muted-foreground">{viewCopy.galleryDescription}</p>
-                  </div>
-                  <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
-                    <Link href="/ads/create?vertical=real_estate">
-                      {messages.home.startSelling}
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-                <div className="listing-grid">
-                  {filteredAds.map((ad) => (
-                    <AdCard
-                      key={ad.id}
-                      ad={ad}
-                      isFavorite={isFavorite(ad.id)}
-                      canDelete={isAdmin}
-                      onDeleted={(adId) => {
-                        setAds((previous) => previous.filter((item) => item.id !== adId));
-                      }}
-                    />
-                  ))}
-                </div>
-              </section>
+              <div className="space-y-4">
+                {featuredAds.length > 0 ? (
+                  <section className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
+                    <div className="mb-6 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
+                      <div>
+                        <h2 className="text-2xl font-bold tracking-tight">{viewCopy.vipTitle}</h2>
+                        <p className="text-sm text-muted-foreground">{viewCopy.vipDescription}</p>
+                      </div>
+                      <Badge variant="secondary">{featuredAds.length}</Badge>
+                    </div>
+                    <div className="scroll-row">
+                      {featuredAds.map((ad) => (
+                        <div key={ad.id} className="w-[16.5rem] shrink-0 sm:w-[18rem] lg:w-[19rem]">
+                          <AdCard
+                            ad={ad}
+                            isFavorite={isFavorite(ad.id)}
+                            canDelete={isAdmin}
+                            onDeleted={(adId) => {
+                              setAds((previous) => previous.filter((item) => item.id !== adId));
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
+
+                {galleryAds.length > 0 ? (
+                  <section className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
+                    <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
+                      <div>
+                        <h2 className="text-2xl font-bold tracking-tight">
+                          {featuredAds.length > 0 ? viewCopy.regularTitle : viewCopy.galleryTitle}
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                          {featuredAds.length > 0 ? viewCopy.regularDescription : viewCopy.galleryDescription}
+                        </p>
+                      </div>
+                      <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
+                        <Link href="/ads/create?vertical=real_estate">
+                          {messages.home.startSelling}
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </div>
+                    <div className="listing-grid">
+                      {galleryAds.map((ad) => (
+                        <AdCard
+                          key={ad.id}
+                          ad={ad}
+                          isFavorite={isFavorite(ad.id)}
+                          canDelete={isAdmin}
+                          onDeleted={(adId) => {
+                            setAds((previous) => previous.filter((item) => item.id !== adId));
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
+              </div>
             </TabsContent>
 
             <TabsContent value="map" className="mt-0 space-y-4">
