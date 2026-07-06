@@ -40,6 +40,34 @@ import { createOrderRequest } from '@/lib/orders';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { getAdDisplayLocation } from '@/lib/listing-utils';
 
+const NEARBY_PROPERTIES_RADIUS_KM = 5;
+
+function hasCoordinates(ad: Ad): ad is Ad & { latitude: number; longitude: number } {
+  return (
+    typeof ad.latitude === 'number' &&
+    Number.isFinite(ad.latitude) &&
+    typeof ad.longitude === 'number' &&
+    Number.isFinite(ad.longitude)
+  );
+}
+
+function getDistanceKm(
+  from: { lat: number; lng: number },
+  to: { lat: number; lng: number }
+) {
+  const toRadians = (value: number) => (value * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const latitudeDelta = toRadians(to.lat - from.lat);
+  const longitudeDelta = toRadians(to.lng - from.lng);
+  const startLatitude = toRadians(from.lat);
+  const endLatitude = toRadians(to.lat);
+  const a =
+    Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos(startLatitude) * Math.cos(endLatitude) * Math.sin(longitudeDelta / 2) ** 2;
+
+  return earthRadiusKm * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
 export function AdDetailsView({ adId }: { adId: string }) {
   const router = useRouter();
   const { isFavorite, user } = useAuth();
@@ -48,6 +76,8 @@ export function AdDetailsView({ adId }: { adId: string }) {
   const { isAdmin } = useAdminSession();
   const [ad, setAd] = useState<Ad | null>(null);
   const [relatedAds, setRelatedAds] = useState<Ad[]>([]);
+  const [nearbyAds, setNearbyAds] = useState<Ad[]>([]);
+  const [selectedMapAdId, setSelectedMapAdId] = useState<string | undefined>(undefined);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,24 +100,68 @@ export function AdDetailsView({ adId }: { adId: string }) {
         const [currentAd, allAds] = await Promise.all([fetchAdById(adId), fetchAds()]);
 
         if (!cancelled) {
+          const currentAdPoint = hasCoordinates(currentAd)
+            ? {
+                lat: currentAd.latitude,
+                lng: currentAd.longitude,
+              }
+            : null;
+          const nextRelatedAds = allAds
+            .filter(
+              (item) =>
+                item.id !== currentAd.id &&
+                item.vertical === currentAd.vertical &&
+                item.category === currentAd.category
+            )
+            .slice(0, 3);
+          const nextNearbyAds =
+            currentAd.vertical === 'real_estate' && currentAdPoint
+              ? allAds
+                  .filter(
+                    (
+                      item
+                    ): item is Ad & {
+                      latitude: number;
+                      longitude: number;
+                    } =>
+                      item.id !== currentAd.id &&
+                      item.vertical === 'real_estate' &&
+                      hasCoordinates(item)
+                  )
+                  .filter(
+                    (item) =>
+                      getDistanceKm(currentAdPoint, {
+                        lat: item.latitude,
+                        lng: item.longitude,
+                      }) <= NEARBY_PROPERTIES_RADIUS_KM
+                  )
+                  .sort(
+                    (left, right) =>
+                      getDistanceKm(currentAdPoint, {
+                        lat: left.latitude,
+                        lng: left.longitude,
+                      }) -
+                      getDistanceKm(currentAdPoint, {
+                        lat: right.latitude,
+                        lng: right.longitude,
+                      })
+                  )
+                  .slice(0, 6)
+              : [];
+
           setAd(currentAd);
+          setSelectedMapAdId(currentAd.id);
           setSelectedImageIndex(0);
-          setRelatedAds(
-            allAds
-              .filter(
-                (item) =>
-                  item.id !== currentAd.id &&
-                  item.vertical === currentAd.vertical &&
-                  item.category === currentAd.category
-              )
-              .slice(0, 3)
-          );
+          setRelatedAds(nextRelatedAds);
+          setNearbyAds(nextNearbyAds);
           setError(null);
         }
       } catch (loadError) {
         if (!cancelled) {
           setAd(null);
+          setSelectedMapAdId(undefined);
           setRelatedAds([]);
+          setNearbyAds([]);
           setError(loadError instanceof Error ? loadError.message : messages.adDetails.notFound);
         }
       } finally {
@@ -149,6 +223,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
   const localizedTitle = getLocalizedText(ad.title, locale);
   const localizedDescription = getLocalizedText(ad.description, locale);
   const localizedLocation = getLocalizedText(getAdDisplayLocation(ad), locale);
+  const localizedDistrict = getLocalizedText(ad.district, locale);
   const localizedCategory = category ? getLocalizedText(category.name, locale) : messages.adDetails.category;
   const localizedCondition = getConditionLabel(ad.condition, locale);
   const isRealEstate = ad.vertical === 'real_estate';
@@ -180,6 +255,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
     value: string;
   }>;
   const selectedImage = ad.images[selectedImageIndex] || ad.images[0];
+  const propertyMapAds = isRealEstate ? [ad, ...nearbyAds] : [ad];
   const isOwnListing = user?.id === ad.userId;
   const shouldDisableOptimization =
     selectedImage.startsWith('data:') || selectedImage.startsWith('blob:');
@@ -296,6 +372,21 @@ export function AdDetailsView({ adId }: { adId: string }) {
             helper: 'Suhbatni ilova ichidagi haqiqiy chatda davom ettiring.',
             ownListing: 'Bu sizning eʼloningiz, shuning uchun o‘zingizga chat ochib bo‘lmaydi.',
             errorTitle: 'Chatni ochib bo‘lmadi',
+          };
+  const nearbyCopy =
+    locale === 'ru'
+      ? {
+          title: 'Объявления рядом',
+          description: 'Жильё в радиусе 5 км от этой точки.',
+        }
+      : locale === 'en'
+        ? {
+            title: 'Nearby properties',
+            description: 'Homes within 5 km of this location.',
+          }
+        : {
+            title: 'Yaqin uylar',
+            description: 'Ushbu joydan 5 km radiusdagi uylar.',
           };
 
   const handleOrderSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -539,15 +630,15 @@ export function AdDetailsView({ adId }: { adId: string }) {
                     {locale === 'ru' ? 'Локация на карте' : locale === 'en' ? 'Map location' : 'Xaritadagi joylashuv'}
                   </h2>
                   <RealEstateListingsMap
-                    ads={[ad]}
+                    ads={propertyMapAds}
                     locale={locale}
-                    selectedAdId={ad.id}
-                    onSelectAd={() => undefined}
+                    selectedAdId={selectedMapAdId}
+                    onSelectAd={setSelectedMapAdId}
                     userLocation={null}
                     userLocationLabel={
                       locale === 'ru' ? 'Вы здесь' : locale === 'en' ? 'You are here' : 'Siz turgan joy'
                     }
-                    nearbyRadiusKm={1}
+                    nearbyRadiusKm={NEARBY_PROPERTIES_RADIUS_KM}
                     popupActionLabel={messages.adDetails.browseMore}
                   />
                 </div>
@@ -584,6 +675,14 @@ export function AdDetailsView({ adId }: { adId: string }) {
                     <span className="font-medium text-foreground">{messages.adDetails.location}: </span>
                     {localizedLocation}
                   </p>
+                  {isRealEstate && localizedDistrict ? (
+                    <p>
+                      <span className="font-medium text-foreground">
+                        {locale === 'ru' ? 'Район: ' : locale === 'en' ? 'District: ' : 'Tuman: '}
+                      </span>
+                      {localizedDistrict}
+                    </p>
+                  ) : null}
                   {isRealEstate && ad.area !== null ? (
                     <p>
                       <span className="font-medium text-foreground">
@@ -746,6 +845,31 @@ export function AdDetailsView({ adId }: { adId: string }) {
             </Card>
           </div>
         </div>
+
+        {nearbyAds.length > 0 ? (
+          <section className="mt-12">
+            <div className="mb-6 flex flex-col items-start justify-between gap-3 min-[481px]:flex-row min-[481px]:items-center">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">{nearbyCopy.title}</h2>
+                <p className="text-sm text-muted-foreground">{nearbyCopy.description}</p>
+              </div>
+              <Badge variant="secondary">{nearbyAds.length}</Badge>
+            </div>
+            <div className="listing-grid">
+              {nearbyAds.map((item) => (
+                <AdCard
+                  key={item.id}
+                  ad={item}
+                  isFavorite={isFavorite(item.id)}
+                  canDelete={isAdmin}
+                  onDeleted={(deletedAdId) => {
+                    setNearbyAds((previous) => previous.filter((nearbyAd) => nearbyAd.id !== deletedAdId));
+                  }}
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {relatedAds.length > 0 ? (
           <section className="mt-12">

@@ -2,12 +2,12 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Wand2, ImagePlus, Loader2, Languages, ShieldCheck, AlertCircle, X, MapPinned } from 'lucide-react';
+import { Wand2, ImagePlus, Loader2, Languages, ShieldCheck, AlertCircle, X } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
-import { LeafletMapPicker } from '@/components/maps/LeafletMapPicker';
+import { GoogleLocationPicker, type GoogleLocationPickerCopy } from '@/components/maps/GoogleLocationPicker';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,7 @@ import {
   getVerticalHref,
 } from '@/lib/mock-data';
 import type { Ad, AdVertical } from '@/lib/types';
+import type { Location, ResolvedLocation } from '@/lib/map-types';
 
 type FormState = {
   title: string;
@@ -54,6 +55,13 @@ type FormState = {
   rooms: string;
   area: string;
   floor: string;
+};
+
+type LocationMetaState = {
+  formattedAddress: string;
+  city: string;
+  district: string;
+  country: string;
 };
 
 function buildInitialFormState(initialVertical: AdVertical = 'market'): FormState {
@@ -84,7 +92,7 @@ function buildFormStateFromAd(ad: Ad): FormState {
     price: String(ad.price),
     description: getLocalizedText(ad.description, 'uz'),
     location: getLocalizedText(ad.location, 'uz'),
-    address: getLocalizedText(ad.address, 'uz'),
+    address: getLocalizedText(ad.formattedAddress, 'uz') || getLocalizedText(ad.address, 'uz'),
     contactPhone: ad.sellerPhone,
     rooms: ad.rooms !== null ? String(ad.rooms) : '',
     area: ad.area !== null ? String(ad.area) : '',
@@ -107,6 +115,24 @@ function normalizeVerticalInput(value: string | null | undefined): AdVertical {
   }
 
   return 'market';
+}
+
+function buildInitialLocationMeta(): LocationMetaState {
+  return {
+    formattedAddress: '',
+    city: '',
+    district: '',
+    country: '',
+  };
+}
+
+function buildLocationMetaFromAd(ad: Ad): LocationMetaState {
+  return {
+    formattedAddress: getLocalizedText(ad.formattedAddress, 'uz'),
+    city: getLocalizedText(ad.city, 'uz'),
+    district: getLocalizedText(ad.district, 'uz'),
+    country: getLocalizedText(ad.country, 'uz'),
+  };
 }
 
 export function AdEditorForm({
@@ -134,10 +160,13 @@ export function AdEditorForm({
   const [uploadedImages, setUploadedImages] = useState<UploadedAdImage[]>(() =>
     initialAd ? buildUploadedImagesFromAd(initialAd) : []
   );
-  const [selectedMapPoint, setSelectedMapPoint] = useState<{ lat: number; lng: number } | null>(
+  const [selectedMapPoint, setSelectedMapPoint] = useState<Location | null>(
     initialAd && typeof initialAd.latitude === 'number' && typeof initialAd.longitude === 'number'
       ? { lat: initialAd.latitude, lng: initialAd.longitude }
       : null
+  );
+  const [locationMeta, setLocationMeta] = useState<LocationMetaState>(() =>
+    initialAd ? buildLocationMetaFromAd(initialAd) : buildInitialLocationMeta()
   );
   const nativeAndroidApp = isNativeAndroidApp();
   const categories = getCategoriesForVertical(formData.vertical);
@@ -153,18 +182,28 @@ export function AdEditorForm({
           vertical: 'Вертикаль',
           selectVertical: 'Выберите вертикаль',
           mapTitle: 'Точка на карте',
-          mapDescription: 'Нажмите по карте, чтобы поставить метку, затем перетащите её для точности.',
+          mapDescription: 'Ищите адрес или нажмите по карте, затем перетащите метку для точности.',
           address: 'Точный адрес',
           addressPlaceholder: 'Например, Ташкент, улица Шахрисабз, 12',
+          searchAddress: 'Найти на карте',
+          searchAddressPending: 'Поиск...',
           locationHint: 'Район / ориентир',
           locationHintPlaceholder: 'Например, рядом с метро Айбек',
           rooms: 'Комнаты',
           area: 'Площадь, м²',
           floor: 'Этаж',
           mapRequiredHint: 'Для жилья точка на карте обязательна.',
-            selectedPoint: 'Координаты',
-            notSelected: 'Не выбрано',
-            editAction: 'Сохранить изменения',
+          selectedPoint: 'Координаты',
+          notSelected: 'Не выбрано',
+          myLocation: 'Моя локация',
+          myLocationPending: 'Определяем...',
+          geolocationDenied: 'Доступ к геолокации закрыт. Выберите точку вручную.',
+          geolocationUnsupported: 'Геолокация в этом браузере недоступна.',
+          geolocationError: 'Текущую локацию получить не удалось.',
+          apiKeyMissing: 'NEXT_PUBLIC_GOOGLE_MAPS_API_KEY не найден.',
+          mapError: 'Google Maps не загрузился.',
+          retry: 'Повторить',
+          editAction: 'Сохранить изменения',
           createAction: 'Опубликовать объявление',
           updateSuccessTitle: 'Объявление обновлено',
           updateSuccessDescription: 'Изменения сохранены успешно.',
@@ -177,9 +216,11 @@ export function AdEditorForm({
             vertical: 'Vertical',
             selectVertical: 'Select a vertical',
             mapTitle: 'Map location',
-            mapDescription: 'Tap the map to place a marker, then drag it to refine the location.',
+            mapDescription: 'Search an address or tap the map, then drag the marker to refine the location.',
             address: 'Full address',
             addressPlaceholder: 'For example, 12 Shahrisabz Street, Tashkent',
+            searchAddress: 'Find on map',
+            searchAddressPending: 'Searching...',
             locationHint: 'Area / landmark',
             locationHintPlaceholder: 'For example, near Oybek metro',
             rooms: 'Rooms',
@@ -188,6 +229,14 @@ export function AdEditorForm({
             mapRequiredHint: 'Real-estate listings require a selected map point.',
             selectedPoint: 'Coordinates',
             notSelected: 'Not selected',
+            myLocation: 'My Location',
+            myLocationPending: 'Locating...',
+            geolocationDenied: 'Location access was denied. You can still place the marker manually.',
+            geolocationUnsupported: 'Geolocation is not supported on this device.',
+            geolocationError: 'Current location could not be resolved.',
+            apiKeyMissing: 'NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing.',
+            mapError: 'Google Maps could not be loaded.',
+            retry: 'Retry',
             editAction: 'Save Changes',
             createAction: 'Publish Listing',
             updateSuccessTitle: 'Listing updated',
@@ -200,9 +249,11 @@ export function AdEditorForm({
             vertical: 'Vertikal',
             selectVertical: 'Vertikalni tanlang',
             mapTitle: 'Xaritadagi nuqta',
-            mapDescription: 'Xaritaga bosib marker qo‘ying, keyin aniq joylashuv uchun uni suring.',
+            mapDescription: 'Manzilni qidiring yoki xaritaga bosib marker qo‘ying, keyin uni aniq joyga suring.',
             address: 'Aniq manzil',
             addressPlaceholder: 'Masalan, Toshkent, Shahrisabz ko‘chasi, 12',
+            searchAddress: 'Xaritadan topish',
+            searchAddressPending: 'Qidirilmoqda...',
             locationHint: 'Hudud / orientir',
             locationHintPlaceholder: 'Masalan, Oybek metro yaqinida',
             rooms: 'Xonalar',
@@ -211,6 +262,14 @@ export function AdEditorForm({
             mapRequiredHint: 'Uy-joy e’lonlari uchun xaritadagi nuqta majburiy.',
             selectedPoint: 'Koordinatalar',
             notSelected: 'Tanlanmagan',
+            myLocation: 'Mening joylashuvim',
+            myLocationPending: 'Aniqlanmoqda...',
+            geolocationDenied: 'Joylashuv ruxsati berilmadi. Nuqtani qo‘lda tanlashingiz mumkin.',
+            geolocationUnsupported: 'Bu qurilmada geolokatsiya qo‘llab-quvvatlanmaydi.',
+            geolocationError: 'Joriy joylashuvni aniqlab bo‘lmadi.',
+            apiKeyMissing: 'NEXT_PUBLIC_GOOGLE_MAPS_API_KEY topilmadi.',
+            mapError: 'Google Maps yuklanmadi.',
+            retry: 'Qayta urinish',
             editAction: 'O‘zgarishlarni saqlash',
             createAction: 'E’lonni chop etish',
             updateSuccessTitle: 'E’lon yangilandi',
@@ -240,6 +299,7 @@ export function AdEditorForm({
 
     setFormData(buildFormStateFromAd(initialAd));
     setUploadedImages(buildUploadedImagesFromAd(initialAd));
+    setLocationMeta(buildLocationMetaFromAd(initialAd));
     setSelectedMapPoint(
       typeof initialAd.latitude === 'number' && typeof initialAd.longitude === 'number'
         ? { lat: initialAd.latitude, lng: initialAd.longitude }
@@ -269,6 +329,42 @@ export function AdEditorForm({
       }));
     }
   }, [formData.category, formData.vertical]);
+
+  const handleResolvedLocation = (resolved: ResolvedLocation) => {
+    setFormData((previous) => ({
+      ...previous,
+      address: resolved.formattedAddress || resolved.address || previous.address,
+      location: resolved.locationHint || previous.location,
+    }));
+    setLocationMeta({
+      formattedAddress: resolved.formattedAddress || resolved.address,
+      city: resolved.city,
+      district: resolved.district,
+      country: resolved.country,
+    });
+  };
+
+  const googleLocationPickerCopy: GoogleLocationPickerCopy = {
+    mapTitle: editorCopy.mapTitle,
+    mapDescription: editorCopy.mapDescription,
+    address: editorCopy.address,
+    addressPlaceholder: editorCopy.addressPlaceholder,
+    searchAddress: editorCopy.searchAddress,
+    searchAddressPending: editorCopy.searchAddressPending,
+    locationHint: editorCopy.locationHint,
+    locationHintPlaceholder: editorCopy.locationHintPlaceholder,
+    mapRequiredHint: editorCopy.mapRequiredHint,
+    selectedPoint: editorCopy.selectedPoint,
+    notSelected: editorCopy.notSelected,
+    myLocation: editorCopy.myLocation,
+    myLocationPending: editorCopy.myLocationPending,
+    geolocationDenied: editorCopy.geolocationDenied,
+    geolocationUnsupported: editorCopy.geolocationUnsupported,
+    geolocationError: editorCopy.geolocationError,
+    apiKeyMissing: editorCopy.apiKeyMissing,
+    mapError: editorCopy.mapError,
+    retry: editorCopy.retry,
+  };
 
   const handleSmartImprove = async () => {
     const selectedCategory = categories.find((category) => category.slug === formData.category);
@@ -516,6 +612,12 @@ export function AdEditorForm({
         description: formData.description.trim(),
         location: (isRealEstate ? formData.location || formData.address : formData.location).trim(),
         address: isRealEstate ? formData.address.trim() : '',
+        formattedAddress: isRealEstate
+          ? (locationMeta.formattedAddress || formData.address).trim()
+          : '',
+        city: isRealEstate ? locationMeta.city.trim() : '',
+        district: isRealEstate ? locationMeta.district.trim() : '',
+        country: isRealEstate ? locationMeta.country.trim() : '',
         latitude: isRealEstate ? selectedMapPoint?.lat ?? null : null,
         longitude: isRealEstate ? selectedMapPoint?.lng ?? null : null,
         propertyType:
@@ -751,32 +853,6 @@ export function AdEditorForm({
                   <CardContent className="space-y-4">
                     {isRealEstate ? (
                       <>
-                        <div className="grid gap-4 min-[481px]:grid-cols-2">
-                          <div className="space-y-2">
-                            <Label htmlFor="address">{editorCopy.address}</Label>
-                            <Input
-                              id="address"
-                              placeholder={editorCopy.addressPlaceholder}
-                              value={formData.address}
-                              onChange={(event) =>
-                                setFormData((previous) => ({ ...previous, address: event.target.value }))
-                              }
-                              required
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="location">{editorCopy.locationHint}</Label>
-                            <Input
-                              id="location"
-                              placeholder={editorCopy.locationHintPlaceholder}
-                              value={formData.location}
-                              onChange={(event) =>
-                                setFormData((previous) => ({ ...previous, location: event.target.value }))
-                              }
-                            />
-                          </div>
-                        </div>
-
                         <div className="grid gap-4 min-[481px]:grid-cols-3">
                           <div className="space-y-2">
                             <Label htmlFor="rooms">{editorCopy.rooms}</Label>
@@ -816,25 +892,29 @@ export function AdEditorForm({
                           </div>
                         </div>
 
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            <MapPinned className="h-4 w-4 text-primary" />
-                            <div>
-                              <p className="font-medium text-foreground">{editorCopy.mapTitle}</p>
-                              <p className="text-sm text-muted-foreground">{editorCopy.mapDescription}</p>
-                            </div>
-                          </div>
-                          <LeafletMapPicker value={selectedMapPoint} onChange={setSelectedMapPoint} />
-                          <div className="flex flex-col gap-2 rounded-[1rem] bg-muted/40 p-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-                            <p>{editorCopy.mapRequiredHint}</p>
-                            <Badge variant="outline" className="w-fit">
-                              {editorCopy.selectedPoint}:{' '}
-                              {selectedMapPoint
-                                ? `${selectedMapPoint.lat}, ${selectedMapPoint.lng}`
-                                : editorCopy.notSelected}
-                            </Badge>
-                          </div>
-                        </div>
+                        <GoogleLocationPicker
+                          value={selectedMapPoint}
+                          address={formData.address}
+                          locationHint={formData.location}
+                          locale={locale}
+                          copy={googleLocationPickerCopy}
+                          onChange={setSelectedMapPoint}
+                          onAddressChange={(value) => {
+                            setFormData((previous) => ({ ...previous, address: value }));
+                            setLocationMeta((previous) => ({
+                              ...previous,
+                              formattedAddress: value,
+                            }));
+                          }}
+                          onLocationHintChange={(value) => {
+                            setFormData((previous) => ({ ...previous, location: value }));
+                            setLocationMeta((previous) => ({
+                              ...previous,
+                              district: value,
+                            }));
+                          }}
+                          onResolvedLocationChange={handleResolvedLocation}
+                        />
                       </>
                     ) : (
                       <div className="grid gap-4 min-[481px]:grid-cols-2">

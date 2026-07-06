@@ -21,6 +21,10 @@ export type Ad = {
   condition: 'new' | 'like-new' | 'used' | 'needs-repair';
   location: LocalizedText;
   address: LocalizedText;
+  formattedAddress: LocalizedText;
+  city: LocalizedText;
+  district: LocalizedText;
+  country: LocalizedText;
   latitude: number | null;
   longitude: number | null;
   propertyType: RealEstatePropertyType | '';

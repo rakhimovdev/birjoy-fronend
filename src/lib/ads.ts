@@ -20,6 +20,10 @@ type RemoteAd = {
   condition?: string;
   location?: string | LocalizedText;
   address?: string | LocalizedText;
+  formattedAddress?: string | LocalizedText;
+  city?: string | LocalizedText;
+  district?: string | LocalizedText;
+  country?: string | LocalizedText;
   latitude?: number | null;
   longitude?: number | null;
   propertyType?: string;
@@ -52,6 +56,10 @@ export type CreateAdInput = {
   description: string;
   location: string;
   address?: string;
+  formattedAddress?: string;
+  city?: string;
+  district?: string;
+  country?: string;
   latitude?: number | null;
   longitude?: number | null;
   propertyType?: RealEstatePropertyType | '';
@@ -195,6 +203,10 @@ function normalizeRemoteAd(ad: RemoteAd): Ad {
     condition: normalizeCondition(ad.condition),
     location: normalizeText(ad.location || ad.address, ''),
     address: normalizeText(ad.address || ad.location, ''),
+    formattedAddress: normalizeText(ad.formattedAddress || ad.address || ad.location, ''),
+    city: normalizeText(ad.city, ''),
+    district: normalizeText(ad.district, ''),
+    country: normalizeText(ad.country, ''),
     latitude: normalizeNullableNumber(ad.latitude),
     longitude: normalizeNullableNumber(ad.longitude),
     propertyType: normalizePropertyType(ad.propertyType),

@@ -1,7 +1,17 @@
 import type { Ad, AdVertical } from '@/lib/types';
 import { getCategoryBySlug } from '@/lib/mock-data';
 
-function flattenLocalizedText(value: Ad['title'] | Ad['description'] | Ad['location'] | Ad['address']) {
+function flattenLocalizedText(
+  value:
+    | Ad['title']
+    | Ad['description']
+    | Ad['location']
+    | Ad['address']
+    | Ad['formattedAddress']
+    | Ad['city']
+    | Ad['district']
+    | Ad['country']
+) {
   return [value.uz, value.ru, value.en].filter(Boolean);
 }
 
@@ -10,7 +20,11 @@ export function isAdInVertical(ad: Ad, vertical: AdVertical) {
 }
 
 export function getAdDisplayLocation(ad: Ad) {
-  return ad.vertical === 'real_estate' ? ad.address : ad.location;
+  return ad.vertical === 'real_estate'
+    ? ad.formattedAddress.uz || ad.formattedAddress.ru || ad.formattedAddress.en
+      ? ad.formattedAddress
+      : ad.address
+    : ad.location;
 }
 
 export function filterAds(
@@ -42,6 +56,10 @@ export function filterAds(
       ...flattenLocalizedText(ad.description),
       ...flattenLocalizedText(ad.location),
       ...flattenLocalizedText(ad.address),
+      ...flattenLocalizedText(ad.formattedAddress),
+      ...flattenLocalizedText(ad.city),
+      ...flattenLocalizedText(ad.district),
+      ...flattenLocalizedText(ad.country),
       ad.userName,
       ad.sellerPhone,
       ad.propertyType,

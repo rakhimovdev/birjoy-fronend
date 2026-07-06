@@ -16,17 +16,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { fetchAds } from '@/lib/ads';
 import { filterAds } from '@/lib/listing-utils';
+import type { Location } from '@/lib/map-types';
 import { getVerticalHref } from '@/lib/mock-data';
 import type { Ad } from '@/lib/types';
 
 type RealEstateViewMode = 'gallery' | 'map';
 type LocationState = 'idle' | 'loading' | 'ready' | 'denied' | 'unsupported' | 'error';
-type Coordinates = {
-  lat: number;
-  lng: number;
-};
-
-const NEARBY_RADIUS_KM = 15;
+const NEARBY_RADIUS_KM = 5;
 const MAX_FALLBACK_MAP_RESULTS = 24;
 
 function hasCoordinates(ad: Ad): ad is Ad & { latitude: number; longitude: number } {
@@ -38,7 +34,7 @@ function hasCoordinates(ad: Ad): ad is Ad & { latitude: number; longitude: numbe
   );
 }
 
-function getDistanceKm(from: Coordinates, to: Coordinates) {
+function getDistanceKm(from: Location, to: Location) {
   const toRadians = (value: number) => (value * Math.PI) / 180;
   const earthRadiusKm = 6371;
   const latitudeDelta = toRadians(to.lat - from.lat);
@@ -63,7 +59,7 @@ export function RealEstateMarketplacePage() {
   const [viewMode, setViewMode] = useState<RealEstateViewMode>('gallery');
   const [selectedAdId, setSelectedAdId] = useState<string | undefined>(undefined);
   const [locationState, setLocationState] = useState<LocationState>('idle');
-  const [userCoordinates, setUserCoordinates] = useState<Coordinates | null>(null);
+  const [userCoordinates, setUserCoordinates] = useState<Location | null>(null);
   const query = searchParams.get('q')?.trim() ?? '';
   const basePath = getVerticalHref('real_estate');
 
@@ -204,12 +200,12 @@ export function RealEstateMarketplacePage() {
       return;
     }
 
-    if (!selectedAdId || !mapAds.some((ad) => ad.id === selectedAdId)) {
+    if (selectedAdId && !mapAds.some((ad) => ad.id === selectedAdId)) {
       setSelectedAdId(mapAds[0]?.id);
     }
   }, [mapAds, selectedAdId]);
 
-  const selectedAd = mapAds.find((ad) => ad.id === selectedAdId) || mapAds[0] || null;
+  const selectedAd = mapAds.find((ad) => ad.id === selectedAdId) || null;
   const hasFilters = Boolean(query);
 
   const viewCopy =
