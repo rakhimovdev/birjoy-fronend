@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
+import { VerticalBar } from '@/components/layout/VerticalBar';
 import { CategoryBar } from '@/components/ads/CategoryBar';
 import { AdCard } from '@/components/ads/AdCard';
 import { Badge } from '@/components/ui/badge';
@@ -91,6 +92,7 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
   return (
     <MarketplaceShell>
       <main className="marketplace-main">
+        <VerticalBar activeVertical={vertical} />
         <CategoryBar categories={categories} basePath={basePath} />
 
         <section className="surface-card rounded-[1.8rem] overflow-hidden">

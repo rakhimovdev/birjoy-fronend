@@ -543,6 +543,12 @@ export function AdDetailsView({ adId }: { adId: string }) {
                     locale={locale}
                     selectedAdId={ad.id}
                     onSelectAd={() => undefined}
+                    userLocation={null}
+                    userLocationLabel={
+                      locale === 'ru' ? 'Вы здесь' : locale === 'en' ? 'You are here' : 'Siz turgan joy'
+                    }
+                    nearbyRadiusKm={1}
+                    popupActionLabel={messages.adDetails.browseMore}
                   />
                 </div>
               ) : null}

@@ -504,6 +504,7 @@
   }
 
   .leaflet-price-marker-wrapper,
+  .leaflet-user-marker-wrapper,
   .leaflet-picker-marker-wrapper {
     background: transparent;
     border: none;
@@ -531,6 +532,16 @@
     color: white;
   }
 
+  .leaflet-user-location-marker {
+    display: block;
+    height: 1.1rem;
+    width: 1.1rem;
+    border-radius: 9999px;
+    border: 3px solid white;
+    background: #0b48d6;
+    box-shadow: 0 0 0 8px rgba(11, 72, 214, 0.14), 0 10px 24px rgba(7, 28, 85, 0.18);
+  }
+
   .leaflet-picker-marker {
     display: block;
     height: 1.2rem;
@@ -549,6 +560,32 @@
   .real-estate-list-panel {
     display: grid;
     gap: clamp(0.8rem, 1.8vw, 1.25rem);
+  }
+
+  .map-listing-chip {
+    min-width: 14rem;
+    border-radius: 1.25rem;
+    border: 1px solid var(--surface-border-color);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 1rem;
+    text-align: left;
+    transition:
+      transform 180ms ease,
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      background-color 180ms ease;
+  }
+
+  .map-listing-chip:hover {
+    transform: translateY(-1px);
+    border-color: rgba(11, 72, 214, 0.2);
+    box-shadow: 0 18px 30px rgba(7, 28, 85, 0.1);
+  }
+
+  .map-listing-chip[data-active='true'] {
+    border-color: rgba(11, 72, 214, 0.22);
+    background: linear-gradient(135deg, rgba(11, 72, 214, 0.08), rgba(255, 115, 10, 0.08));
+    box-shadow: 0 18px 32px rgba(11, 72, 214, 0.12);
   }
 
   .list-clamp-2 {

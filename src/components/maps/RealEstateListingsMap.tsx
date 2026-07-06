@@ -4,6 +4,11 @@ import dynamic from 'next/dynamic';
 import type { Ad } from '@/lib/types';
 import type { Language } from '@/lib/i18n';
 
+type Coordinates = {
+  lat: number;
+  lng: number;
+};
+
 const RealEstateListingsMapClient = dynamic(() => import('./RealEstateListingsMapClient'), {
   ssr: false,
   loading: () => (
@@ -18,6 +23,10 @@ export function RealEstateListingsMap(props: {
   locale: Language;
   selectedAdId?: string;
   onSelectAd: (adId: string) => void;
+  userLocation?: Coordinates | null;
+  userLocationLabel: string;
+  nearbyRadiusKm: number;
+  popupActionLabel: string;
 }) {
   return <RealEstateListingsMapClient {...props} />;
 }

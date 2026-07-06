@@ -38,6 +38,7 @@ function useNavigationLinks() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { messages } = useI18n();
+  const homeHref = '/uy-joy';
 
   const favoritesHref = user ? '/favorites' : `/sign-in?redirect=${encodeURIComponent('/favorites')}`;
   const chatHref = user ? '/chat' : `/sign-in?redirect=${encodeURIComponent('/chat')}`;
@@ -47,10 +48,10 @@ function useNavigationLinks() {
 
   const links: NavigationLink[] = [
     {
-      href: '/',
+      href: homeHref,
       icon: Home,
       label: messages.navbar.home,
-      active: pathname === '/',
+      active: pathname === '/' || pathname === homeHref,
     },
     {
       href: favoritesHref,
@@ -130,8 +131,8 @@ export function MarketplaceBottomNav() {
 export function MarketplaceDrawer() {
   const { links, pathname, searchParams } = useNavigationLinks();
   const { locale, messages, setLocale } = useI18n();
-  const activeVertical = pathname === '/' ? 'market' : getVerticalBySlug(pathname.slice(1))?.id || 'market';
-  const activeVerticalPath = activeVertical === 'market' ? '/market' : getVerticalHref(activeVertical);
+  const activeVertical = pathname === '/' ? 'real_estate' : getVerticalBySlug(pathname.slice(1))?.id || 'market';
+  const activeVerticalPath = getVerticalHref(activeVertical);
   const activeCategory = searchParams.get('category') ?? 'all';
   const currentQuery = searchParams.get('q');
   const currentCategories = activeVertical === 'market' ? CATEGORIES : getCategoriesForVertical(activeVertical);
