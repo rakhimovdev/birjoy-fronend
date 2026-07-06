@@ -13,23 +13,20 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { fetchAds } from '@/lib/ads';
-import { getLocalizedText } from '@/lib/i18n';
 import { filterAds } from '@/lib/listing-utils';
-import { getCategoryBySlug, getVerticalHref } from '@/lib/mock-data';
+import { getVerticalHref } from '@/lib/mock-data';
 import type { Ad, AdVertical } from '@/lib/types';
 
 export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) {
   const searchParams = useSearchParams();
   const { isFavorite } = useAuth();
-  const { locale, messages } = useI18n();
+  const { messages } = useI18n();
   const { isAdmin } = useAdminSession();
   const [ads, setAds] = useState<Ad[]>([]);
   const [isLoadingAds, setIsLoadingAds] = useState(true);
   const [adsError, setAdsError] = useState<string | null>(null);
   const query = searchParams.get('q')?.trim() ?? '';
-  const selectedCategory = searchParams.get('category');
   const basePath = getVerticalHref(vertical);
-  const selectedCategoryObject = selectedCategory ? getCategoryBySlug(selectedCategory) : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -64,15 +61,9 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
 
   const filteredAds = filterAds(ads, {
     vertical,
-    category: selectedCategory,
     query,
   });
-  const featuredAds = filteredAds.filter((ad) => ad.isFeatured);
-  const latestAds = filteredAds.filter((ad) => !ad.isFeatured);
-  const hasFilters = Boolean(query || selectedCategory);
-  const selectedCategoryLabel = selectedCategoryObject
-    ? getLocalizedText(selectedCategoryObject.name, locale)
-    : null;
+  const hasFilters = Boolean(query);
 
   return (
     <MarketplaceShell>
@@ -87,7 +78,6 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
                 <p className="text-sm text-muted-foreground">{messages.home.resultsDescription}</p>
                 <div className="flex flex-wrap gap-2">
                   {query ? <Badge variant="secondary">{query}</Badge> : null}
-                  {selectedCategoryLabel ? <Badge variant="secondary">{selectedCategoryLabel}</Badge> : null}
                 </div>
               </div>
               <Button asChild variant="outline" className="w-full min-[481px]:w-auto">
@@ -129,59 +119,30 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
             </div>
           </section>
         ) : (
-          <>
-            {featuredAds.length > 0 ? (
-              <section className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
-                <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
-                  <h2 className="text-2xl font-bold tracking-tight">{messages.home.featuredListings}</h2>
-                  <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
-                    <Link href="#all-listings">
-                      {messages.home.viewAll}
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-                <div className="listing-grid">
-                  {featuredAds.map((ad) => (
-                    <AdCard
-                      key={ad.id}
-                      ad={ad}
-                      isFavorite={isFavorite(ad.id)}
-                      canDelete={isAdmin}
-                      onDeleted={(adId) => {
-                        setAds((previous) => previous.filter((item) => item.id !== adId));
-                      }}
-                    />
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
-            <section id="all-listings" className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
-              <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
-                <h2 className="text-2xl font-bold tracking-tight">{messages.home.recentPostings}</h2>
-                <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
-                  <Link href={`/ads/create?vertical=${vertical}`}>
-                    {messages.home.startSelling}
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-              <div className="listing-grid">
-                {latestAds.map((ad) => (
-                  <AdCard
-                    key={ad.id}
-                    ad={ad}
-                    isFavorite={isFavorite(ad.id)}
-                    canDelete={isAdmin}
-                    onDeleted={(adId) => {
-                      setAds((previous) => previous.filter((item) => item.id !== adId));
-                    }}
-                  />
-                ))}
-              </div>
-            </section>
-          </>
+          <section id="all-listings" className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
+            <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
+              <h2 className="text-2xl font-bold tracking-tight">{messages.home.browseAllListings}</h2>
+              <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
+                <Link href={`/ads/create?vertical=${vertical}`}>
+                  {messages.home.startSelling}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+            <div className="listing-grid">
+              {filteredAds.map((ad) => (
+                <AdCard
+                  key={ad.id}
+                  ad={ad}
+                  isFavorite={isFavorite(ad.id)}
+                  canDelete={isAdmin}
+                  onDeleted={(adId) => {
+                    setAds((previous) => previous.filter((item) => item.id !== adId));
+                  }}
+                />
+              ))}
+            </div>
+          </section>
         )}
       </main>
     </MarketplaceShell>

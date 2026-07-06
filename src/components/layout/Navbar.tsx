@@ -76,14 +76,6 @@ function NavbarContent() {
       params.set('q', trimmedQuery);
     }
 
-    const selectedCategory = verticalPaths.has(activeMarketplacePath)
-      ? searchParams.get('category')
-      : null;
-
-    if (selectedCategory) {
-      params.set('category', selectedCategory);
-    }
-
     const queryString = params.toString();
     return queryString ? `${activeMarketplacePath}?${queryString}` : activeMarketplacePath;
   };

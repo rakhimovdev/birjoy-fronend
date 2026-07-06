@@ -11,9 +11,7 @@ import {
   User,
 } from 'lucide-react';
 import {
-  CATEGORIES,
   MARKETPLACE_VERTICALS,
-  getCategoriesForVertical,
   getVerticalBySlug,
   getVerticalHref,
 } from '@/lib/mock-data';
@@ -86,21 +84,6 @@ function useNavigationLinks() {
   };
 }
 
-function buildCategoryHref(basePath: string, categorySlug: string, currentQuery: string | null) {
-  const params = new URLSearchParams();
-
-  if (currentQuery?.trim()) {
-    params.set('q', currentQuery.trim());
-  }
-
-  if (categorySlug !== 'all') {
-    params.set('category', categorySlug);
-  }
-
-  const query = params.toString();
-  return query ? `${basePath}?${query}` : basePath;
-}
-
 export function MarketplaceBottomNav() {
   const { links } = useNavigationLinks();
 
@@ -129,13 +112,9 @@ export function MarketplaceBottomNav() {
 }
 
 export function MarketplaceDrawer() {
-  const { links, pathname, searchParams } = useNavigationLinks();
+  const { links, pathname } = useNavigationLinks();
   const { locale, messages, setLocale } = useI18n();
   const activeVertical = pathname === '/' ? 'real_estate' : getVerticalBySlug(pathname.slice(1))?.id || 'market';
-  const activeVerticalPath = getVerticalHref(activeVertical);
-  const activeCategory = searchParams.get('category') ?? 'all';
-  const currentQuery = searchParams.get('q');
-  const currentCategories = activeVertical === 'market' ? CATEGORIES : getCategoriesForVertical(activeVertical);
   const verticalSectionLabel =
     locale === 'ru' ? 'Вертикали' : locale === 'en' ? 'Verticals' : 'Vertikallar';
 
@@ -220,42 +199,6 @@ export function MarketplaceDrawer() {
                       )}
                     >
                       {getLocalizedText(vertical.name, locale)}
-                    </Link>
-                  </SheetClose>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-xs font-bold uppercase tracking-[0.26em] text-muted-foreground">
-                {messages.navbar.marketCategories}
-              </p>
-              <div className="grid gap-2 min-[481px]:grid-cols-2">
-                <SheetClose asChild>
-                  <Link
-                    href={buildCategoryHref(activeVerticalPath, 'all', currentQuery)}
-                    className={cn(
-                      'rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors',
-                      activeCategory === 'all'
-                        ? 'border-primary/15 bg-primary/10 text-primary'
-                        : 'marketplace-drawer-card hover:bg-primary/5 hover:text-primary'
-                    )}
-                  >
-                    {messages.categoryBar.all}
-                  </Link>
-                </SheetClose>
-                {currentCategories.map((category) => (
-                  <SheetClose key={category.id} asChild>
-                    <Link
-                      href={buildCategoryHref(activeVerticalPath, category.slug, currentQuery)}
-                      className={cn(
-                      'rounded-2xl border px-4 py-3 text-sm font-medium transition-colors',
-                      activeCategory === category.slug
-                        ? 'border-primary/15 bg-primary/10 text-primary'
-                        : 'marketplace-drawer-card hover:bg-primary/5 hover:text-primary'
-                    )}
-                  >
-                    {getLocalizedText(category.name, locale)}
                     </Link>
                   </SheetClose>
                 ))}

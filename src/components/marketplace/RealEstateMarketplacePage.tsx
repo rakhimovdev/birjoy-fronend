@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowRight, LayoutGrid, ListFilter, Loader2, LocateFixed, MapPinned } from 'lucide-react';
 import { AdCard } from '@/components/ads/AdCard';
-import { CategoryBar } from '@/components/ads/CategoryBar';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { VerticalBar } from '@/components/layout/VerticalBar';
 import { RealEstateListingsMap } from '@/components/maps/RealEstateListingsMap';
@@ -20,7 +19,7 @@ import { useAdminSession } from '@/hooks/use-admin-session';
 import { fetchAds } from '@/lib/ads';
 import { getLocalizedText, languageMeta } from '@/lib/i18n';
 import { filterAds, getAdDisplayLocation } from '@/lib/listing-utils';
-import { REAL_ESTATE_CATEGORIES, getCategoryBySlug, getVerticalById, getVerticalHref } from '@/lib/mock-data';
+import { getCategoryBySlug, getVerticalHref } from '@/lib/mock-data';
 import type { Ad } from '@/lib/types';
 
 type RealEstateViewMode = 'gallery' | 'map';
@@ -79,10 +78,7 @@ export function RealEstateMarketplacePage() {
   const [locationState, setLocationState] = useState<LocationState>('idle');
   const [userCoordinates, setUserCoordinates] = useState<Coordinates | null>(null);
   const query = searchParams.get('q')?.trim() ?? '';
-  const selectedCategory = searchParams.get('category');
   const basePath = getVerticalHref('real_estate');
-  const verticalConfig = getVerticalById('real_estate');
-  const selectedCategoryObject = selectedCategory ? getCategoryBySlug(selectedCategory) : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -154,10 +150,9 @@ export function RealEstateMarketplacePage() {
     () =>
       filterAds(ads, {
         vertical: 'real_estate',
-        category: selectedCategory,
         query,
       }),
-    [ads, query, selectedCategory]
+    [ads, query]
   );
 
   const mapEligibleAds = useMemo(
@@ -222,15 +217,7 @@ export function RealEstateMarketplacePage() {
   const selectedAdDistance = mapAdsWithDistance.find((item) => item.ad.id === selectedAd?.id)?.distanceKm ?? null;
   const isShowingDistanceFallback =
     Boolean(userCoordinates) && nearbyAds.length === 0 && mapAdsWithDistance.length > 0;
-  const hasFilters = Boolean(query || selectedCategory);
-  const localizedVerticalName = verticalConfig ? getLocalizedText(verticalConfig.name, locale) : '';
-  const localizedVerticalTagline = verticalConfig ? getLocalizedText(verticalConfig.tagline, locale) : '';
-  const localizedVerticalDescription = verticalConfig
-    ? getLocalizedText(verticalConfig.description, locale)
-    : '';
-  const selectedCategoryLabel = selectedCategoryObject
-    ? getLocalizedText(selectedCategoryObject.name, locale)
-    : null;
+  const hasFilters = Boolean(query);
   const priceFormatter = useMemo(
     () =>
       new Intl.NumberFormat(languageMeta[locale].numberLocale, {
@@ -345,48 +332,6 @@ export function RealEstateMarketplacePage() {
     <MarketplaceShell>
       <main className="marketplace-main">
         <VerticalBar activeVertical="real_estate" />
-        <CategoryBar categories={REAL_ESTATE_CATEGORIES} basePath={basePath} />
-
-        <section className="surface-card overflow-hidden rounded-[1.8rem]">
-          <div className="grid gap-6 bg-[linear-gradient(135deg,_rgba(14,38,25,0.98),_rgba(17,94,89,0.92)_56%,_rgba(239,154,78,0.82))] px-5 py-8 text-white sm:px-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(16rem,0.88fr)] lg:px-8">
-            <div className="space-y-4">
-              <Badge className="w-fit rounded-full border border-white/15 bg-white/10 text-white">
-                {localizedVerticalName}
-              </Badge>
-              <div className="space-y-3">
-                <h1 className="page-title font-bold text-white">{localizedVerticalTagline}</h1>
-                <p className="body-lead max-w-2xl text-white/80">{localizedVerticalDescription}</p>
-              </div>
-              <div className="flex flex-col gap-3 min-[481px]:flex-row">
-                <Button asChild className="min-h-12 rounded-2xl bg-white text-[#0b3f37] hover:bg-white/92">
-                  <Link href="/ads/create?vertical=real_estate">{messages.home.startSelling}</Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="min-h-12 rounded-2xl border-white/20 bg-white/10 text-white hover:bg-white/15"
-                >
-                  <Link href={basePath}>{messages.home.clearFilters}</Link>
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <div className="rounded-[1.5rem] border border-white/15 bg-white/10 p-4">
-                <p className="text-sm uppercase tracking-[0.24em] text-white/65">{viewCopy.homesLabel}</p>
-                <p className="mt-3 text-3xl font-bold">{filteredAds.length}</p>
-              </div>
-              <div className="rounded-[1.5rem] border border-white/15 bg-white/10 p-4">
-                <p className="text-sm uppercase tracking-[0.24em] text-white/65">{viewCopy.mappedLabel}</p>
-                <p className="mt-3 text-3xl font-bold">{mapEligibleAds.length}</p>
-              </div>
-              <div className="rounded-[1.5rem] border border-white/15 bg-white/10 p-4">
-                <p className="text-sm uppercase tracking-[0.24em] text-white/65">{viewCopy.featuredLabel}</p>
-                <p className="mt-3 text-3xl font-bold">{filteredAds.filter((ad) => ad.isFeatured).length}</p>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {hasFilters ? (
           <section className="surface-card rounded-[1.75rem] px-5 py-5 sm:px-6">
@@ -396,7 +341,6 @@ export function RealEstateMarketplacePage() {
                 <p className="text-sm text-muted-foreground">{messages.home.resultsDescription}</p>
                 <div className="flex flex-wrap gap-2">
                   {query ? <Badge variant="secondary">{query}</Badge> : null}
-                  {selectedCategoryLabel ? <Badge variant="secondary">{selectedCategoryLabel}</Badge> : null}
                 </div>
               </div>
               <Button asChild variant="outline" className="w-full min-[481px]:w-auto">
@@ -588,9 +532,9 @@ export function RealEstateMarketplacePage() {
                                       ? `${selectedAd.rooms} ${viewCopy.roomSuffix}`
                                       : getLocalizedText(
                                           getCategoryBySlug(selectedAd.category)?.name || {
-                                            uz: localizedVerticalName,
-                                            ru: localizedVerticalName,
-                                            en: localizedVerticalName,
+                                            uz: 'Uy-joy',
+                                            ru: 'Жильё',
+                                            en: 'Real Estate',
                                           },
                                           locale
                                         )}
