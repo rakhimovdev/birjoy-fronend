@@ -661,7 +661,7 @@
     }
 
     .listing-grid {
-      grid-template-columns: repeat(auto-fit, minmax(var(--listing-min-column), 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .category-bar-grid {
@@ -724,7 +724,7 @@
     }
 
     .listing-grid {
-      grid-template-columns: repeat(auto-fit, minmax(var(--listing-min-column), 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
     .two-pane-grid {
@@ -752,6 +752,10 @@
   @media (min-width: 1280px) {
     :root {
       --listing-min-column: 14.5rem;
+    }
+
+    .listing-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
     }
   }
 

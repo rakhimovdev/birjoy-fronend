@@ -445,7 +445,7 @@ export function RealEstateMarketplacePage() {
                     </div>
                     <div className="scroll-row">
                       {featuredAds.map((ad) => (
-                        <div key={ad.id} className="w-[16.5rem] shrink-0 sm:w-[18rem] lg:w-[19rem]">
+                        <div key={ad.id} className="w-[11.5rem] shrink-0 sm:w-[12.5rem] lg:w-[13rem] xl:w-[14rem]">
                           <AdCard
                             ad={ad}
                             isFavorite={isFavorite(ad.id)}
