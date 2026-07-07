@@ -404,7 +404,7 @@ export function RealEstateMarketplacePage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="map" className="mt-0">
+            <TabsContent value="map" className="mt-0" forceMount>
               {mapAds.length === 0 ? (
                 <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
                   <MapPinned className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
@@ -414,7 +414,7 @@ export function RealEstateMarketplacePage() {
                   <p className="mx-auto max-w-2xl text-muted-foreground">{viewCopy.noMapDescription}</p>
                 </section>
               ) : (
-                <section className="surface-card rounded-[1.75rem] p-3">
+                <section className="surface-card min-w-0 rounded-[1.75rem] p-3">
                   <RealEstateListingsMap
                     ads={mapAds}
                     locale={locale}
@@ -424,6 +424,7 @@ export function RealEstateMarketplacePage() {
                     userLocationLabel={viewCopy.yourLocation}
                     nearbyRadiusKm={NEARBY_RADIUS_KM}
                     popupActionLabel={messages.adDetails.browseMore}
+                    isVisible={viewMode === 'map'}
                   />
                 </section>
               )}

@@ -31,6 +31,8 @@ import type { Cluster, ClusterStats, Renderer } from '@googlemaps/markerclustere
 type GoogleMapComponentProps = MapProps & {
   language?: Language;
   popupActionLabel?: string;
+  containerId?: string;
+  isVisible?: boolean;
 };
 
 type AdvancedMarkerClusterer = InstanceType<typeof GoogleMapsMarkerClusterer.MarkerClusterer>;
@@ -67,7 +69,7 @@ function normalizeHeight(height: number | string | undefined) {
     return `${height}px`;
   }
 
-  return height || '100%';
+  return height;
 }
 
 function createMarkerImageContent(icon: PropertyMarker['icon']) {
@@ -135,7 +137,7 @@ function GoogleMapComponent({
   markers = [],
   onClick,
   onMarkerClick,
-  height = '100%',
+  height,
   className,
   fitBounds = false,
   selectedMarkerId,
@@ -144,19 +146,27 @@ function GoogleMapComponent({
   nearbyRadiusKm,
   language = 'uz',
   popupActionLabel,
+  containerId,
+  isVisible = true,
 }: GoogleMapComponentProps) {
   const { theme } = useTheme();
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const clustererRef = useRef<AdvancedMarkerClusterer | null>(null);
   const propertyMarkerListenersRef = useRef<Array<() => void>>([]);
   const propertyMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const userLocationMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
+  const resizeFrameRef = useRef<number | null>(null);
   const [loaderNonce, setLoaderNonce] = useState(0);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(selectedMarkerId || null);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const [canInitializeMap, setCanInitializeMap] = useState(false);
   const copy = getCopy(language);
   const mapHeight = normalizeHeight(height);
   const highlightedMarkerId = selectedMarkerId || activeMarkerId;
+  const hasContainerSize = containerSize.width > 0 && containerSize.height > 0;
+  const containerStyle = mapHeight ? { height: mapHeight } : undefined;
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: `google-map-${language}-${loaderNonce}`,
@@ -248,6 +258,81 @@ function GoogleMapComponent({
     [onMarkerClick]
   );
 
+  const syncMapViewport = useCallback(
+    (map: google.maps.Map) => {
+      if (selectedMarker) {
+        map.panTo(selectedMarker);
+
+        if ((map.getZoom() || 0) < 14) {
+          map.setZoom(14);
+        }
+
+        return;
+      }
+
+      if (fitBounds && (markers.length > 1 || userLocation)) {
+        const bounds = new google.maps.LatLngBounds();
+
+        markers.forEach((marker) => {
+          bounds.extend(marker);
+        });
+
+        if (userLocation) {
+          bounds.extend(userLocation);
+        }
+
+        map.fitBounds(bounds, 64);
+        return;
+      }
+
+      if (userLocation) {
+        map.panTo(userLocation);
+        map.setZoom(12);
+        return;
+      }
+
+      map.panTo(center);
+      map.setZoom(zoom);
+    },
+    [center, fitBounds, markers, selectedMarker, userLocation, zoom]
+  );
+
+  const scheduleMapResize = useCallback(() => {
+    if (
+      typeof window === 'undefined' ||
+      !mapRef.current ||
+      !hasContainerSize ||
+      !isLoaded ||
+      typeof google === 'undefined'
+    ) {
+      return;
+    }
+
+    if (resizeFrameRef.current !== null) {
+      window.cancelAnimationFrame(resizeFrameRef.current);
+    }
+
+    resizeFrameRef.current = window.requestAnimationFrame(() => {
+      resizeFrameRef.current = null;
+
+      const map = mapRef.current;
+      const container = containerRef.current;
+
+      if (!map || !container) {
+        return;
+      }
+
+      const { width, height } = container.getBoundingClientRect();
+
+      if (width <= 0 || height <= 0) {
+        return;
+      }
+
+      google.maps.event.trigger(map, 'resize');
+      syncMapViewport(map);
+    });
+  }, [hasContainerSize, isLoaded, mapInstance, syncMapViewport]);
+
   const clearPropertyMarkers = useCallback(() => {
     propertyMarkerListenersRef.current.forEach((removeListener) => {
       removeListener();
@@ -267,6 +352,60 @@ function GoogleMapComponent({
 
     userLocationMarkerRef.current.map = null;
     userLocationMarkerRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    const updateContainerSize = () => {
+      const { width, height } = container.getBoundingClientRect();
+      const nextSize = {
+        width: Math.round(width),
+        height: Math.round(height),
+      };
+
+      setContainerSize((current) =>
+        current.width === nextSize.width && current.height === nextSize.height ? current : nextSize
+      );
+    };
+
+    updateContainerSize();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateContainerSize);
+
+      return () => {
+        window.removeEventListener('resize', updateContainerSize);
+      };
+    }
+
+    const observer = new ResizeObserver(() => {
+      updateContainerSize();
+    });
+
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!canInitializeMap && isVisible && hasContainerSize) {
+      setCanInitializeMap(true);
+    }
+  }, [canInitializeMap, hasContainerSize, isVisible]);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && resizeFrameRef.current !== null) {
+        window.cancelAnimationFrame(resizeFrameRef.current);
+      }
+    };
   }, []);
 
   const handleMapLoad = useCallback((map: google.maps.Map) => {
@@ -313,44 +452,20 @@ function GoogleMapComponent({
   useEffect(() => {
     const map = mapRef.current;
 
-    if (!map || !isLoaded || typeof google === 'undefined') {
+    if (!map || !isLoaded || typeof google === 'undefined' || !hasContainerSize) {
       return;
     }
 
-    if (selectedMarker) {
-      map.panTo(selectedMarker);
+    syncMapViewport(map);
+  }, [hasContainerSize, isLoaded, mapInstance, syncMapViewport]);
 
-      if ((map.getZoom() || 0) < 14) {
-        map.setZoom(14);
-      }
-
+  useEffect(() => {
+    if (!canInitializeMap || !isVisible) {
       return;
     }
 
-    if (fitBounds && (markers.length > 1 || userLocation)) {
-      const bounds = new google.maps.LatLngBounds();
-
-      markers.forEach((marker) => {
-        bounds.extend(marker);
-      });
-
-      if (userLocation) {
-        bounds.extend(userLocation);
-      }
-
-      map.fitBounds(bounds, 64);
-      return;
-    }
-
-    if (userLocation) {
-      map.panTo(userLocation);
-      map.setZoom(12);
-      return;
-    }
-
-    map.panTo(center);
-    map.setZoom(zoom);
-  }, [center, fitBounds, isLoaded, markers, selectedMarker, userLocation, zoom]);
+    scheduleMapResize();
+  }, [canInitializeMap, isVisible, mapInstance, scheduleMapResize]);
 
   useEffect(() => {
     if (
@@ -437,7 +552,7 @@ function GoogleMapComponent({
 
   if (!hasGoogleMapsApiKey()) {
     return (
-      <div className={cn('map-shell', className)} style={{ height: mapHeight }}>
+      <div id={containerId} ref={containerRef} className={cn('map-shell', className)} style={containerStyle}>
         <div className="flex h-full items-center justify-center rounded-[inherit] bg-muted/30 p-6 text-center text-sm text-muted-foreground">
           {copy.apiKeyMissing}
         </div>
@@ -447,7 +562,7 @@ function GoogleMapComponent({
 
   if (loadError) {
     return (
-      <div className={cn('map-shell', className)} style={{ height: mapHeight }}>
+      <div id={containerId} ref={containerRef} className={cn('map-shell', className)} style={containerStyle}>
         <div className="flex h-full flex-col items-center justify-center gap-4 rounded-[inherit] bg-muted/30 p-6 text-center">
           <p className="max-w-md text-sm text-muted-foreground">{copy.mapError}</p>
           <Button
@@ -466,107 +581,116 @@ function GoogleMapComponent({
 
   if (!isLoaded) {
     return (
-      <div className={cn('map-shell animate-pulse', className)} style={{ height: mapHeight }}>
+      <div
+        id={containerId}
+        ref={containerRef}
+        className={cn('map-shell animate-pulse', className)}
+        style={containerStyle}
+      >
         <div className="h-full w-full rounded-[inherit] bg-muted/60" />
       </div>
     );
   }
 
   return (
-    <div className={cn('map-shell', className)} style={{ height: mapHeight }}>
-      <GoogleMapCanvas
-        key={`google-map-${language}-${theme}`}
-        mapContainerClassName="google-map-canvas"
-        center={center}
-        zoom={zoom}
-        options={mapOptions}
-        onLoad={handleMapLoad}
-        onUnmount={handleMapUnmount}
-        onClick={handleMapClick}
-      >
-        {userLocation ? (
-          <>
-            {nearbyRadiusKm ? (
-              <CircleF
-                center={userLocation}
-                radius={nearbyRadiusKm * 1000}
-                options={{
-                  fillColor: '#0b48d6',
-                  fillOpacity: theme === 'dark' ? 0.12 : 0.08,
-                  strokeColor: '#0b48d6',
-                  strokeOpacity: 0.5,
-                  strokeWeight: 2,
-                }}
-              />
-            ) : null}
-          </>
-        ) : null}
+    <div id={containerId} ref={containerRef} className={cn('map-shell', className)} style={containerStyle}>
+      {canInitializeMap ? (
+        <GoogleMapCanvas
+          key={`google-map-${language}-${theme}`}
+          mapContainerClassName="google-map-canvas"
+          center={center}
+          zoom={zoom}
+          options={mapOptions}
+          onLoad={handleMapLoad}
+          onUnmount={handleMapUnmount}
+          onClick={handleMapClick}
+        >
+          {userLocation ? (
+            <>
+              {nearbyRadiusKm ? (
+                <CircleF
+                  center={userLocation}
+                  radius={nearbyRadiusKm * 1000}
+                  options={{
+                    fillColor: '#0b48d6',
+                    fillOpacity: theme === 'dark' ? 0.12 : 0.08,
+                    strokeColor: '#0b48d6',
+                    strokeOpacity: 0.5,
+                    strokeWeight: 2,
+                  }}
+                />
+              ) : null}
+            </>
+          ) : null}
 
-        {selectedMarker ? (
-          <InfoWindowF
-            position={selectedMarker}
-            onCloseClick={() => setActiveMarkerId(selectedMarkerId || null)}
-            options={{
-              pixelOffset: new google.maps.Size(0, -42),
-            }}
-          >
-            <div className="google-map-preview">
-              <div className="relative aspect-[16/10] overflow-hidden rounded-[1rem] bg-muted/40">
-                {selectedMarker.image ? (
-                  <Image
-                    src={selectedMarker.image}
-                    alt={selectedMarker.title}
-                    fill
-                    className="object-cover"
-                    sizes="320px"
-                    unoptimized={
-                      selectedMarker.image.startsWith('data:') ||
-                      selectedMarker.image.startsWith('blob:')
-                    }
-                  />
-                ) : null}
-              </div>
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  {selectedMarker.priceLabel ? (
-                    <p className="text-base font-bold text-primary">{selectedMarker.priceLabel}</p>
+          {selectedMarker ? (
+            <InfoWindowF
+              position={selectedMarker}
+              onCloseClick={() => setActiveMarkerId(selectedMarkerId || null)}
+              options={{
+                pixelOffset: new google.maps.Size(0, -42),
+              }}
+            >
+              <div className="google-map-preview">
+                <div className="relative aspect-[16/10] overflow-hidden rounded-[1rem] bg-muted/40">
+                  {selectedMarker.image ? (
+                    <Image
+                      src={selectedMarker.image}
+                      alt={selectedMarker.title}
+                      fill
+                      className="object-cover"
+                      sizes="320px"
+                      unoptimized={
+                        selectedMarker.image.startsWith('data:') ||
+                        selectedMarker.image.startsWith('blob:')
+                      }
+                    />
                   ) : null}
-                  <h3 className="text-base font-semibold text-foreground">{selectedMarker.title}</h3>
                 </div>
-
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  {selectedMarker.district || selectedMarker.address ? (
-                    <div className="flex items-start gap-2">
-                      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                      <span>{selectedMarker.district || selectedMarker.address}</span>
-                    </div>
-                  ) : null}
-                  <div className="flex flex-wrap gap-3">
-                    {selectedMarker.rooms ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        <BedDouble className="h-4 w-4 text-primary" />
-                        {selectedMarker.rooms}
-                      </span>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    {selectedMarker.priceLabel ? (
+                      <p className="text-base font-bold text-primary">{selectedMarker.priceLabel}</p>
                     ) : null}
-                    {selectedMarker.area ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        <Ruler className="h-4 w-4 text-primary" />
-                        {selectedMarker.area} m²
-                      </span>
-                    ) : null}
+                    <h3 className="text-base font-semibold text-foreground">{selectedMarker.title}</h3>
                   </div>
-                </div>
 
-                {selectedMarker.href ? (
-                  <Button asChild className="h-10 w-full rounded-2xl">
-                    <Link href={selectedMarker.href}>{popupActionLabel || copy.viewDetails}</Link>
-                  </Button>
-                ) : null}
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    {selectedMarker.district || selectedMarker.address ? (
+                      <div className="flex items-start gap-2">
+                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                        <span>{selectedMarker.district || selectedMarker.address}</span>
+                      </div>
+                    ) : null}
+                    <div className="flex flex-wrap gap-3">
+                      {selectedMarker.rooms ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <BedDouble className="h-4 w-4 text-primary" />
+                          {selectedMarker.rooms}
+                        </span>
+                      ) : null}
+                      {selectedMarker.area ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Ruler className="h-4 w-4 text-primary" />
+                          {selectedMarker.area} m²
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {selectedMarker.href ? (
+                    <Button asChild className="h-10 w-full rounded-2xl">
+                      <Link href={selectedMarker.href}>{popupActionLabel || copy.viewDetails}</Link>
+                    </Button>
+                  ) : null}
+                </div>
               </div>
-            </div>
-          </InfoWindowF>
-        ) : null}
-      </GoogleMapCanvas>
+            </InfoWindowF>
+          ) : null}
+        </GoogleMapCanvas>
+      ) : (
+        <div className="h-full w-full rounded-[inherit] bg-muted/60" />
+      )}
     </div>
   );
 }

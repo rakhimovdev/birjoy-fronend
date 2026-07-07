@@ -485,11 +485,18 @@
 
   .map-shell {
     position: relative;
+    width: 100%;
+    min-width: 0;
     height: 25rem;
     overflow: hidden;
     border-radius: 1.35rem;
     border: 1px solid var(--surface-border-color);
     background: rgba(255, 255, 255, 0.66);
+  }
+
+  .google-property-map-shell {
+    min-height: 420px;
+    height: 420px;
   }
 
   .google-map-canvas {
@@ -596,6 +603,11 @@
 
     .map-shell {
       height: 19rem;
+    }
+
+    .google-property-map-shell {
+      min-height: 360px;
+      height: 360px;
     }
 
     .google-map-preview {

@@ -8,7 +8,7 @@ import type { Location } from '@/lib/map-types';
 const RealEstateListingsMapClient = dynamic(() => import('./RealEstateListingsMapClient'), {
   ssr: false,
   loading: () => (
-    <div className="map-shell animate-pulse">
+    <div id="google-property-map" className="map-shell google-property-map-shell animate-pulse">
       <div className="h-full w-full rounded-[inherit] bg-muted/60" />
     </div>
   ),
@@ -23,6 +23,7 @@ export function RealEstateListingsMap(props: {
   userLocationLabel: string;
   nearbyRadiusKm: number;
   popupActionLabel: string;
+  isVisible: boolean;
 }) {
   return <RealEstateListingsMapClient {...props} />;
 }

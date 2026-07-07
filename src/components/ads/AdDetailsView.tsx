@@ -640,6 +640,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
                     }
                     nearbyRadiusKm={NEARBY_PROPERTIES_RADIUS_KM}
                     popupActionLabel={messages.adDetails.browseMore}
+                    isVisible
                   />
                 </div>
               ) : null}
