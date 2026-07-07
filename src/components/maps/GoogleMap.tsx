@@ -14,8 +14,8 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { Button } from '@/components/ui/button';
 import {
-  GOOGLE_DARK_MAP_STYLES,
   GOOGLE_MAPS_API_KEY,
+  GOOGLE_MAPS_API_VERSION,
   GOOGLE_MAPS_LIBRARIES,
   GOOGLE_MAPS_MAP_ID,
   createPropertyMarkerContent,
@@ -26,6 +26,7 @@ import {
 import type { MapProps, PropertyMarker } from '@/lib/map-types';
 import type { Language } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import type { Cluster, ClusterStats, Renderer } from '@googlemaps/markerclusterer';
 
 type GoogleMapComponentProps = MapProps & {
   language?: Language;
@@ -93,6 +94,41 @@ function createMarkerImageContent(icon: PropertyMarker['icon']) {
   return image;
 }
 
+function createClusterMarkerContent(count: number, color: string) {
+  const template = document.createElement('template');
+  template.innerHTML = `
+    <div
+      style="
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        border-radius: 999px;
+        background: ${color};
+        color: #fff;
+        font: 700 16px/1 Arial, sans-serif;
+        box-shadow:
+          0 0 0 8px color-mix(in srgb, ${color} 28%, transparent),
+          0 14px 24px rgba(15, 23, 42, 0.24);
+      "
+    >
+      <span
+        style="
+          position: absolute;
+          inset: 6px;
+          border-radius: 999px;
+          background: color-mix(in srgb, #fff 16%, transparent);
+        "
+      ></span>
+      <span style="position: relative; z-index: 1;">${count}</span>
+    </div>
+  `.trim();
+
+  return template.content.firstElementChild as HTMLElement | null;
+}
+
 function GoogleMapComponent({
   center,
   zoom = 12,
@@ -112,7 +148,7 @@ function GoogleMapComponent({
   const { theme } = useTheme();
   const mapRef = useRef<google.maps.Map | null>(null);
   const clustererRef = useRef<AdvancedMarkerClusterer | null>(null);
-  const propertyMarkerListenersRef = useRef<google.maps.MapsEventListener[]>([]);
+  const propertyMarkerListenersRef = useRef<Array<() => void>>([]);
   const propertyMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const userLocationMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
   const [loaderNonce, setLoaderNonce] = useState(0);
@@ -128,6 +164,7 @@ function GoogleMapComponent({
     libraries: GOOGLE_MAPS_LIBRARIES,
     language: getGoogleMapsLanguage(language),
     region: 'UZ',
+    version: GOOGLE_MAPS_API_VERSION,
   });
 
   const selectedMarker = useMemo(
@@ -135,16 +172,48 @@ function GoogleMapComponent({
     [highlightedMarkerId, markers]
   );
 
+  const clusterRenderer = useMemo<Renderer>(
+    () => ({
+      render(cluster: Cluster, stats: ClusterStats, map: google.maps.Map) {
+        const color =
+          cluster.count > Math.max(10, stats.clusters.markers.mean) ? '#0b48d6' : '#0f172a';
+        const content = createClusterMarkerContent(cluster.count, color);
+
+        if (!content) {
+          throw new Error('Cluster marker content could not be created.');
+        }
+
+        const clusterMarker = new google.maps.marker.AdvancedMarkerElement({
+          map,
+          position: cluster.position,
+          title: `Cluster of ${cluster.count} markers`,
+          zIndex: 4000 + cluster.count,
+          gmpClickable: true,
+          content,
+        });
+
+        clusterMarker.addEventListener('gmp-click', () => {
+          if (cluster.bounds) {
+            map.fitBounds(cluster.bounds);
+          }
+        });
+
+        return clusterMarker;
+      },
+    }),
+    []
+  );
+
   const mapOptions = useMemo<google.maps.MapOptions>(
     () => ({
       clickableIcons: false,
       disableDefaultUI: false,
+      colorScheme: theme === 'dark' ? 'DARK' : 'LIGHT',
       fullscreenControl: false,
       gestureHandling: 'greedy',
       mapId: GOOGLE_MAPS_MAP_ID,
       mapTypeControl: false,
       streetViewControl: false,
-      styles: theme === 'dark' ? GOOGLE_DARK_MAP_STYLES : undefined,
       zoomControl: true,
       minZoom: 5,
       maxZoom: 20,
@@ -180,8 +249,8 @@ function GoogleMapComponent({
   );
 
   const clearPropertyMarkers = useCallback(() => {
-    propertyMarkerListenersRef.current.forEach((listener) => {
-      listener.remove();
+    propertyMarkerListenersRef.current.forEach((removeListener) => {
+      removeListener();
     });
     propertyMarkerListenersRef.current = [];
     clustererRef.current?.clearMarkers(true);
@@ -211,12 +280,14 @@ function GoogleMapComponent({
           minPoints: 4,
           radius: 60,
         }),
+        onClusterClick: null as unknown as AdvancedMarkerClusterer['onClusterClick'],
+        renderer: clusterRenderer,
       });
       return;
     }
 
     clustererRef.current.setMap(map);
-  }, []);
+  }, [clusterRenderer]);
 
   const handleMapUnmount = useCallback(() => {
     clearPropertyMarkers();
@@ -298,6 +369,7 @@ function GoogleMapComponent({
       const markerView = new google.maps.marker.AdvancedMarkerElement({
         position: marker,
         title: marker.title,
+        gmpClickable: true,
         zIndex: marker.id === highlightedMarkerId ? 2500 : 1200,
         content:
           createMarkerImageContent(marker.icon) ||
@@ -309,11 +381,14 @@ function GoogleMapComponent({
           }),
       });
 
-      propertyMarkerListenersRef.current.push(
-        markerView.addListener('click', () => {
-          handleMarkerClick(marker);
-        })
-      );
+      const handleMarkerActivate = () => {
+        handleMarkerClick(marker);
+      };
+
+      markerView.addEventListener('gmp-click', handleMarkerActivate);
+      propertyMarkerListenersRef.current.push(() => {
+        markerView.removeEventListener('gmp-click', handleMarkerActivate);
+      });
 
       return markerView;
     });
@@ -400,6 +475,7 @@ function GoogleMapComponent({
   return (
     <div className={cn('map-shell', className)} style={{ height: mapHeight }}>
       <GoogleMapCanvas
+        key={`google-map-${language}-${theme}`}
         mapContainerClassName="google-map-canvas"
         center={center}
         zoom={zoom}

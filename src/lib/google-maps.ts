@@ -7,6 +7,7 @@ import type { RealEstatePropertyType } from '@/lib/types';
 
 export const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 // Advanced markers require the marker library and a map ID.
+export const GOOGLE_MAPS_API_VERSION = 'beta';
 export const GOOGLE_MAPS_LIBRARIES: Libraries = ['places', 'marker'];
 export const GOOGLE_MAPS_MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID?.trim() || 'DEMO_MAP_ID';
 export const GOOGLE_MAPS_DEFAULT_CENTER = REAL_ESTATE_DEFAULT_CENTER;

@@ -13,8 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  GOOGLE_DARK_MAP_STYLES,
   GOOGLE_MAPS_API_KEY,
+  GOOGLE_MAPS_API_VERSION,
   GOOGLE_MAPS_DEFAULT_CENTER,
   GOOGLE_MAPS_LIBRARIES,
   GOOGLE_MAPS_MAP_ID,
@@ -70,6 +70,7 @@ export default function GoogleLocationPickerClient({
     libraries: GOOGLE_MAPS_LIBRARIES,
     language: getGoogleMapsLanguage(locale),
     region: 'UZ',
+    version: GOOGLE_MAPS_API_VERSION,
   });
 
   const center = value || GOOGLE_MAPS_DEFAULT_CENTER;
@@ -77,12 +78,12 @@ export default function GoogleLocationPickerClient({
   const mapOptions = useMemo<google.maps.MapOptions>(
     () => ({
       clickableIcons: false,
+      colorScheme: theme === 'dark' ? 'DARK' : 'LIGHT',
       fullscreenControl: false,
       gestureHandling: 'greedy',
       mapId: GOOGLE_MAPS_MAP_ID,
       mapTypeControl: false,
       streetViewControl: false,
-      styles: theme === 'dark' ? GOOGLE_DARK_MAP_STYLES : undefined,
       zoomControl: true,
       minZoom: 5,
       maxZoom: 20,
@@ -391,6 +392,7 @@ export default function GoogleLocationPickerClient({
       ) : (
         <div className="map-shell">
           <GoogleMapCanvas
+            key={`google-location-picker-${locale}-${theme}`}
             mapContainerClassName="google-map-canvas"
             center={center}
             zoom={value ? 16 : 12}
