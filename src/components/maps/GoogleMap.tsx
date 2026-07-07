@@ -4,10 +4,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   CircleF,
+  GoogleMapsMarkerClusterer,
   GoogleMap as GoogleMapCanvas,
   InfoWindowF,
-  MarkerClustererF,
-  MarkerF,
   useJsApiLoader,
 } from '@react-google-maps/api';
 import { BedDouble, MapPin, RefreshCw, Ruler } from 'lucide-react';
@@ -18,8 +17,9 @@ import {
   GOOGLE_DARK_MAP_STYLES,
   GOOGLE_MAPS_API_KEY,
   GOOGLE_MAPS_LIBRARIES,
-  createPropertyMarkerIcon,
-  createUserLocationIcon,
+  GOOGLE_MAPS_MAP_ID,
+  createPropertyMarkerContent,
+  createUserLocationMarkerContent,
   getGoogleMapsLanguage,
   hasGoogleMapsApiKey,
 } from '@/lib/google-maps';
@@ -31,6 +31,8 @@ type GoogleMapComponentProps = MapProps & {
   language?: Language;
   popupActionLabel?: string;
 };
+
+type AdvancedMarkerClusterer = InstanceType<typeof GoogleMapsMarkerClusterer.MarkerClusterer>;
 
 function getCopy(language: Language) {
   if (language === 'ru') {
@@ -67,6 +69,30 @@ function normalizeHeight(height: number | string | undefined) {
   return height || '100%';
 }
 
+function createMarkerImageContent(icon: PropertyMarker['icon']) {
+  if (!icon) {
+    return null;
+  }
+
+  const url = typeof icon === 'string' ? icon : 'url' in icon ? icon.url : null;
+  const scaledSize =
+    typeof icon !== 'string' && 'scaledSize' in icon && icon.scaledSize ? icon.scaledSize : null;
+
+  if (!url) {
+    return null;
+  }
+
+  const image = document.createElement('img');
+  image.src = url;
+  image.alt = '';
+  image.decoding = 'async';
+  image.style.width = scaledSize ? `${scaledSize.width}px` : '40px';
+  image.style.height = scaledSize ? `${scaledSize.height}px` : '40px';
+  image.style.objectFit = 'contain';
+
+  return image;
+}
+
 function GoogleMapComponent({
   center,
   zoom = 12,
@@ -85,10 +111,16 @@ function GoogleMapComponent({
 }: GoogleMapComponentProps) {
   const { theme } = useTheme();
   const mapRef = useRef<google.maps.Map | null>(null);
+  const clustererRef = useRef<AdvancedMarkerClusterer | null>(null);
+  const propertyMarkerListenersRef = useRef<google.maps.MapsEventListener[]>([]);
+  const propertyMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const userLocationMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
   const [loaderNonce, setLoaderNonce] = useState(0);
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(selectedMarkerId || null);
   const copy = getCopy(language);
   const mapHeight = normalizeHeight(height);
+  const highlightedMarkerId = selectedMarkerId || activeMarkerId;
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: `google-map-${language}-${loaderNonce}`,
@@ -99,28 +131,9 @@ function GoogleMapComponent({
   });
 
   const selectedMarker = useMemo(
-    () => markers.find((marker) => marker.id === (selectedMarkerId || activeMarkerId)) || null,
-    [activeMarkerId, markers, selectedMarkerId]
+    () => markers.find((marker) => marker.id === highlightedMarkerId) || null,
+    [highlightedMarkerId, markers]
   );
-
-  const markerIcons = useMemo(() => {
-    if (!isLoaded || typeof google === 'undefined') {
-      return new Map<string, google.maps.Icon | google.maps.Symbol | string>();
-    }
-
-    return new Map(
-      markers.map((marker) => [
-        marker.id,
-        marker.icon ||
-          createPropertyMarkerIcon(google, {
-            label: marker.priceLabel || '',
-            propertyType: marker.propertyType,
-            selected: marker.id === (selectedMarkerId || activeMarkerId),
-            theme,
-          }),
-      ])
-    );
-  }, [activeMarkerId, isLoaded, markers, selectedMarkerId, theme]);
 
   const mapOptions = useMemo<google.maps.MapOptions>(
     () => ({
@@ -128,6 +141,7 @@ function GoogleMapComponent({
       disableDefaultUI: false,
       fullscreenControl: false,
       gestureHandling: 'greedy',
+      mapId: GOOGLE_MAPS_MAP_ID,
       mapTypeControl: false,
       streetViewControl: false,
       styles: theme === 'dark' ? GOOGLE_DARK_MAP_STYLES : undefined,
@@ -137,14 +151,6 @@ function GoogleMapComponent({
     }),
     [theme]
   );
-
-  const handleMapLoad = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
-  }, []);
-
-  const handleMapUnmount = useCallback(() => {
-    mapRef.current = null;
-  }, []);
 
   const handleMapClick = useCallback(
     (event: google.maps.MapMouseEvent) => {
@@ -172,6 +178,55 @@ function GoogleMapComponent({
     },
     [onMarkerClick]
   );
+
+  const clearPropertyMarkers = useCallback(() => {
+    propertyMarkerListenersRef.current.forEach((listener) => {
+      listener.remove();
+    });
+    propertyMarkerListenersRef.current = [];
+    clustererRef.current?.clearMarkers(true);
+    propertyMarkersRef.current.forEach((marker) => {
+      marker.map = null;
+    });
+    propertyMarkersRef.current = [];
+  }, []);
+
+  const clearUserLocationMarker = useCallback(() => {
+    if (!userLocationMarkerRef.current) {
+      return;
+    }
+
+    userLocationMarkerRef.current.map = null;
+    userLocationMarkerRef.current = null;
+  }, []);
+
+  const handleMapLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map;
+    setMapInstance(map);
+
+    if (!clustererRef.current) {
+      clustererRef.current = new GoogleMapsMarkerClusterer.MarkerClusterer({
+        map,
+        algorithm: new GoogleMapsMarkerClusterer.SuperClusterAlgorithm({
+          minPoints: 4,
+          radius: 60,
+        }),
+      });
+      return;
+    }
+
+    clustererRef.current.setMap(map);
+  }, []);
+
+  const handleMapUnmount = useCallback(() => {
+    clearPropertyMarkers();
+    clearUserLocationMarker();
+    clustererRef.current?.clearMarkers(true);
+    clustererRef.current?.setMap(null);
+    clustererRef.current = null;
+    mapRef.current = null;
+    setMapInstance(null);
+  }, [clearPropertyMarkers, clearUserLocationMarker]);
 
   useEffect(() => {
     if (selectedMarkerId) {
@@ -225,6 +280,85 @@ function GoogleMapComponent({
     map.panTo(center);
     map.setZoom(zoom);
   }, [center, fitBounds, isLoaded, markers, selectedMarker, userLocation, zoom]);
+
+  useEffect(() => {
+    if (
+      !mapInstance ||
+      !isLoaded ||
+      typeof google === 'undefined' ||
+      !google.maps.marker?.AdvancedMarkerElement ||
+      !clustererRef.current
+    ) {
+      return;
+    }
+
+    clearPropertyMarkers();
+
+    const propertyMarkers = markers.map((marker) => {
+      const markerView = new google.maps.marker.AdvancedMarkerElement({
+        position: marker,
+        title: marker.title,
+        zIndex: marker.id === highlightedMarkerId ? 2500 : 1200,
+        content:
+          createMarkerImageContent(marker.icon) ||
+          createPropertyMarkerContent({
+            label: marker.priceLabel || '',
+            propertyType: marker.propertyType,
+            selected: marker.id === highlightedMarkerId,
+            theme,
+          }),
+      });
+
+      propertyMarkerListenersRef.current.push(
+        markerView.addListener('click', () => {
+          handleMarkerClick(marker);
+        })
+      );
+
+      return markerView;
+    });
+
+    propertyMarkersRef.current = propertyMarkers;
+    clustererRef.current.addMarkers(propertyMarkers, true);
+    clustererRef.current.render();
+
+    return () => {
+      clearPropertyMarkers();
+    };
+  }, [clearPropertyMarkers, handleMarkerClick, highlightedMarkerId, isLoaded, mapInstance, markers, theme]);
+
+  useEffect(() => {
+    if (
+      !mapInstance ||
+      !isLoaded ||
+      typeof google === 'undefined' ||
+      !google.maps.marker?.AdvancedMarkerElement
+    ) {
+      return;
+    }
+
+    if (!userLocation) {
+      clearUserLocationMarker();
+      return;
+    }
+
+    if (!userLocationMarkerRef.current) {
+      userLocationMarkerRef.current = new google.maps.marker.AdvancedMarkerElement({
+        map: mapInstance,
+        position: userLocation,
+        title: userLocationLabel,
+        zIndex: 3000,
+        content: createUserLocationMarkerContent(theme),
+      });
+      return;
+    }
+
+    userLocationMarkerRef.current.map = mapInstance;
+    userLocationMarkerRef.current.position = userLocation;
+    userLocationMarkerRef.current.title = userLocationLabel || '';
+    userLocationMarkerRef.current.zIndex = 3000;
+    userLocationMarkerRef.current.content = createUserLocationMarkerContent(theme);
+  }, [clearUserLocationMarker, isLoaded, mapInstance, theme, userLocation, userLocationLabel]);
 
   if (!hasGoogleMapsApiKey()) {
     return (
@@ -289,38 +423,8 @@ function GoogleMapComponent({
                 }}
               />
             ) : null}
-
-            <MarkerF
-              position={userLocation}
-              title={userLocationLabel}
-              icon={createUserLocationIcon(google, theme)}
-              zIndex={3000}
-            />
           </>
         ) : null}
-
-        <MarkerClustererF options={{ gridSize: 60, minimumClusterSize: 4 }}>
-          {(clusterer) => (
-            <>
-              {markers.map((marker) => (
-                <MarkerF
-                  key={marker.id}
-                  clusterer={clusterer}
-                  position={marker}
-                  title={marker.title}
-                  icon={markerIcons.get(marker.id)}
-                  onClick={() => handleMarkerClick(marker)}
-                  zIndex={marker.id === (selectedMarkerId || activeMarkerId) ? 2500 : 1200}
-                  animation={
-                    marker.id === (selectedMarkerId || activeMarkerId)
-                      ? google.maps.Animation.DROP
-                      : undefined
-                  }
-                />
-              ))}
-            </>
-          )}
-        </MarkerClustererF>
 
         {selectedMarker ? (
           <InfoWindowF

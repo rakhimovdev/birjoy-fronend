@@ -6,7 +6,9 @@ import type { ThemeMode } from '@/lib/theme';
 import type { RealEstatePropertyType } from '@/lib/types';
 
 export const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
-export const GOOGLE_MAPS_LIBRARIES: Libraries = ['places'];
+// Advanced markers require the marker library and a map ID.
+export const GOOGLE_MAPS_LIBRARIES: Libraries = ['places', 'marker'];
+export const GOOGLE_MAPS_MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID?.trim() || 'DEMO_MAP_ID';
 export const GOOGLE_MAPS_DEFAULT_CENTER = REAL_ESTATE_DEFAULT_CENTER;
 
 const PROPERTY_TYPE_ACCENT: Record<RealEstatePropertyType | '', string> = {
@@ -196,8 +198,14 @@ function escapeSvgText(value: string) {
     .replaceAll("'", '&#39;');
 }
 
-export function createPropertyMarkerIcon(
-  mapsApi: typeof google,
+function createSvgContentNode(svg: string) {
+  const template = document.createElement('template');
+  template.innerHTML = svg.trim();
+
+  return template.content.firstElementChild;
+}
+
+export function createPropertyMarkerContent(
   {
     label,
     propertyType = '',
@@ -209,7 +217,7 @@ export function createPropertyMarkerIcon(
     selected?: boolean;
     theme: ThemeMode;
   }
-): google.maps.Icon {
+) {
   const accent = selected ? '#0b48d6' : PROPERTY_TYPE_ACCENT[propertyType];
   const stroke = theme === 'dark' ? '#f8fafc' : '#ffffff';
   const textColor = '#ffffff';
@@ -229,23 +237,44 @@ export function createPropertyMarkerIcon(
     </svg>
   `.trim();
 
-  return {
-    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    scaledSize: new mapsApi.maps.Size(width, totalHeight),
-    anchor: new mapsApi.maps.Point(width / 2, totalHeight - 1),
-  };
+  const content = createSvgContentNode(svg);
+
+  if (!content) {
+    throw new Error('Property marker SVG could not be created.');
+  }
+
+  if (content instanceof SVGElement) {
+    content.style.overflow = 'visible';
+    content.style.filter = selected
+      ? 'drop-shadow(0 14px 18px rgba(11, 72, 214, 0.34))'
+      : 'drop-shadow(0 10px 14px rgba(15, 23, 42, 0.24))';
+  }
+
+  return content;
 }
 
-export function createUserLocationIcon(
-  mapsApi: typeof google,
-  theme: ThemeMode
-): google.maps.Symbol {
-  return {
-    path: mapsApi.maps.SymbolPath.CIRCLE,
-    scale: 9,
-    fillColor: '#0b48d6',
-    fillOpacity: 1,
-    strokeColor: theme === 'dark' ? '#f8fafc' : '#ffffff',
-    strokeWeight: 3,
-  };
+export function createUserLocationMarkerContent(theme: ThemeMode) {
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'relative';
+  wrapper.style.width = '18px';
+  wrapper.style.height = '9px';
+  wrapper.style.overflow = 'visible';
+
+  const dot = document.createElement('div');
+  dot.style.position = 'absolute';
+  dot.style.left = '0';
+  dot.style.top = '0';
+  dot.style.width = '18px';
+  dot.style.height = '18px';
+  dot.style.borderRadius = '999px';
+  dot.style.background = '#0b48d6';
+  dot.style.border = `3px solid ${theme === 'dark' ? '#f8fafc' : '#ffffff'}`;
+  dot.style.boxShadow =
+    theme === 'dark'
+      ? '0 0 0 6px rgba(11, 72, 214, 0.18)'
+      : '0 0 0 6px rgba(11, 72, 214, 0.14)';
+
+  wrapper.append(dot);
+
+  return wrapper;
 }

@@ -3,7 +3,6 @@
 import {
   Autocomplete,
   GoogleMap as GoogleMapCanvas,
-  MarkerF,
   useJsApiLoader,
 } from '@react-google-maps/api';
 import { AlertCircle, Loader2, LocateFixed, MapPinned, RefreshCw, Search } from 'lucide-react';
@@ -18,7 +17,8 @@ import {
   GOOGLE_MAPS_API_KEY,
   GOOGLE_MAPS_DEFAULT_CENTER,
   GOOGLE_MAPS_LIBRARIES,
-  createUserLocationIcon,
+  GOOGLE_MAPS_MAP_ID,
+  createUserLocationMarkerContent,
   geocodeAddressByQuery,
   getGoogleMapsLanguage,
   hasGoogleMapsApiKey,
@@ -58,8 +58,11 @@ export default function GoogleLocationPickerClient({
   const [geolocationState, setGeolocationState] = useState<GeolocationState>('idle');
   const [searchError, setSearchError] = useState<string | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
+  const locationMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
+  const locationMarkerListenersRef = useRef<google.maps.MapsEventListener[]>([]);
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: `google-location-picker-${locale}-${loaderNonce}`,
@@ -76,6 +79,7 @@ export default function GoogleLocationPickerClient({
       clickableIcons: false,
       fullscreenControl: false,
       gestureHandling: 'greedy',
+      mapId: GOOGLE_MAPS_MAP_ID,
       mapTypeControl: false,
       streetViewControl: false,
       styles: theme === 'dark' ? GOOGLE_DARK_MAP_STYLES : undefined,
@@ -181,6 +185,20 @@ export default function GoogleLocationPickerClient({
     );
   }, [handleReverseGeocode]);
 
+  const clearLocationMarker = useCallback(() => {
+    locationMarkerListenersRef.current.forEach((listener) => {
+      listener.remove();
+    });
+    locationMarkerListenersRef.current = [];
+
+    if (!locationMarkerRef.current) {
+      return;
+    }
+
+    locationMarkerRef.current.map = null;
+    locationMarkerRef.current = null;
+  }, []);
+
   useEffect(() => {
     if (!value || !mapRef.current) {
       return;
@@ -188,6 +206,56 @@ export default function GoogleLocationPickerClient({
 
     mapRef.current.panTo(value);
   }, [value]);
+
+  useEffect(() => {
+    if (
+      !mapInstance ||
+      !isLoaded ||
+      typeof google === 'undefined' ||
+      !google.maps.marker?.AdvancedMarkerElement
+    ) {
+      return;
+    }
+
+    if (!value) {
+      clearLocationMarker();
+      return;
+    }
+
+    if (!locationMarkerRef.current) {
+      locationMarkerRef.current = new google.maps.marker.AdvancedMarkerElement({
+        map: mapInstance,
+        position: value,
+        zIndex: 3000,
+        content: createUserLocationMarkerContent(theme),
+      });
+    }
+
+    const marker = locationMarkerRef.current;
+    marker.map = mapInstance;
+    marker.position = value;
+    marker.zIndex = 3000;
+    marker.gmpDraggable = true;
+    marker.content = createUserLocationMarkerContent(theme);
+
+    locationMarkerListenersRef.current.forEach((listener) => {
+      listener.remove();
+    });
+    locationMarkerListenersRef.current = [
+      marker.addListener('dragend', (event: google.maps.MapMouseEvent) => {
+        const latLng = event.latLng;
+
+        if (!latLng) {
+          return;
+        }
+
+        void handleReverseGeocode({
+          lat: Number(latLng.lat().toFixed(6)),
+          lng: Number(latLng.lng().toFixed(6)),
+        });
+      }),
+    ];
+  }, [clearLocationMarker, handleReverseGeocode, isLoaded, mapInstance, theme, value]);
 
   const geolocationMessage =
     geolocationState === 'denied'
@@ -329,9 +397,12 @@ export default function GoogleLocationPickerClient({
             options={mapOptions}
             onLoad={(map) => {
               mapRef.current = map;
+              setMapInstance(map);
             }}
             onUnmount={() => {
+              clearLocationMarker();
               mapRef.current = null;
+              setMapInstance(null);
             }}
             onClick={(event) => {
               const latLng = event.latLng;
@@ -345,27 +416,7 @@ export default function GoogleLocationPickerClient({
                 lng: Number(latLng.lng().toFixed(6)),
               });
             }}
-          >
-            {value ? (
-              <MarkerF
-                position={value}
-                draggable
-                icon={createUserLocationIcon(google, theme)}
-                onDragEnd={(event) => {
-                  const latLng = event.latLng;
-
-                  if (!latLng) {
-                    return;
-                  }
-
-                  void handleReverseGeocode({
-                    lat: Number(latLng.lat().toFixed(6)),
-                    lng: Number(latLng.lng().toFixed(6)),
-                  });
-                }}
-              />
-            ) : null}
-          </GoogleMapCanvas>
+          />
         </div>
       )}
 
