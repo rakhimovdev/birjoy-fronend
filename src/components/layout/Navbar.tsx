@@ -69,11 +69,13 @@ function NavbarContent() {
   const activeMarketplacePath = verticalPaths.has(pathname) ? pathname : '/market';
 
   const buildMarketplaceUrl = (query: string) => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams.toString());
     const trimmedQuery = query.trim();
 
     if (trimmedQuery) {
       params.set('q', trimmedQuery);
+    } else {
+      params.delete('q');
     }
 
     const queryString = params.toString();

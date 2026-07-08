@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const developmentBackendOrigin = 'http://localhost:5000';
 const productionBackendOrigin = 'https://birjoy-backend.onrender.com';
 
 function normalizeBaseUrl(value: string | undefined) {
   return value?.replace(/\/$/, '') || '';
 }
 
+function stripKnownApiSuffix(value: string | undefined) {
+  return normalizeBaseUrl(value).replace(/\/api(?:\/backend)?$/, '');
+}
+
 function resolveBackendOrigin() {
   return (
-    normalizeBaseUrl(process.env.NEXT_PUBLIC_BACKEND_URL) ||
-    normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL) ||
-    productionBackendOrigin
+    stripKnownApiSuffix(process.env.NEXT_PUBLIC_BACKEND_URL) ||
+    stripKnownApiSuffix(process.env.NEXT_PUBLIC_API_BASE_URL) ||
+    stripKnownApiSuffix(process.env.BACKEND_URL) ||
+    (process.env.NODE_ENV === 'development' ? developmentBackendOrigin : productionBackendOrigin)
   );
 }
 

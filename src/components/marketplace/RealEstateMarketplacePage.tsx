@@ -15,9 +15,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { fetchAds } from '@/lib/ads';
+import { getLocalizedText } from '@/lib/i18n';
 import { filterAds } from '@/lib/listing-utils';
 import type { Location } from '@/lib/map-types';
-import { getVerticalHref } from '@/lib/mock-data';
+import { getCategoryBySlug, getVerticalHref } from '@/lib/mock-data';
 import {
   EMPTY_REAL_ESTATE_FILTERS,
   getActiveRealEstateFilterCount,
@@ -69,7 +70,13 @@ export function RealEstateMarketplacePage() {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [filters, setFilters] = useState<RealEstateFilterState>({ ...EMPTY_REAL_ESTATE_FILTERS });
   const query = searchParams.get('q')?.trim() ?? '';
+  const category = searchParams.get('category')?.trim() ?? '';
   const basePath = getVerticalHref('real_estate');
+  const activeCategory = category || null;
+  const activeCategoryRecord = activeCategory ? getCategoryBySlug(activeCategory) : null;
+  const activeCategoryLabel = activeCategoryRecord
+    ? getLocalizedText(activeCategoryRecord.name, locale)
+    : activeCategory;
 
   useEffect(() => {
     let cancelled = false;
@@ -141,9 +148,10 @@ export function RealEstateMarketplacePage() {
     () =>
       filterAds(ads, {
         vertical: 'real_estate',
+        category: activeCategory,
         query,
       }).filter((ad) => matchesRealEstateFilters(ad, filters)),
-    [ads, filters, query]
+    [activeCategory, ads, filters, query]
   );
 
   const featuredAds = useMemo(() => filteredAds.filter((ad) => ad.isFeatured), [filteredAds]);
@@ -209,7 +217,7 @@ export function RealEstateMarketplacePage() {
   const selectedAd = mapAds.find((ad) => ad.id === selectedAdId) || null;
   const hasCustomFilters = hasActiveRealEstateFilters(filters);
   const activeFilterCount = getActiveRealEstateFilterCount(filters);
-  const hasFilters = Boolean(query) || hasCustomFilters;
+  const hasFilters = Boolean(query || activeCategory) || hasCustomFilters;
 
   const viewCopy =
     locale === 'ru'
@@ -295,6 +303,7 @@ export function RealEstateMarketplacePage() {
                 <p className="text-sm text-muted-foreground">{messages.home.resultsDescription}</p>
                 <div className="flex flex-wrap gap-2">
                   {query ? <Badge variant="secondary">{query}</Badge> : null}
+                  {activeCategoryLabel ? <Badge variant="outline">{activeCategoryLabel}</Badge> : null}
                   {hasCustomFilters ? (
                     <Badge variant="outline">
                       {activeFilterCount} {viewCopy.activeFilters}

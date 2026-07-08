@@ -26,6 +26,10 @@ export type RemoteAd = {
   area?: number | null;
   floor?: number | null;
   images?: Array<string | { url?: string; fileId?: string; name?: string; thumbnailUrl?: string }>;
+  imageUrl?: string;
+  imageUrls?: string[];
+  primaryImageUrl?: string;
+  thumbnailUrl?: string;
   userId?: string;
   userName?: string;
   sellerName?: string;
@@ -107,28 +111,42 @@ function normalizeNullableNumber(value: number | null | undefined) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
-function normalizeImageUrls(images: RemoteAd['images']) {
-  if (!Array.isArray(images)) {
-    return [];
-  }
+function normalizeSingleImageUrl(value: string | undefined) {
+  return typeof value === 'string' ? value.trim() : '';
+}
 
-  return images
-    .map((image) => {
-      if (typeof image === 'string') {
-        return image.trim();
-      }
+function normalizeImageUrls(
+  images: RemoteAd['images'],
+  fallbackImages: Array<string | undefined> = []
+) {
+  const imageUrls = Array.isArray(images)
+    ? images
+        .map((image) => {
+          if (typeof image === 'string') {
+            return image.trim();
+          }
 
-      if (image && typeof image.url === 'string') {
-        return image.url.trim();
-      }
+          if (image && typeof image.url === 'string') {
+            return image.url.trim();
+          }
 
-      return '';
-    })
-    .filter(Boolean);
+          return '';
+        })
+        .filter(Boolean)
+    : [];
+
+  const fallbackUrls = fallbackImages.map(normalizeSingleImageUrl).filter(Boolean);
+
+  return [...new Set([...imageUrls, ...fallbackUrls])];
 }
 
 export function normalizeRemoteAd(ad: RemoteAd): Ad {
-  const imageUrls = normalizeImageUrls(ad.images);
+  const imageUrls = normalizeImageUrls(ad.images, [
+    ad.primaryImageUrl,
+    ad.imageUrl,
+    ...(Array.isArray(ad.imageUrls) ? ad.imageUrls : []),
+    ad.thumbnailUrl,
+  ]);
 
   return {
     id: ad.id || ad._id || '',

@@ -13,20 +13,27 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { fetchAds } from '@/lib/ads';
+import { getLocalizedText } from '@/lib/i18n';
 import { filterAds } from '@/lib/listing-utils';
-import { getVerticalHref } from '@/lib/mock-data';
+import { getCategoryBySlug, getVerticalHref } from '@/lib/mock-data';
 import type { Ad, AdVertical } from '@/lib/types';
 
 export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) {
   const searchParams = useSearchParams();
   const { isFavorite } = useAuth();
-  const { messages } = useI18n();
+  const { locale, messages } = useI18n();
   const { isAdmin } = useAdminSession();
   const [ads, setAds] = useState<Ad[]>([]);
   const [isLoadingAds, setIsLoadingAds] = useState(true);
   const [adsError, setAdsError] = useState<string | null>(null);
   const query = searchParams.get('q')?.trim() ?? '';
+  const category = searchParams.get('category')?.trim() ?? '';
   const basePath = getVerticalHref(vertical);
+  const activeCategory = category || null;
+  const activeCategoryRecord = activeCategory ? getCategoryBySlug(activeCategory) : null;
+  const activeCategoryLabel = activeCategoryRecord
+    ? getLocalizedText(activeCategoryRecord.name, locale)
+    : activeCategory;
 
   useEffect(() => {
     let cancelled = false;
@@ -61,9 +68,10 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
 
   const filteredAds = filterAds(ads, {
     vertical,
+    category: activeCategory,
     query,
   });
-  const hasFilters = Boolean(query);
+  const hasFilters = Boolean(query || activeCategory);
 
   return (
     <MarketplaceShell>
@@ -78,6 +86,7 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
                 <p className="text-sm text-muted-foreground">{messages.home.resultsDescription}</p>
                 <div className="flex flex-wrap gap-2">
                   {query ? <Badge variant="secondary">{query}</Badge> : null}
+                  {activeCategoryLabel ? <Badge variant="outline">{activeCategoryLabel}</Badge> : null}
                 </div>
               </div>
               <Button asChild variant="outline" className="w-full min-[481px]:w-auto">
