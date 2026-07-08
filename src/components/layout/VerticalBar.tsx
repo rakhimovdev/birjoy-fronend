@@ -29,8 +29,8 @@ export function VerticalBar({ activeVertical }: { activeVertical: AdVertical }) 
   };
 
   return (
-    <section aria-label="Marketplace verticals">
-      <div className="surface-card rounded-[1.35rem] px-3 py-3 sm:rounded-[1.5rem] sm:px-4">
+    <section aria-label="Marketplace verticals" className="vertical-bar-shell">
+      <div className="vertical-bar-surface px-3 py-3 sm:px-4">
         <div className="category-bar-grid">
           {MARKETPLACE_VERTICALS.map((vertical) => {
             const Icon = (Icons as unknown as Record<string, LucideIcon>)[vertical.icon];

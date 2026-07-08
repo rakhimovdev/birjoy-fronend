@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Clock, Heart, Loader2, MapPin, Phone, Trash2 } from 'lucide-react';
+import { AdShareActions } from '@/components/ads/AdShareActions';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   AlertDialog,
@@ -210,80 +211,90 @@ export function AdCard({
             {messages.adCard.featured}
           </Badge>
         ) : null}
-        {canDelete ? (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-11 top-2 z-20 h-9 w-9 rounded-full border border-border/60 bg-background/88 text-destructive shadow-sm backdrop-blur-sm transition-colors hover:bg-background sm:right-14 sm:top-3 sm:h-10 sm:w-10"
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                }}
-                disabled={isDeleting}
-                aria-label={deleteCopy.action}
-              >
-                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{deleteCopy.confirmTitle}</AlertDialogTitle>
-                <AlertDialogDescription>{deleteCopy.confirmDescription}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{deleteCopy.cancel}</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+        <div className="absolute right-2 top-2 z-20 flex items-center gap-2 sm:right-3 sm:top-3">
+          {canDelete ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full border border-border/60 bg-background/88 text-destructive shadow-sm backdrop-blur-sm transition-colors hover:bg-background sm:h-10 sm:w-10"
                   onClick={(event) => {
                     event.preventDefault();
-                    void handleDeleteAd();
+                    event.stopPropagation();
                   }}
                   disabled={isDeleting}
+                  aria-label={deleteCopy.action}
                 >
-                  {deleteCopy.confirm}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        ) : null}
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            'absolute right-2 top-2 z-20 h-9 w-9 rounded-full border border-border/60 bg-background/88 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-background sm:right-3 sm:top-3 sm:h-10 sm:w-10',
-            isFavorite ? 'text-red-500' : 'text-muted-foreground'
-          )}
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
+                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{deleteCopy.confirmTitle}</AlertDialogTitle>
+                  <AlertDialogDescription>{deleteCopy.confirmDescription}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{deleteCopy.cancel}</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      void handleDeleteAd();
+                    }}
+                    disabled={isDeleting}
+                  >
+                    {deleteCopy.confirm}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : null}
 
-            if (!user) {
+          <AdShareActions
+            ad={ad}
+            locale={locale}
+            preventNavigation
+            menuButtonClassName="h-9 w-9 sm:h-10 sm:w-10"
+          />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              'h-9 w-9 rounded-full border border-border/60 bg-background/88 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-background sm:h-10 sm:w-10',
+              isFavorite ? 'text-red-500' : 'text-muted-foreground'
+            )}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+
+              if (!user) {
+                toast({
+                  title: messages.auth.favoriteLoginTitle,
+                  description: messages.auth.favoriteLoginDescription,
+                  variant: 'destructive',
+                });
+                router.push(`/sign-in?redirect=${encodeURIComponent(pathname)}`);
+                return;
+              }
+
+              const favoriteState = toggleFavorite(ad.id);
+
               toast({
-                title: messages.auth.favoriteLoginTitle,
-                description: messages.auth.favoriteLoginDescription,
-                variant: 'destructive',
+                title: favoriteState
+                  ? messages.auth.favoriteAddedTitle
+                  : messages.auth.favoriteRemovedTitle,
+                description: favoriteState
+                  ? messages.auth.favoriteAddedDescription
+                  : messages.auth.favoriteRemovedDescription,
               });
-              router.push(`/sign-in?redirect=${encodeURIComponent(pathname)}`);
-              return;
-            }
-
-            const favoriteState = toggleFavorite(ad.id);
-
-            toast({
-              title: favoriteState
-                ? messages.auth.favoriteAddedTitle
-                : messages.auth.favoriteRemovedTitle,
-              description: favoriteState
-                ? messages.auth.favoriteAddedDescription
-                : messages.auth.favoriteRemovedDescription,
-            });
-          }}
-          aria-label={messages.navbar.favorites}
-        >
-          <Heart className={cn('h-5 w-5', isFavorite && 'fill-current')} />
-        </Button>
+            }}
+            aria-label={messages.navbar.favorites}
+          >
+            <Heart className={cn('h-5 w-5', isFavorite && 'fill-current')} />
+          </Button>
+        </div>
         {hasMultipleImages ? (
           <>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />

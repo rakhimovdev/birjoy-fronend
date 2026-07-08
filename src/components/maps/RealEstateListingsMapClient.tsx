@@ -27,6 +27,8 @@ export default function RealEstateListingsMapClient({
   nearbyRadiusKm,
   popupActionLabel,
   isVisible,
+  mapClassName,
+  mapHeight,
 }: {
   ads: Ad[];
   locale: Language;
@@ -37,6 +39,8 @@ export default function RealEstateListingsMapClient({
   nearbyRadiusKm: number;
   popupActionLabel: string;
   isVisible: boolean;
+  mapClassName?: string;
+  mapHeight?: number | string;
 }) {
   const validAds = useMemo(() => ads.filter(hasCoordinates), [ads]);
   const priceFormatter = useMemo(
@@ -95,7 +99,8 @@ export default function RealEstateListingsMapClient({
       fitBounds={markers.length > 1 || Boolean(userLocation)}
       containerId="google-property-map"
       isVisible={isVisible}
-      className="google-property-map-shell"
+      height={mapHeight}
+      className={mapClassName || 'google-property-map-shell'}
     />
   );
 }

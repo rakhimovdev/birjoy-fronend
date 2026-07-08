@@ -24,6 +24,8 @@ export function RealEstateListingsMap(props: {
   nearbyRadiusKm: number;
   popupActionLabel: string;
   isVisible: boolean;
+  mapClassName?: string;
+  mapHeight?: number | string;
 }) {
   return <RealEstateListingsMapClient {...props} />;
 }

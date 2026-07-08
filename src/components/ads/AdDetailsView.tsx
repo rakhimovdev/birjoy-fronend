@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { AdCard } from '@/components/ads/AdCard';
+import { AdShareActions } from '@/components/ads/AdShareActions';
 import { RealEstateListingsMap } from '@/components/maps/RealEstateListingsMap';
 import {
   AlertDialog,
@@ -488,32 +489,41 @@ export function AdDetailsView({ adId }: { adId: string }) {
           <Button asChild variant="ghost" className="px-0 text-primary hover:bg-transparent">
             <Link href={getVerticalHref(ad.vertical)}>{messages.adDetails.backToListings}</Link>
           </Button>
-          {isAdmin ? (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full gap-2 min-[481px]:w-auto" disabled={isDeleting}>
-                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                  {deleteCopy.action}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{deleteCopy.confirmTitle}</AlertDialogTitle>
-                  <AlertDialogDescription>{deleteCopy.confirmDescription}</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{deleteCopy.cancel}</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    onClick={() => void handleDeleteAd()}
-                    disabled={isDeleting}
-                  >
-                    {deleteCopy.confirm}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          ) : null}
+          <div className="flex w-full flex-col gap-2 min-[481px]:w-auto min-[481px]:flex-row">
+            <AdShareActions
+              ad={ad}
+              locale={locale}
+              showQuickAction
+              quickActionClassName="w-full min-[481px]:w-auto"
+              menuButtonClassName="h-11 w-11 rounded-2xl"
+            />
+            {isAdmin ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full gap-2 min-[481px]:w-auto" disabled={isDeleting}>
+                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    {deleteCopy.action}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{deleteCopy.confirmTitle}</AlertDialogTitle>
+                    <AlertDialogDescription>{deleteCopy.confirmDescription}</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{deleteCopy.cancel}</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => void handleDeleteAd()}
+                      disabled={isDeleting}
+                    >
+                      {deleteCopy.confirm}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : null}
+          </div>
         </div>
 
         <div className="detail-grid">
