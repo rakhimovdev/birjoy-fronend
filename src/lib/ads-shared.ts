@@ -9,7 +9,16 @@ export type RemoteAd = {
   _id?: string;
   title?: string | LocalizedText;
   description?: string | LocalizedText;
-  price?: number;
+  price?:
+    | number
+    | string
+    | {
+        amount?: number | string;
+        value?: number | string;
+        price?: number | string;
+        usd?: number | string;
+        uzs?: number | string;
+      };
   category?: string;
   vertical?: string;
   condition?: string;
@@ -111,6 +120,29 @@ function normalizeNullableNumber(value: number | null | undefined) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+function normalizePrice(value: RemoteAd['price']): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    const parsedValue = Number(value);
+    return Number.isFinite(parsedValue) ? parsedValue : 0;
+  }
+
+  if (value && typeof value === 'object') {
+    return (
+      normalizePrice(value.amount) ||
+      normalizePrice(value.value) ||
+      normalizePrice(value.price) ||
+      normalizePrice(value.usd) ||
+      normalizePrice(value.uzs)
+    );
+  }
+
+  return 0;
+}
+
 function normalizeSingleImageUrl(value: string | undefined) {
   return typeof value === 'string' ? value.trim() : '';
 }
@@ -152,8 +184,8 @@ export function normalizeRemoteAd(ad: RemoteAd): Ad {
     id: ad.id || ad._id || '',
     title: normalizeText(ad.title, ''),
     description: normalizeText(ad.description, ''),
-    price: typeof ad.price === 'number' ? ad.price : 0,
-    category: ad.category || '',
+    price: normalizePrice(ad.price),
+    category: ad.category || (normalizeVertical(ad.vertical) === 'real_estate' ? normalizePropertyType(ad.propertyType) : ''),
     vertical: normalizeVertical(ad.vertical),
     condition: normalizeCondition(ad.condition),
     location: normalizeText(ad.location || ad.address, ''),
