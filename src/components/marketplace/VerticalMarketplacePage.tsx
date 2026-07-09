@@ -79,12 +79,13 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
         <VerticalBar activeVertical={vertical} />
 
         {hasFilters ? (
-          <section className="surface-card rounded-[1.75rem] px-5 py-5 sm:px-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight">{messages.home.resultsTitle}</h2>
-                <p className="text-sm text-muted-foreground">{messages.home.resultsDescription}</p>
-                <div className="flex flex-wrap gap-2">
+          <section className="surface-card section-shell rounded-[1.85rem]">
+            <div className="section-header">
+              <div className="section-header__copy">
+                <p className="section-kicker">{messages.home.resultsTitle}</p>
+                <h2 className="section-title">{messages.home.resultsTitle}</h2>
+                <p className="section-caption">{messages.home.resultsDescription}</p>
+                <div className="status-strip">
                   {query ? <Badge variant="secondary">{query}</Badge> : null}
                   {activeCategoryLabel ? <Badge variant="outline">{activeCategoryLabel}</Badge> : null}
                 </div>
@@ -128,9 +129,12 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
             </div>
           </section>
         ) : (
-          <section id="all-listings" className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
-            <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
-              <h2 className="text-2xl font-bold tracking-tight">{messages.home.browseAllListings}</h2>
+          <section id="all-listings" className="surface-card section-shell rounded-[1.85rem]">
+            <div className="section-header">
+              <div className="section-header__copy">
+                <p className="section-kicker">{messages.home.browseAllListings}</p>
+                <h2 className="section-title">{messages.home.browseAllListings}</h2>
+              </div>
               <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
                 <Link href={`/ads/create?vertical=${vertical}`}>
                   {messages.home.startSelling}

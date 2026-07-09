@@ -192,16 +192,17 @@ function ProfilePageContent() {
     <MarketplaceShell>
       <ProtectedRoute>
         <main className="marketplace-main">
-          <div className="surface-card rounded-[1.75rem] px-5 py-6 sm:px-6">
-            <h1 className="page-title font-bold text-primary">{messages.navbar.profile}</h1>
-            <p className="body-lead mt-3 max-w-3xl text-muted-foreground">
-              {messages.profile.memberSince}
-            </p>
+          <div className="surface-card section-shell rounded-[1.9rem]">
+            <div className="section-header__copy">
+              <p className="section-kicker">{messages.navbar.profile}</p>
+              <h1 className="page-title font-bold text-primary">{messages.navbar.profile}</h1>
+              <p className="body-lead max-w-3xl text-muted-foreground">{messages.profile.memberSince}</p>
+            </div>
           </div>
 
           <div className="page-grid profile-grid">
             <div className="page-stack">
-              <Card className="surface-card rounded-[1.75rem] border-none shadow-none">
+              <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
                 <CardContent className="flex flex-col items-center p-5 pt-8 text-center sm:p-6 sm:pt-8">
                   <Avatar className="mb-4 h-24 w-24 border-4 border-primary/10">
                     <AvatarImage src={user.avatar} alt={user.name} />
@@ -239,7 +240,7 @@ function ProfilePageContent() {
                 </CardContent>
               </Card>
 
-              <Card className="surface-card rounded-[1.75rem] border-none shadow-none">
+              <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
                 <CardHeader className="p-4">
                   <CardTitle className="text-sm">{messages.profile.accountSettings}</CardTitle>
                 </CardHeader>

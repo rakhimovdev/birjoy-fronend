@@ -8,7 +8,7 @@ import type { Location } from '@/lib/map-types';
 const RealEstateListingsMapClient = dynamic(() => import('./RealEstateListingsMapClient'), {
   ssr: false,
   loading: () => (
-    <div id="google-property-map" className="map-shell google-property-map-shell animate-pulse">
+    <div id="marketplace-property-map" className="map-shell marketplace-property-map-shell animate-pulse">
       <div className="h-full w-full rounded-[inherit] bg-muted/60" />
     </div>
   ),

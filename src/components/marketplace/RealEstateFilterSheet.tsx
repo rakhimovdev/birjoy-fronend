@@ -180,7 +180,7 @@ export function RealEstateFilterSheet({
           type="button"
           variant={buttonVariant}
           className={cn(
-            'h-11 rounded-2xl border-border/60 bg-background/88 shadow-sm backdrop-blur-sm',
+            'h-11 gap-2 rounded-[1.15rem] border-white/55 bg-background/80 px-4 shadow-none',
             buttonClassName
           )}
         >
@@ -194,14 +194,22 @@ export function RealEstateFilterSheet({
         </Button>
       </SheetTrigger>
 
-      <SheetContent side="right" className="w-full overflow-y-auto border-l-border/60 sm:max-w-xl">
-        <SheetHeader className="pr-10">
+      <SheetContent
+        side="right"
+        className="w-full overflow-y-auto border-l-border/60 bg-background/95 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:max-w-xl"
+      >
+        <SheetHeader className="pr-12">
           <SheetTitle>{copy.title}</SheetTitle>
           <SheetDescription>{copy.description}</SheetDescription>
+          <div className="pt-2">
+            <span className="inline-flex rounded-full border border-primary/15 bg-primary/8 px-3 py-1 text-xs font-semibold text-primary">
+              {activeCount > 0 ? `${activeCount} ${copy.active}` : copy.clear}
+            </span>
+          </div>
         </SheetHeader>
 
         <div className="grid gap-5 py-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="soft-panel grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="real-estate-price-min">{copy.priceMin}</Label>
               <Input
@@ -224,7 +232,7 @@ export function RealEstateFilterSheet({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="soft-panel grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="real-estate-property-type">{copy.propertyType}</Label>
               <Select
@@ -264,7 +272,7 @@ export function RealEstateFilterSheet({
             </div>
           </div>
 
-          <div className="grid gap-4">
+          <div className="soft-panel grid gap-4">
             <div className="space-y-2">
               <Label htmlFor="real-estate-location">{copy.location}</Label>
               <Input
@@ -296,7 +304,7 @@ export function RealEstateFilterSheet({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="soft-panel grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="real-estate-area-min">{copy.areaMin}</Label>
               <Input
@@ -320,12 +328,12 @@ export function RealEstateFilterSheet({
           </div>
         </div>
 
-        <SheetFooter className="gap-3 border-t border-border/60 pt-4">
-          <Button type="button" variant="ghost" className="h-11 rounded-2xl" onClick={handleClear}>
+        <SheetFooter className="sticky bottom-0 gap-3 border-t border-border/60 bg-background/95 pt-4">
+          <Button type="button" variant="ghost" className="h-11 rounded-[1.15rem]" onClick={handleClear}>
             <RotateCcw className="h-4 w-4" />
             {copy.clear}
           </Button>
-          <Button type="button" className="h-11 rounded-2xl" onClick={handleApply}>
+          <Button type="button" className="h-11 rounded-[1.15rem]" onClick={handleApply}>
             {copy.apply}
           </Button>
         </SheetFooter>

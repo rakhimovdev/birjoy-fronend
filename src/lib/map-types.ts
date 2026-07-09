@@ -28,14 +28,15 @@ export interface PropertyMarker extends Location {
   area?: number | null;
   href?: string;
   propertyType?: RealEstatePropertyType | '';
-  icon?: string | google.maps.Icon | google.maps.Symbol;
+  icon?: string;
+  customMarkerContent?: string;
 }
 
 export interface MapProps {
   center: Location;
   zoom?: number;
   markers?: PropertyMarker[];
-  onClick?: (location: Location, event: google.maps.MapMouseEvent) => void;
+  onClick?: (location: Location) => void;
   onMarkerClick?: (marker: PropertyMarker) => void;
   height?: number | string;
   className?: string;

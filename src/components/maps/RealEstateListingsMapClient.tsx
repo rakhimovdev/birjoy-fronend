@@ -1,12 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import GoogleMap from '@/components/maps/GoogleMap';
-import { GOOGLE_MAPS_DEFAULT_CENTER } from '@/lib/google-maps';
+import YandexMap from '@/components/maps/YandexMap';
 import type { Location, PropertyMarker } from '@/lib/map-types';
 import { getLocalizedText, languageMeta, type Language } from '@/lib/i18n';
 import { getAdDisplayLocation } from '@/lib/listing-utils';
 import type { Ad } from '@/lib/types';
+import { YANDEX_MAPS_DEFAULT_CENTER } from '@/lib/yandex-maps';
 
 function hasCoordinates(ad: Ad): ad is Ad & { latitude: number; longitude: number } {
   return (
@@ -81,11 +81,11 @@ export default function RealEstateListingsMapClient({
   const mapCenter = useMemo<Location>(() => {
     const selectedMarker = markers.find((marker) => marker.id === selectedAdId);
 
-    return selectedMarker || userLocation || markers[0] || GOOGLE_MAPS_DEFAULT_CENTER;
+    return selectedMarker || userLocation || markers[0] || YANDEX_MAPS_DEFAULT_CENTER;
   }, [markers, selectedAdId, userLocation]);
 
   return (
-    <GoogleMap
+    <YandexMap
       center={mapCenter}
       zoom={selectedAdId ? 14 : 12}
       markers={markers}
@@ -97,10 +97,10 @@ export default function RealEstateListingsMapClient({
       popupActionLabel={popupActionLabel}
       language={locale}
       fitBounds={markers.length > 1 || Boolean(userLocation)}
-      containerId="google-property-map"
+      containerId="marketplace-property-map"
       isVisible={isVisible}
       height={mapHeight}
-      className={mapClassName || 'google-property-map-shell'}
+      className={mapClassName || 'marketplace-property-map-shell'}
     />
   );
 }

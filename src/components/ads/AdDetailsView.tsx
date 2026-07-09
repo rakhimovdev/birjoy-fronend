@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Building2, Clock, Loader2, MapPin, MessageSquare, PencilLine, Phone, Square, Tag, Trash2, User, type LucideIcon } from 'lucide-react';
+import { Building2, Clock, Heart, Loader2, MapPin, MessageSquare, PencilLine, Phone, Square, Tag, Trash2, User, type LucideIcon } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
@@ -71,7 +71,7 @@ function getDistanceKm(
 
 export function AdDetailsView({ adId }: { adId: string }) {
   const router = useRouter();
-  const { isFavorite, user } = useAuth();
+  const { isFavorite, toggleFavorite, user } = useAuth();
   const { locale, messages } = useI18n();
   const { toast } = useToast();
   const { isAdmin } = useAdminSession();
@@ -258,6 +258,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
   const selectedImage = ad.images[selectedImageIndex] || ad.images[0];
   const propertyMapAds = isRealEstate ? [ad, ...nearbyAds] : [ad];
   const isOwnListing = user?.id === ad.userId;
+  const isCurrentAdFavorite = isFavorite(ad.id);
   const shouldDisableOptimization =
     selectedImage.startsWith('data:') || selectedImage.startsWith('blob:');
   const formattedPrice = new Intl.NumberFormat(languageMeta[locale].numberLocale, {
@@ -451,6 +452,27 @@ export function AdDetailsView({ adId }: { adId: string }) {
     }
   };
 
+  const handleToggleFavorite = () => {
+    if (!user) {
+      toast({
+        title: messages.auth.favoriteLoginTitle,
+        description: messages.auth.favoriteLoginDescription,
+        variant: 'destructive',
+      });
+      router.push(`/sign-in?redirect=${encodeURIComponent(`/ads/${ad.id}`)}`);
+      return;
+    }
+
+    const favoriteState = toggleFavorite(ad.id);
+
+    toast({
+      title: favoriteState ? messages.auth.favoriteAddedTitle : messages.auth.favoriteRemovedTitle,
+      description: favoriteState
+        ? messages.auth.favoriteAddedDescription
+        : messages.auth.favoriteRemovedDescription,
+    });
+  };
+
   const handleStartChat = async () => {
     if (!ad) {
       return;
@@ -485,50 +507,66 @@ export function AdDetailsView({ adId }: { adId: string }) {
   return (
     <MarketplaceShell>
       <main className="marketplace-main">
-        <div className="mb-2 flex flex-col items-start justify-between gap-3 min-[481px]:mb-4 min-[481px]:flex-row min-[481px]:items-center">
-          <Button asChild variant="ghost" className="px-0 text-primary hover:bg-transparent">
-            <Link href={getVerticalHref(ad.vertical)}>{messages.adDetails.backToListings}</Link>
-          </Button>
-          <div className="flex w-full flex-col gap-2 min-[481px]:w-auto min-[481px]:flex-row">
-            <AdShareActions
-              ad={ad}
-              locale={locale}
-              showQuickAction
-              quickActionClassName="w-full min-[481px]:w-auto"
-              menuButtonClassName="h-11 w-11 rounded-2xl"
-            />
-            {isAdmin ? (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="w-full gap-2 min-[481px]:w-auto" disabled={isDeleting}>
-                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                    {deleteCopy.action}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{deleteCopy.confirmTitle}</AlertDialogTitle>
-                    <AlertDialogDescription>{deleteCopy.confirmDescription}</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{deleteCopy.cancel}</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      onClick={() => void handleDeleteAd()}
-                      disabled={isDeleting}
-                    >
-                      {deleteCopy.confirm}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            ) : null}
+        <div className="surface-card section-shell--compact rounded-[1.85rem]">
+          <div className="section-header">
+            <div className="action-cluster items-center">
+              <Button asChild variant="ghost" className="px-0 text-primary hover:bg-transparent">
+                <Link href={getVerticalHref(ad.vertical)}>{messages.adDetails.backToListings}</Link>
+              </Button>
+              <Badge variant="secondary">{localizedCategory}</Badge>
+              {ad.isFeatured ? <Badge>{messages.adCard.featured}</Badge> : null}
+            </div>
+            <div className="action-cluster w-full min-[481px]:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                className={`w-full min-[481px]:w-auto ${isCurrentAdFavorite ? 'text-red-500 hover:text-red-500' : ''}`}
+                onClick={handleToggleFavorite}
+                aria-pressed={isCurrentAdFavorite}
+              >
+                <Heart className={`h-4 w-4 ${isCurrentAdFavorite ? 'fill-current' : ''}`} />
+                {messages.navbar.favorites}
+              </Button>
+              <AdShareActions
+                ad={ad}
+                locale={locale}
+                showQuickAction
+                quickActionClassName="w-full min-[481px]:w-auto"
+                menuButtonClassName="h-11 w-11 rounded-[1.15rem]"
+              />
+              {isAdmin ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="w-full gap-2 min-[481px]:w-auto" disabled={isDeleting}>
+                      {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      {deleteCopy.action}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{deleteCopy.confirmTitle}</AlertDialogTitle>
+                      <AlertDialogDescription>{deleteCopy.confirmDescription}</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{deleteCopy.cancel}</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={() => void handleDeleteAd()}
+                        disabled={isDeleting}
+                      >
+                        {deleteCopy.confirm}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : null}
+            </div>
           </div>
         </div>
 
         <div className="detail-grid">
           <div className="space-y-6">
-            <div className="surface-card relative aspect-[4/3] overflow-hidden rounded-[1.75rem] sm:aspect-[16/10] sm:rounded-[1.9rem]">
+            <div className="surface-card relative aspect-[4/3] overflow-hidden rounded-[1.9rem] shadow-[0_24px_56px_rgba(7,28,85,0.16)] sm:aspect-[16/10] sm:rounded-[2rem]">
               <Image
                 src={selectedImage}
                 alt={localizedTitle}
@@ -538,11 +576,10 @@ export function AdDetailsView({ adId }: { adId: string }) {
                 data-ai-hint="classified product detail"
                 unoptimized={shouldDisableOptimization}
               />
-              {ad.isFeatured ? (
-                <Badge className="absolute left-4 top-4 bg-accent font-bold text-accent-foreground">
-                  {messages.adCard.featured}
-                </Badge>
-              ) : null}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/52 via-slate-950/10 to-transparent" />
+              <div className="absolute bottom-4 right-4 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                {selectedImageIndex + 1}/{ad.images.length}
+              </div>
             </div>
             {ad.images.length > 1 ? (
               <div className="grid grid-cols-3 gap-3 min-[481px]:grid-cols-4 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5">
@@ -550,7 +587,7 @@ export function AdDetailsView({ adId }: { adId: string }) {
                   <button
                     key={`${image.slice(0, 32)}-${index}`}
                     type="button"
-                    className={`relative aspect-square overflow-hidden rounded-2xl border transition-colors ${index === selectedImageIndex ? 'border-primary ring-2 ring-primary/20' : 'border-border'
+                    className={`relative aspect-square overflow-hidden rounded-[1.15rem] border transition-all ${index === selectedImageIndex ? 'border-primary ring-2 ring-primary/20' : 'border-border/70 hover:border-primary/20'
                       }`}
                     onClick={() => setSelectedImageIndex(index)}
                   >
@@ -568,45 +605,42 @@ export function AdDetailsView({ adId }: { adId: string }) {
               </div>
             ) : null}
 
-            <div className="surface-card rounded-[1.75rem] p-5 sm:rounded-[1.9rem] sm:p-6">
-              <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-primary">
-                    {localizedCategory}
-                  </p>
+            <div className="surface-card rounded-[1.9rem] p-5 sm:p-6">
+              <div className="section-header">
+                <div className="section-header__copy">
+                  <p className="section-kicker">{localizedCategory}</p>
                   <h1 className="page-title font-bold">{localizedTitle}</h1>
+                  <p className="section-caption">{localizedLocation}</p>
                 </div>
-                <div className="text-xl font-bold text-primary min-[481px]:text-2xl sm:text-3xl">{formattedPrice}</div>
+                <div className="text-2xl font-extrabold tracking-[-0.03em] text-primary min-[481px]:text-3xl">
+                  {formattedPrice}
+                </div>
               </div>
 
-              <div
-                className={`grid grid-cols-1 gap-4 border-y py-5 text-sm text-muted-foreground min-[481px]:grid-cols-2 ${
-                  isRealEstate ? 'xl:grid-cols-3' : 'xl:grid-cols-4'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-primary" />
+              <div className="detail-fact-grid border-y border-border/70 py-5 text-sm text-muted-foreground">
+                <div className="detail-fact-card">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <div>
                     <p className="font-medium text-foreground">{messages.adDetails.location}</p>
                     <p>{localizedLocation}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary" />
+                <div className="detail-fact-card">
+                  <Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <div>
                     <p className="font-medium text-foreground">{messages.adDetails.posted}</p>
                     <p>{postedAgo}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-primary" />
+                <div className="detail-fact-card">
+                  <Tag className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <div>
                     <p className="font-medium text-foreground">{messages.adDetails.category}</p>
                     <p>{localizedCategory}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-primary" />
+                <div className="detail-fact-card">
+                  <Tag className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <div>
                     <p className="font-medium text-foreground">{messages.adDetails.condition}</p>
                     <p>{localizedCondition}</p>
@@ -617,8 +651,8 @@ export function AdDetailsView({ adId }: { adId: string }) {
                       const Icon = fact.icon;
 
                       return (
-                        <div key={fact.label} className="flex items-center gap-2">
-                          <Icon className="h-4 w-4 text-primary" />
+                        <div key={fact.label} className="detail-fact-card">
+                          <Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                           <div>
                             <p className="font-medium text-foreground">{fact.label}</p>
                             <p>{fact.value}</p>
@@ -629,41 +663,52 @@ export function AdDetailsView({ adId }: { adId: string }) {
                   : null}
               </div>
 
-              <div className="pt-6">
-                <h2 className="mb-3 text-xl font-semibold">{messages.adDetails.description}</h2>
-                <p className="body-lead whitespace-pre-line text-muted-foreground">{localizedDescription}</p>
-              </div>
-
-              {isRealEstate && typeof ad.latitude === 'number' && typeof ad.longitude === 'number' ? (
-                <div className="pt-6">
-                  <h2 className="mb-3 text-xl font-semibold">
-                    {locale === 'ru' ? 'Локация на карте' : locale === 'en' ? 'Map location' : 'Xaritadagi joylashuv'}
-                  </h2>
-                  <RealEstateListingsMap
-                    ads={propertyMapAds}
-                    locale={locale}
-                    selectedAdId={selectedMapAdId}
-                    onSelectAd={setSelectedMapAdId}
-                    userLocation={null}
-                    userLocationLabel={
-                      locale === 'ru' ? 'Вы здесь' : locale === 'en' ? 'You are here' : 'Siz turgan joy'
-                    }
-                    nearbyRadiusKm={NEARBY_PROPERTIES_RADIUS_KM}
-                    popupActionLabel={messages.adDetails.browseMore}
-                    isVisible
-                  />
+              <div className="space-y-6 pt-6">
+                <div>
+                  <h2 className="mb-3 text-xl font-semibold">{messages.adDetails.description}</h2>
+                  <p className="body-lead whitespace-pre-line text-muted-foreground">{localizedDescription}</p>
                 </div>
-              ) : null}
+
+                {isRealEstate && typeof ad.latitude === 'number' && typeof ad.longitude === 'number' ? (
+                  <div className="space-y-4 border-t border-border/70 pt-6">
+                    <div className="soft-panel">
+                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+                        {locale === 'ru' ? 'Локация' : locale === 'en' ? 'Location' : 'Joylashuv'}
+                      </p>
+                      <p className="mt-2 text-base font-semibold text-foreground">{localizedLocation}</p>
+                      {localizedDistrict ? <p className="mt-1 text-sm text-muted-foreground">{localizedDistrict}</p> : null}
+                    </div>
+                    <div>
+                      <h2 className="mb-3 text-xl font-semibold">
+                        {locale === 'ru' ? 'Локация на карте' : locale === 'en' ? 'Map location' : 'Xaritadagi joylashuv'}
+                      </h2>
+                      <RealEstateListingsMap
+                        ads={propertyMapAds}
+                        locale={locale}
+                        selectedAdId={selectedMapAdId}
+                        onSelectAd={setSelectedMapAdId}
+                        userLocation={null}
+                        userLocationLabel={
+                          locale === 'ru' ? 'Вы здесь' : locale === 'en' ? 'You are here' : 'Siz turgan joy'
+                        }
+                        nearbyRadiusKm={NEARBY_PROPERTIES_RADIUS_KM}
+                        popupActionLabel={messages.adDetails.browseMore}
+                        isVisible
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
 
           <div className="space-y-6">
-            <Card className="surface-card border-none shadow-none min-[900px]:sticky min-[900px]:top-24">
+            <Card className="surface-card rounded-[1.9rem] border-none shadow-none min-[900px]:sticky min-[900px]:top-24">
               <CardHeader>
                 <CardTitle>{messages.adDetails.overview}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
-                <div className="flex items-center gap-3 rounded-2xl bg-muted/50 p-4">
+                <div className="soft-panel flex items-center gap-3">
                   <div className="rounded-full bg-primary/10 p-3 text-primary">
                     <User className="h-5 w-5" />
                   </div>
@@ -738,10 +783,18 @@ export function AdDetailsView({ adId }: { adId: string }) {
                       {isStartingChat ? chatCopy.loading : chatCopy.action}
                     </Button>
                   ) : (
-                    <div className="rounded-2xl bg-muted/50 p-4 text-sm text-muted-foreground">
+                    <div className="soft-panel text-sm text-muted-foreground">
                       {chatCopy.ownListing}
                     </div>
                   )}
+                  {!isOwnListing && ad.sellerPhone ? (
+                    <Button asChild variant="outline" className="h-11">
+                      <a href={`tel:${ad.sellerPhone}`}>
+                        <Phone className="mr-2 h-4 w-4" />
+                        {locale === 'ru' ? 'Позвонить' : locale === 'en' ? 'Call seller' : 'Qo‘ng‘iroq qilish'}
+                      </a>
+                    </Button>
+                  ) : null}
                   {isOwnListing ? (
                     <Button asChild variant="outline" className="h-11">
                       <Link href={`/ads/${ad.id}/edit`}>
@@ -758,14 +811,14 @@ export function AdDetailsView({ adId }: { adId: string }) {
                   </Button>
                 </div>
                 {!isOwnListing ? (
-                  <div className="rounded-2xl bg-muted/50 p-4 text-sm text-muted-foreground">
+                  <div className="soft-panel text-sm text-muted-foreground">
                     {chatCopy.helper}
                   </div>
                 ) : null}
               </CardContent>
             </Card>
 
-            <Card className="surface-card border-none shadow-none">
+            <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
               <CardHeader>
                 <CardTitle>{orderCopy.title}</CardTitle>
               </CardHeader>
@@ -835,20 +888,20 @@ export function AdDetailsView({ adId }: { adId: string }) {
                     {isOrderSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                     {orderCopy.submit}
                   </Button>
-                  <div className="rounded-2xl bg-muted/50 p-4 text-sm text-muted-foreground">
+                  <div className="soft-panel text-sm text-muted-foreground">
                     {orderCopy.statusNote}
                   </div>
                 </form>
               </CardContent>
             </Card>
 
-            <Card className="surface-card border-none shadow-none">
+            <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
               <CardHeader>
                 <CardTitle>{messages.adDetails.safetyTitle}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 {messages.adDetails.safetyTips.map((tip) => (
-                  <div key={tip} className="rounded-2xl bg-muted/50 p-4">
+                  <div key={tip} className="soft-panel">
                     {tip}
                   </div>
                 ))}
@@ -858,11 +911,12 @@ export function AdDetailsView({ adId }: { adId: string }) {
         </div>
 
         {nearbyAds.length > 0 ? (
-          <section className="mt-12">
-            <div className="mb-6 flex flex-col items-start justify-between gap-3 min-[481px]:flex-row min-[481px]:items-center">
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight">{nearbyCopy.title}</h2>
-                <p className="text-sm text-muted-foreground">{nearbyCopy.description}</p>
+          <section className="surface-card section-shell rounded-[1.85rem]">
+            <div className="section-header">
+              <div className="section-header__copy">
+                <p className="section-kicker">{nearbyCopy.title}</p>
+                <h2 className="section-title">{nearbyCopy.title}</h2>
+                <p className="section-caption">{nearbyCopy.description}</p>
               </div>
               <Badge variant="secondary">{nearbyAds.length}</Badge>
             </div>
@@ -883,9 +937,12 @@ export function AdDetailsView({ adId }: { adId: string }) {
         ) : null}
 
         {relatedAds.length > 0 ? (
-          <section className="mt-12">
-            <div className="mb-6 flex flex-col items-start justify-between gap-3 min-[481px]:flex-row min-[481px]:items-center">
-              <h2 className="text-2xl font-bold tracking-tight">{messages.adDetails.relatedListings}</h2>
+          <section className="surface-card section-shell rounded-[1.85rem]">
+            <div className="section-header">
+              <div className="section-header__copy">
+                <p className="section-kicker">{messages.adDetails.relatedListings}</p>
+                <h2 className="section-title">{messages.adDetails.relatedListings}</h2>
+              </div>
               <Button asChild variant="ghost" className="px-0 text-primary hover:bg-transparent">
                 <Link href={getVerticalHref(ad.vertical)}>{messages.adDetails.browseMore}</Link>
               </Button>

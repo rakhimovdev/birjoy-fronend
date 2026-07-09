@@ -30,7 +30,7 @@ export function VerticalBar({ activeVertical }: { activeVertical: AdVertical }) 
 
   return (
     <section aria-label="Marketplace verticals" className="vertical-bar-shell">
-      <div className="vertical-bar-surface px-3 py-3 sm:px-4">
+      <div className="vertical-bar-surface px-2.5 py-2.5 sm:px-3.5 sm:py-3.5">
         <div className="category-bar-grid">
           {MARKETPLACE_VERTICALS.map((vertical) => {
             const Icon = (Icons as unknown as Record<string, LucideIcon>)[vertical.icon];
@@ -40,7 +40,7 @@ export function VerticalBar({ activeVertical }: { activeVertical: AdVertical }) 
               <Link
                 key={vertical.id}
                 href={buildVerticalHref(vertical.id)}
-                className={cn('category-pill', isActive && 'text-primary')}
+                className={cn('category-pill shrink-0', isActive && 'text-primary')}
                 data-active={isActive}
                 aria-current={isActive ? 'page' : undefined}
               >

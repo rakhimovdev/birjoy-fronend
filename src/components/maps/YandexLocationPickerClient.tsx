@@ -1,0 +1,538 @@
+'use client';
+
+import { AlertCircle, Loader2, LocateFixed, MapPinned, RefreshCw, Search } from 'lucide-react';
+import { startTransition, useCallback, useDeferredValue, useEffect, useRef, useState } from 'react';
+import { useTheme } from '@/components/providers/ThemeProvider';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useYandexMaps, hasYandexMapsApiKey } from '@/lib/yandex-maps-loader';
+import {
+  createUserLocationMarkerHtml,
+  geocodeAddressByQuery,
+  reverseGeocodeCoordinates,
+  searchAddressSuggestions,
+  toYandexCoordinates,
+  YANDEX_MAPS_DEFAULT_CENTER,
+} from '@/lib/yandex-maps';
+import type { Language } from '@/lib/i18n';
+import type { Location, ResolvedLocation } from '@/lib/map-types';
+import type { YandexLocationPickerCopy } from './YandexLocationPicker';
+
+type GeolocationState = 'idle' | 'loading' | 'denied' | 'unsupported' | 'error';
+
+export default function YandexLocationPickerClient({
+  value,
+  address,
+  locationHint,
+  locale,
+  copy,
+  onChange,
+  onAddressChange,
+  onLocationHintChange,
+  onResolvedLocationChange,
+}: {
+  value: Location | null;
+  address: string;
+  locationHint: string;
+  locale: Language;
+  copy: YandexLocationPickerCopy;
+  onChange: (point: Location) => void;
+  onAddressChange: (value: string) => void;
+  onLocationHintChange: (value: string) => void;
+  onResolvedLocationChange: (value: ResolvedLocation) => void;
+}) {
+  const { theme } = useTheme();
+  const [loaderNonce, setLoaderNonce] = useState(0);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+  const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
+  const [geolocationState, setGeolocationState] = useState<GeolocationState>('idle');
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<ResolvedLocation[]>([]);
+  const [searchResultsOpen, setSearchResultsOpen] = useState(false);
+  const mapRef = useRef<YMapsMap | null>(null);
+  const canvasRef = useRef<HTMLDivElement | null>(null);
+  const markerRef = useRef<YMapsPlacemark | null>(null);
+  const markerDragHandlerRef = useRef<((event: YMapsEvent) => void) | null>(null);
+  const markerLayoutRef = useRef<YMapsLayoutClass | null>(null);
+  const mapClickHandlerRef = useRef<((event: YMapsEvent) => void) | null>(null);
+  const lastResolvedAddressRef = useRef('');
+  const reverseGeocodeRef = useRef<((point: Location) => Promise<void>) | null>(null);
+  const deferredAddress = useDeferredValue(address.trim());
+  const { api, error, isLoaded } = useYandexMaps(loaderNonce);
+  const center = value || YANDEX_MAPS_DEFAULT_CENTER;
+
+  const applyResolvedLocation = useCallback(
+    (resolved: ResolvedLocation) => {
+      setSearchError(null);
+      setSearchResults([]);
+      setSearchResultsOpen(false);
+      lastResolvedAddressRef.current = (resolved.formattedAddress || resolved.address).trim();
+      onChange(resolved.location);
+      onResolvedLocationChange(resolved);
+      onAddressChange(resolved.formattedAddress || resolved.address);
+
+      if (resolved.locationHint) {
+        onLocationHintChange(resolved.locationHint);
+      }
+
+      const map = mapRef.current;
+
+      if (map) {
+        map.setCenter(toYandexCoordinates(resolved.location), Math.max(map.getZoom(), 16), {
+          duration: 220,
+        });
+      }
+    },
+    [onAddressChange, onChange, onLocationHintChange, onResolvedLocationChange]
+  );
+
+  const handleReverseGeocode = useCallback(
+    async (nextPoint: Location) => {
+      if (!api || !isLoaded) {
+        return;
+      }
+
+      try {
+        const resolved = await reverseGeocodeCoordinates(api, nextPoint);
+        applyResolvedLocation(resolved);
+      } catch (loadError) {
+        setSearchError(loadError instanceof Error ? loadError.message : copy.mapError);
+        onChange(nextPoint);
+      }
+    },
+    [api, applyResolvedLocation, copy.mapError, isLoaded, onChange]
+  );
+
+  const handleAddressSearch = useCallback(async () => {
+    if (!api || !isLoaded || !address.trim()) {
+      return;
+    }
+
+    setIsSearchingAddress(true);
+
+    try {
+      const resolved = await geocodeAddressByQuery(api, address.trim());
+      applyResolvedLocation(resolved);
+    } catch (loadError) {
+      setSearchError(loadError instanceof Error ? loadError.message : copy.mapError);
+    } finally {
+      setIsSearchingAddress(false);
+    }
+  }, [address, api, applyResolvedLocation, copy.mapError, isLoaded]);
+
+  const handleCurrentLocation = useCallback(() => {
+    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+      setGeolocationState('unsupported');
+      return;
+    }
+
+    setGeolocationState('loading');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nextPoint = {
+          lat: Number(position.coords.latitude.toFixed(6)),
+          lng: Number(position.coords.longitude.toFixed(6)),
+        };
+
+        setGeolocationState('idle');
+        void handleReverseGeocode(nextPoint);
+      },
+      (locationError) => {
+        if (locationError.code === locationError.PERMISSION_DENIED) {
+          setGeolocationState('denied');
+          return;
+        }
+
+        setGeolocationState('error');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000,
+      }
+    );
+  }, [handleReverseGeocode]);
+
+  useEffect(() => {
+    reverseGeocodeRef.current = handleReverseGeocode;
+  }, [handleReverseGeocode]);
+
+  useEffect(() => {
+    if (!api || !isLoaded || !canvasRef.current || mapRef.current) {
+      return;
+    }
+
+    const map = new api.Map(
+      canvasRef.current,
+      {
+        center: toYandexCoordinates(center),
+        zoom: value ? 16 : 12,
+        controls: ['zoomControl'],
+      },
+      {
+        suppressMapOpenBlock: true,
+      }
+    );
+
+    const handleMapClick = (event: YMapsEvent<YandexMapCoords>) => {
+      const coordinates = event.get('coords');
+
+      if (!Array.isArray(coordinates) || coordinates.length < 2) {
+        return;
+      }
+
+      void reverseGeocodeRef.current?.({
+        lat: Number(coordinates[0].toFixed(6)),
+        lng: Number(coordinates[1].toFixed(6)),
+      });
+    };
+
+    map.events.add('click', handleMapClick as (event: YMapsEvent) => void);
+    mapClickHandlerRef.current = handleMapClick as (event: YMapsEvent) => void;
+    mapRef.current = map;
+    map.container.fitToViewport();
+
+    return () => {
+      if (mapClickHandlerRef.current) {
+        map.events.remove('click', mapClickHandlerRef.current);
+      }
+
+      map.destroy();
+      mapClickHandlerRef.current = null;
+      mapRef.current = null;
+      markerRef.current = null;
+      markerDragHandlerRef.current = null;
+      markerLayoutRef.current = null;
+    };
+  }, [api, center, isLoaded, value]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+
+    if (!map) {
+      return;
+    }
+
+    map.setCenter(toYandexCoordinates(center), value ? 16 : 12, {
+      duration: 220,
+    });
+  }, [center, value]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+
+    if (!api || !isLoaded || !map) {
+      return;
+    }
+
+    if (markerRef.current) {
+      if (markerDragHandlerRef.current) {
+        markerRef.current.events.remove('dragend', markerDragHandlerRef.current);
+      }
+
+      map.geoObjects.remove(markerRef.current);
+      markerRef.current = null;
+      markerDragHandlerRef.current = null;
+    }
+
+    if (!value) {
+      return;
+    }
+
+    if (!markerLayoutRef.current) {
+      markerLayoutRef.current = api.templateLayoutFactory.createClass('$[properties.markerHtml]');
+    }
+
+    markerRef.current = new api.Placemark(
+      toYandexCoordinates(value),
+      {
+        markerHtml: createUserLocationMarkerHtml(theme, copy.selectedPoint),
+      },
+      {
+        draggable: true,
+        iconLayout: markerLayoutRef.current,
+        zIndex: 3000,
+      }
+    );
+
+    const handleDragEnd = () => {
+      const coordinates = markerRef.current?.geometry.getCoordinates();
+
+      if (!coordinates) {
+        return;
+      }
+
+      void handleReverseGeocode({
+        lat: Number(coordinates[0].toFixed(6)),
+        lng: Number(coordinates[1].toFixed(6)),
+      });
+    };
+
+    markerRef.current.events.add('dragend', handleDragEnd as (event: YMapsEvent) => void);
+    markerDragHandlerRef.current = handleDragEnd as (event: YMapsEvent) => void;
+    map.geoObjects.add(markerRef.current);
+  }, [api, copy.selectedPoint, handleReverseGeocode, isLoaded, theme, value]);
+
+  useEffect(() => {
+    if (!api || !isLoaded || deferredAddress.length < 3) {
+      setSearchResults([]);
+      setSearchResultsOpen(false);
+      setIsFetchingSuggestions(false);
+      return;
+    }
+
+    if (deferredAddress === lastResolvedAddressRef.current) {
+      setSearchResults([]);
+      setSearchResultsOpen(false);
+      setIsFetchingSuggestions(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsFetchingSuggestions(true);
+
+    const timeoutId = window.setTimeout(() => {
+      void searchAddressSuggestions(api, deferredAddress, 6)
+        .then((results) => {
+          if (cancelled) {
+            return;
+          }
+
+          startTransition(() => {
+            setSearchResults(results);
+            setSearchResultsOpen(results.length > 0);
+          });
+        })
+        .catch(() => {
+          if (cancelled) {
+            return;
+          }
+
+          startTransition(() => {
+            setSearchResults([]);
+            setSearchResultsOpen(false);
+          });
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setIsFetchingSuggestions(false);
+          }
+        });
+    }, 260);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [api, deferredAddress, isLoaded]);
+
+  useEffect(() => {
+    const fitToViewport = () => {
+      mapRef.current?.container.fitToViewport();
+    };
+
+    fitToViewport();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', fitToViewport);
+
+      return () => {
+        window.removeEventListener('resize', fitToViewport);
+      };
+    }
+
+    const observer = new ResizeObserver(() => {
+      fitToViewport();
+    });
+
+    if (canvasRef.current?.parentElement) {
+      observer.observe(canvasRef.current.parentElement);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isLoaded]);
+
+  const geolocationMessage =
+    geolocationState === 'denied'
+      ? copy.geolocationDenied
+      : geolocationState === 'unsupported'
+        ? copy.geolocationUnsupported
+        : geolocationState === 'error'
+          ? copy.geolocationError
+          : null;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 min-[481px]:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor={`address-${locale}`}>{copy.address}</Label>
+          <div className="flex flex-col gap-2 min-[640px]:flex-row">
+            <div className="relative flex-1">
+              <Input
+                id={`address-${locale}`}
+                placeholder={copy.addressPlaceholder}
+                value={address}
+                onChange={(event) => {
+                  onAddressChange(event.target.value);
+                  if (lastResolvedAddressRef.current === event.target.value.trim()) {
+                    lastResolvedAddressRef.current = '';
+                  }
+                  setSearchError(null);
+                }}
+                onFocus={() => {
+                  if (searchResults.length > 0) {
+                    setSearchResultsOpen(true);
+                  }
+                }}
+                onBlur={() => {
+                  window.setTimeout(() => {
+                    setSearchResultsOpen(false);
+                  }, 120);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    void handleAddressSearch();
+                  }
+                }}
+                required
+              />
+
+              {searchResultsOpen && searchResults.length > 0 ? (
+                <div className="map-search-results">
+                  {searchResults.map((result) => (
+                    <button
+                      key={result.placeId}
+                      type="button"
+                      className="map-search-result"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        applyResolvedLocation(result);
+                      }}
+                    >
+                      <span className="map-search-result__title">{result.title}</span>
+                      <span className="map-search-result__description">
+                        {result.formattedAddress || result.description}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 shrink-0 gap-2 rounded-2xl"
+              onClick={() => void handleAddressSearch()}
+              disabled={isSearchingAddress || !address.trim() || !isLoaded}
+            >
+              {isSearchingAddress ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
+              {isSearchingAddress ? copy.searchAddressPending : copy.searchAddress}
+            </Button>
+          </div>
+
+          {isFetchingSuggestions ? (
+            <p className="text-xs text-muted-foreground">
+              {locale === 'ru'
+                ? 'Подбираем адреса...'
+                : locale === 'en'
+                  ? 'Finding addresses...'
+                  : 'Manzillar qidirilmoqda...'}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`location-hint-${locale}`}>{copy.locationHint}</Label>
+          <Input
+            id={`location-hint-${locale}`}
+            placeholder={copy.locationHintPlaceholder}
+            value={locationHint}
+            onChange={(event) => onLocationHintChange(event.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="soft-panel flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <MapPinned className="mt-0.5 h-4 w-4 text-primary" />
+          <div>
+            <p className="font-medium text-foreground">{copy.mapTitle}</p>
+            <p className="text-sm text-muted-foreground">{copy.mapDescription}</p>
+          </div>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="min-h-11 gap-2 rounded-[1.15rem]"
+          onClick={handleCurrentLocation}
+          disabled={geolocationState === 'loading' || !isLoaded}
+        >
+          {geolocationState === 'loading' ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <LocateFixed className="h-4 w-4" />
+          )}
+          {geolocationState === 'loading' ? copy.myLocationPending : copy.myLocation}
+        </Button>
+      </div>
+
+      {!hasYandexMapsApiKey() ? (
+        <div className="map-shell">
+          <div className="flex h-full items-center justify-center rounded-[inherit] bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+            {copy.apiKeyMissing}
+          </div>
+        </div>
+      ) : error ? (
+        <div className="map-shell">
+          <div className="flex h-full flex-col items-center justify-center gap-4 rounded-[inherit] bg-muted/30 p-6 text-center">
+            <p className="max-w-md text-sm text-muted-foreground">{copy.mapError}</p>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              onClick={() => setLoaderNonce((current) => current + 1)}
+            >
+              <RefreshCw className="h-4 w-4" />
+              {copy.retry}
+            </Button>
+          </div>
+        </div>
+      ) : !isLoaded ? (
+        <div className="map-shell animate-pulse">
+          <div className="h-full w-full rounded-[inherit] bg-muted/60" />
+        </div>
+      ) : (
+        <div className="map-shell">
+          <div ref={canvasRef} className="yandex-map-canvas h-full w-full" />
+        </div>
+      )}
+
+      <div className="soft-panel flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <p>{copy.mapRequiredHint}</p>
+          {geolocationMessage ? (
+            <div className="inline-flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              <span>{geolocationMessage}</span>
+            </div>
+          ) : null}
+          {searchError ? <p className="text-destructive">{searchError}</p> : null}
+        </div>
+        <Badge variant="outline" className="w-fit">
+          {copy.selectedPoint}: {value ? `${value.lat}, ${value.lng}` : copy.notSelected}
+        </Badge>
+      </div>
+    </div>
+  );
+}

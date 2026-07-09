@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Wand2, ImagePlus, Loader2, Languages, ShieldCheck, AlertCircle, X } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
-import { GoogleLocationPicker, type GoogleLocationPickerCopy } from '@/components/maps/GoogleLocationPicker';
+import { YandexLocationPicker, type YandexLocationPickerCopy } from '@/components/maps/YandexLocationPicker';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -170,6 +170,7 @@ export function AdEditorForm({
   );
   const nativeAndroidApp = isNativeAndroidApp();
   const categories = getCategoriesForVertical(formData.vertical);
+  const selectedCategoryConfig = categories.find((category) => category.slug === formData.category);
   const isRealEstate = formData.vertical === 'real_estate';
   const currentVerticalConfig = getVerticalById(formData.vertical);
   const isEditMode = mode === 'edit';
@@ -200,8 +201,8 @@ export function AdEditorForm({
           geolocationDenied: 'Доступ к геолокации закрыт. Выберите точку вручную.',
           geolocationUnsupported: 'Геолокация в этом браузере недоступна.',
           geolocationError: 'Текущую локацию получить не удалось.',
-          apiKeyMissing: 'NEXT_PUBLIC_GOOGLE_MAPS_API_KEY не найден.',
-          mapError: 'Google Maps не загрузился.',
+          apiKeyMissing: 'NEXT_PUBLIC_YANDEX_MAPS_API_KEY не найден.',
+          mapError: 'Yandex Maps не загрузился.',
           retry: 'Повторить',
           editAction: 'Сохранить изменения',
           createAction: 'Опубликовать объявление',
@@ -234,8 +235,8 @@ export function AdEditorForm({
             geolocationDenied: 'Location access was denied. You can still place the marker manually.',
             geolocationUnsupported: 'Geolocation is not supported on this device.',
             geolocationError: 'Current location could not be resolved.',
-            apiKeyMissing: 'NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing.',
-            mapError: 'Google Maps could not be loaded.',
+            apiKeyMissing: 'NEXT_PUBLIC_YANDEX_MAPS_API_KEY is missing.',
+            mapError: 'Yandex Maps could not be loaded.',
             retry: 'Retry',
             editAction: 'Save Changes',
             createAction: 'Publish Listing',
@@ -267,8 +268,8 @@ export function AdEditorForm({
             geolocationDenied: 'Joylashuv ruxsati berilmadi. Nuqtani qo‘lda tanlashingiz mumkin.',
             geolocationUnsupported: 'Bu qurilmada geolokatsiya qo‘llab-quvvatlanmaydi.',
             geolocationError: 'Joriy joylashuvni aniqlab bo‘lmadi.',
-            apiKeyMissing: 'NEXT_PUBLIC_GOOGLE_MAPS_API_KEY topilmadi.',
-            mapError: 'Google Maps yuklanmadi.',
+            apiKeyMissing: 'NEXT_PUBLIC_YANDEX_MAPS_API_KEY topilmadi.',
+            mapError: 'Yandex Maps yuklanmadi.',
             retry: 'Qayta urinish',
             editAction: 'O‘zgarishlarni saqlash',
             createAction: 'E’lonni chop etish',
@@ -344,7 +345,7 @@ export function AdEditorForm({
     });
   };
 
-  const googleLocationPickerCopy: GoogleLocationPickerCopy = {
+  const yandexLocationPickerCopy: YandexLocationPickerCopy = {
     mapTitle: editorCopy.mapTitle,
     mapDescription: editorCopy.mapDescription,
     address: editorCopy.address,
@@ -675,10 +676,11 @@ export function AdEditorForm({
     <MarketplaceShell>
       <ProtectedRoute>
         <main className="marketplace-main">
-          <div className="surface-card rounded-[1.75rem] px-5 py-6 sm:px-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h1 className="page-title mb-3 font-bold text-primary">{editorTitle}</h1>
+          <div className="surface-card section-shell rounded-[1.9rem]">
+            <div className="section-header">
+              <div className="section-header__copy">
+                <p className="section-kicker">{isEditMode ? editorCopy.editAction : messages.createAd.title}</p>
+                <h1 className="page-title font-bold text-primary">{editorTitle}</h1>
                 <p className="body-lead text-muted-foreground">{editorDescription}</p>
               </div>
               {currentVerticalConfig ? (
@@ -704,7 +706,7 @@ export function AdEditorForm({
           <form onSubmit={handleSubmit} className="page-stack">
             <div className="two-pane-grid">
               <div className="page-stack">
-                <Card className="surface-card rounded-[1.75rem] border-none shadow-none">
+                <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
                   <CardHeader>
                     <CardTitle>{messages.createAd.basicInfo}</CardTitle>
                   </CardHeader>
@@ -790,7 +792,7 @@ export function AdEditorForm({
                   </CardContent>
                 </Card>
 
-                <Card className="surface-card rounded-[1.75rem] border-none shadow-none">
+                <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
                   <CardHeader className="flex flex-col items-start justify-between gap-3 space-y-0 min-[640px]:flex-row min-[640px]:items-center">
                     <div className="space-y-1">
                       <CardTitle>{messages.createAd.descriptionTitle}</CardTitle>
@@ -846,7 +848,7 @@ export function AdEditorForm({
                   </CardContent>
                 </Card>
 
-                <Card className="surface-card rounded-[1.75rem] border-none shadow-none">
+                <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
                   <CardHeader>
                     <CardTitle>{messages.createAd.location}</CardTitle>
                   </CardHeader>
@@ -892,12 +894,12 @@ export function AdEditorForm({
                           </div>
                         </div>
 
-                        <GoogleLocationPicker
+                        <YandexLocationPicker
                           value={selectedMapPoint}
                           address={formData.address}
                           locationHint={formData.location}
                           locale={locale}
-                          copy={googleLocationPickerCopy}
+                          copy={yandexLocationPickerCopy}
                           onChange={setSelectedMapPoint}
                           onAddressChange={(value) => {
                             setFormData((previous) => ({ ...previous, address: value }));
@@ -964,7 +966,7 @@ export function AdEditorForm({
               </div>
 
               <div className="page-stack">
-                <Card className="surface-card rounded-[1.75rem] border-none shadow-none">
+                <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
                   <CardHeader>
                     <CardTitle>{messages.createAd.media}</CardTitle>
                     <CardDescription>{messages.createAd.mediaDescription}</CardDescription>
@@ -983,7 +985,7 @@ export function AdEditorForm({
                         <>
                           <button
                             type="button"
-                            className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3 text-center text-muted-foreground transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="upload-tile disabled:cursor-not-allowed disabled:opacity-60"
                             onClick={() => void handleNativeGalleryUpload()}
                             disabled={isUploadingImages}
                           >
@@ -992,7 +994,7 @@ export function AdEditorForm({
                           </button>
                           <button
                             type="button"
-                            className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3 text-center text-muted-foreground transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="upload-tile disabled:cursor-not-allowed disabled:opacity-60"
                             onClick={() => void handleNativeCameraUpload()}
                             disabled={isUploadingImages}
                           >
@@ -1003,7 +1005,7 @@ export function AdEditorForm({
                       ) : (
                         <button
                           type="button"
-                          className="flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3 text-center text-muted-foreground transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="upload-tile disabled:cursor-not-allowed disabled:opacity-60"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={isUploadingImages}
                         >
@@ -1014,7 +1016,7 @@ export function AdEditorForm({
                       {uploadedImages.map((image, index) => (
                         <div
                           key={`${image.fileId || image.url.slice(0, 32)}-${index}`}
-                          className="relative aspect-square overflow-hidden rounded-2xl border bg-muted/30"
+                          className="relative aspect-square overflow-hidden rounded-[1.3rem] border border-border/70 bg-muted/30 shadow-[0_12px_24px_rgba(7,28,85,0.06)]"
                         >
                           <Image
                             src={image.thumbnailUrl || image.url}
@@ -1041,7 +1043,31 @@ export function AdEditorForm({
                   </CardContent>
                 </Card>
 
-                <div className="surface-card rounded-[1.75rem] p-4 min-[900px]:sticky min-[900px]:top-24">
+                <div className="surface-card rounded-[1.9rem] p-4 min-[900px]:sticky min-[900px]:top-24">
+                  <div className="soft-panel mb-4 space-y-3 text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between gap-3">
+                      <span>{messages.createAd.category}</span>
+                      <span className="font-semibold text-foreground">
+                        {selectedCategoryConfig
+                          ? getLocalizedText(selectedCategoryConfig.name, locale)
+                          : messages.createAd.selectCategory}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span>{messages.createAd.media}</span>
+                      <span className="font-semibold text-foreground">{uploadedImages.length}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span>{messages.createAd.location}</span>
+                      <span className="max-w-[11rem] truncate text-right font-semibold text-foreground">
+                        {isRealEstate
+                          ? selectedMapPoint
+                            ? `${selectedMapPoint.lat}, ${selectedMapPoint.lng}`
+                            : editorCopy.notSelected
+                          : formData.location || messages.createAd.locationPlaceholder}
+                      </span>
+                    </div>
+                  </div>
                   <Button
                     type="submit"
                     className="h-12 w-full gap-2 rounded-2xl text-lg font-bold"

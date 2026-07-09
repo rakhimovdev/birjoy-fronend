@@ -296,12 +296,13 @@ export function RealEstateMarketplacePage() {
         <VerticalBar activeVertical="real_estate" />
 
         {hasFilters ? (
-          <section className="surface-card rounded-[1.75rem] px-5 py-5 sm:px-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight">{messages.home.resultsTitle}</h2>
-                <p className="text-sm text-muted-foreground">{messages.home.resultsDescription}</p>
-                <div className="flex flex-wrap gap-2">
+          <section className="surface-card section-shell rounded-[1.85rem]">
+            <div className="section-header">
+              <div className="section-header__copy">
+                <p className="section-kicker">{messages.home.resultsTitle}</p>
+                <h2 className="section-title">{messages.home.resultsTitle}</h2>
+                <p className="section-caption">{messages.home.resultsDescription}</p>
+                <div className="status-strip">
                   {query ? <Badge variant="secondary">{query}</Badge> : null}
                   {activeCategoryLabel ? <Badge variant="outline">{activeCategoryLabel}</Badge> : null}
                   {hasCustomFilters ? (
@@ -352,14 +353,20 @@ export function RealEstateMarketplacePage() {
           </section>
         ) : (
           <>
-            <section className="surface-card rounded-[1.75rem] px-4 py-4 sm:px-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight">{viewCopy.galleryTitle}</h2>
-                  <p className="text-sm text-muted-foreground">{viewCopy.galleryDescription}</p>
+            <section className="surface-card section-shell rounded-[1.85rem]">
+              <div className="section-header">
+                <div className="section-header__copy">
+                  <p className="section-kicker">{activeCategoryLabel || viewCopy.galleryTitle}</p>
+                  <h2 className="section-title">{viewCopy.galleryTitle}</h2>
+                  <p className="section-caption">{viewCopy.galleryDescription}</p>
+                  <div className="status-strip">
+                    <span className="stat-pill">{filteredAds.length} {messages.home.resultsTitle}</span>
+                    {mapEligibleAds.length > 0 ? <span className="stat-pill">{mapEligibleAds.length} {viewCopy.map}</span> : null}
+                    {featuredAds.length > 0 ? <span className="stat-pill">{featuredAds.length} {viewCopy.vipTitle}</span> : null}
+                  </div>
                 </div>
 
-                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                <div className="action-cluster w-full sm:w-auto">
                   <RealEstateFilterSheet
                     locale={locale}
                     filters={filters}
@@ -370,7 +377,7 @@ export function RealEstateMarketplacePage() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-11 w-full rounded-2xl border-border/60 bg-background/88 shadow-sm backdrop-blur-sm sm:w-auto sm:min-w-[9rem]"
+                    className="h-11 w-full rounded-[1.15rem] border-white/55 bg-background/80 shadow-none sm:w-auto sm:min-w-[9rem]"
                     onClick={() => setIsMapOpen(true)}
                   >
                     <MapPinned className="h-4 w-4" />
@@ -382,11 +389,12 @@ export function RealEstateMarketplacePage() {
 
             <div className="space-y-4">
               {featuredAds.length > 0 ? (
-                <section className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
-                  <div className="mb-6 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
-                    <div>
-                      <h2 className="text-2xl font-bold tracking-tight">{viewCopy.vipTitle}</h2>
-                      <p className="text-sm text-muted-foreground">{viewCopy.vipDescription}</p>
+                <section className="surface-card section-shell rounded-[1.85rem]">
+                  <div className="section-header">
+                    <div className="section-header__copy">
+                      <p className="section-kicker">{viewCopy.vipTitle}</p>
+                      <h2 className="section-title">{viewCopy.vipTitle}</h2>
+                      <p className="section-caption">{viewCopy.vipDescription}</p>
                     </div>
                     <Badge variant="secondary">{featuredAds.length}</Badge>
                   </div>
@@ -408,13 +416,14 @@ export function RealEstateMarketplacePage() {
               ) : null}
 
               {galleryAds.length > 0 ? (
-                <section className="surface-card rounded-[1.75rem] px-5 py-8 sm:px-6">
-                  <div className="mb-8 flex flex-col items-start justify-between gap-4 min-[640px]:flex-row min-[640px]:items-center">
-                    <div>
-                      <h2 className="text-2xl font-bold tracking-tight">
+                <section className="surface-card section-shell rounded-[1.85rem]">
+                  <div className="section-header">
+                    <div className="section-header__copy">
+                      <p className="section-kicker">{messages.home.browseAllListings}</p>
+                      <h2 className="section-title">
                         {featuredAds.length > 0 ? viewCopy.regularTitle : viewCopy.galleryTitle}
                       </h2>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="section-caption">
                         {featuredAds.length > 0 ? viewCopy.regularDescription : viewCopy.galleryDescription}
                       </p>
                     </div>

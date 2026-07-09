@@ -68,6 +68,7 @@ export function AdCard({
     ad.vertical === 'real_estate'
       ? [ad.rooms ? `${ad.rooms}R` : '', ad.area ? `${ad.area} m²` : ''].filter(Boolean).join(' · ')
       : '';
+  const secondaryMetaLabel = ad.vertical === 'real_estate' && realEstateMeta ? realEstateMeta : localizedCondition;
   const deleteCopy =
     locale === 'ru'
       ? {
@@ -167,7 +168,7 @@ export function AdCard({
   return (
     <Card
       className={cn(
-        'group flex h-full flex-col overflow-hidden rounded-[1.3rem] border-border/50 bg-card/95 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_42px_rgba(7,28,85,0.12)] sm:rounded-[1.6rem]',
+        'group flex h-full flex-col overflow-hidden rounded-[1.45rem] border-border/50 bg-card/96 shadow-[0_16px_32px_rgba(7,28,85,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_42px_rgba(7,28,85,0.12)] sm:rounded-[1.65rem]',
         className
       )}
     >
@@ -206,6 +207,7 @@ export function AdCard({
             })}
           </CarouselContent>
         </Carousel>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/45 via-slate-950/10 to-transparent" />
         {ad.isFeatured ? (
           <Badge className="absolute left-2 top-2 z-20 rounded-full bg-accent px-2.5 py-1 text-[0.68rem] font-bold text-accent-foreground shadow-sm">
             {messages.adCard.featured}
@@ -297,7 +299,6 @@ export function AdCard({
         </div>
         {hasMultipleImages ? (
           <>
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
             <div className="absolute inset-y-0 left-0 right-0 z-10 hidden items-center justify-between px-2 sm:flex">
               <Button
                 type="button"
@@ -347,40 +348,48 @@ export function AdCard({
                 />
               ))}
             </div>
+            <div className="absolute bottom-2 right-2 z-10 rounded-full bg-black/55 px-2.5 py-1 text-[0.68rem] font-semibold text-white backdrop-blur-sm">
+              {selectedImageIndex + 1}/{ad.images.length}
+            </div>
           </>
         ) : null}
       </div>
 
       <CardContent className="flex flex-1 p-0">
-        <Link href={adHref} className="flex flex-1 flex-col gap-2.5 p-3 sm:gap-3 sm:p-4">
+        <Link
+          href={adHref}
+          className="flex flex-1 flex-col gap-3 p-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:p-4"
+        >
           <div className="flex items-start justify-between gap-2">
-            <span className="text-[0.98rem] font-bold leading-tight text-primary sm:text-lg">{formattedPrice}</span>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="hidden rounded-full px-2.5 py-1 text-[0.68rem] font-semibold text-primary/85 sm:inline-flex">
-                {localizedCategory}
-              </Badge>
-              <Badge variant="outline" className="hidden rounded-full px-2.5 py-1 text-[0.68rem] font-semibold sm:inline-flex">
-                {ad.vertical === 'real_estate' && realEstateMeta ? realEstateMeta : localizedCondition}
-              </Badge>
-            </div>
+            <span className="text-[1rem] font-extrabold leading-tight tracking-[-0.02em] text-primary sm:text-[1.12rem]">
+              {formattedPrice}
+            </span>
           </div>
-          <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-foreground transition-colors group-hover:text-primary sm:text-base sm:leading-6">
+          <h3 className="line-clamp-2 min-h-[2.75rem] text-sm font-semibold leading-5 text-foreground transition-colors group-hover:text-primary sm:min-h-[3rem] sm:text-base sm:leading-6">
             {localizedTitle}
           </h3>
-          <div className="mt-auto grid gap-1.5 text-[0.72rem] text-muted-foreground sm:text-sm">
+          <div className="flex flex-wrap gap-1.5">
+            <Badge variant="secondary" className="text-[0.66rem] text-primary/90">
+              {localizedCategory}
+            </Badge>
+            <Badge variant="outline" className="text-[0.66rem]">
+              {secondaryMetaLabel}
+            </Badge>
+          </div>
+          <div className="mt-auto grid gap-2 text-[0.76rem] text-muted-foreground sm:text-sm">
             {hasLocation ? (
               <div className="flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" />
                 <span className="truncate">{localizedLocation}</span>
               </div>
             ) : null}
             <div className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 shrink-0" />
+              <Clock className="h-3.5 w-3.5 shrink-0 text-primary" />
               <span className="truncate">{postedAtLabel}</span>
             </div>
             {ad.sellerPhone ? (
               <div className="hidden items-center gap-1.5 sm:flex">
-                <Phone className="h-3.5 w-3.5 shrink-0" />
+                <Phone className="h-3.5 w-3.5 shrink-0 text-primary" />
                 <span className="truncate">{ad.sellerPhone}</span>
               </div>
             ) : null}

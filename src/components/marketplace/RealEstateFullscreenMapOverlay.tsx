@@ -116,7 +116,7 @@ export function RealEstateFullscreenMapOverlay({
             nearbyRadiusKm={nearbyRadiusKm}
             popupActionLabel={popupActionLabel}
             isVisible={open}
-            mapClassName="google-property-map-shell google-property-map-shell--fullscreen"
+            mapClassName="marketplace-property-map-shell marketplace-property-map-shell--fullscreen"
             mapHeight="100%"
           />
         ) : (
@@ -130,16 +130,16 @@ export function RealEstateFullscreenMapOverlay({
         )}
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-3 sm:p-4">
-        <div className="pointer-events-auto mx-auto flex max-w-6xl flex-col gap-3 rounded-[1.75rem] border border-white/25 bg-background/72 p-3 shadow-[0_24px_50px_rgba(7,28,85,0.24)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between sm:p-4">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:p-4 sm:pt-[calc(env(safe-area-inset-top)+1rem)]">
+        <div className="pointer-events-auto mx-auto flex max-w-6xl flex-col gap-3 rounded-[1.85rem] border border-white/25 bg-background/74 p-3 shadow-[0_24px_50px_rgba(7,28,85,0.24)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between sm:p-4">
           <div className="flex items-center gap-2">
-            <Button type="button" variant="ghost" className="h-11 rounded-2xl px-4" onClick={onClose}>
+            <Button type="button" variant="ghost" className="h-11 rounded-[1.15rem] px-4" onClick={onClose}>
               <ArrowLeft className="h-4 w-4" />
               {getBackLabel(locale)}
             </Button>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-foreground sm:text-base">{title}</p>
-              <p className="text-xs text-muted-foreground">{getSubtitle(locale, activeFilterCount)}</p>
+              <p className="text-xs text-muted-foreground sm:text-sm">{getSubtitle(locale, activeFilterCount)}</p>
             </div>
           </div>
 

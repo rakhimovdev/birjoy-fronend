@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import type { Language } from '@/lib/i18n';
 import type { Location, ResolvedLocation } from '@/lib/map-types';
 
-export type GoogleLocationPickerCopy = {
+export type YandexLocationPickerCopy = {
   mapTitle: string;
   mapDescription: string;
   address: string;
@@ -26,7 +26,7 @@ export type GoogleLocationPickerCopy = {
   retry: string;
 };
 
-const GoogleLocationPickerClient = dynamic(() => import('./GoogleLocationPickerClient'), {
+const YandexLocationPickerClient = dynamic(() => import('./YandexLocationPickerClient'), {
   ssr: false,
   loading: () => (
     <div className="map-shell animate-pulse">
@@ -35,16 +35,16 @@ const GoogleLocationPickerClient = dynamic(() => import('./GoogleLocationPickerC
   ),
 });
 
-export function GoogleLocationPicker(props: {
+export function YandexLocationPicker(props: {
   value: Location | null;
   address: string;
   locationHint: string;
   locale: Language;
-  copy: GoogleLocationPickerCopy;
+  copy: YandexLocationPickerCopy;
   onChange: (point: Location) => void;
   onAddressChange: (value: string) => void;
   onLocationHintChange: (value: string) => void;
   onResolvedLocationChange: (value: ResolvedLocation) => void;
 }) {
-  return <GoogleLocationPickerClient {...props} />;
+  return <YandexLocationPickerClient {...props} />;
 }
