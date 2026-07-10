@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import YandexMap from '@/components/maps/YandexMap';
 import type { Location, PropertyMarker } from '@/lib/map-types';
@@ -42,6 +43,7 @@ export default function RealEstateListingsMapClient({
   mapClassName?: string;
   mapHeight?: number | string;
 }) {
+  const router = useRouter();
   const validAds = useMemo(() => ads.filter(hasCoordinates), [ads]);
   const priceFormatter = useMemo(
     () =>
@@ -89,7 +91,10 @@ export default function RealEstateListingsMapClient({
       center={mapCenter}
       zoom={selectedAdId ? 14 : 12}
       markers={markers}
-      onMarkerClick={(marker) => onSelectAd(marker.id)}
+      onMarkerClick={(marker) => {
+        const href = marker.href || `/ads/${marker.id}`;
+        router.push(href);
+      }}
       selectedMarkerId={selectedAdId}
       userLocation={userLocation || null}
       userLocationLabel={userLocationLabel}
