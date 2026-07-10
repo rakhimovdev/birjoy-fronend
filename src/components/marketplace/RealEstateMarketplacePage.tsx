@@ -210,7 +210,6 @@ export function RealEstateMarketplacePage() {
   }, [mapAds, selectedAdId]);
   const hasCustomFilters = hasActiveRealEstateFilters(filters);
   const activeFilterCount = getActiveRealEstateFilterCount(filters);
-  const hasFilters = Boolean(query || activeCategory) || hasCustomFilters;
 
   const viewCopy =
     locale === 'ru'
@@ -349,7 +348,7 @@ export function RealEstateMarketplacePage() {
                 </div>
               </div>
 
-              <section className="listing-grid">
+              <section className="property-listing-grid">
                 {mobileAds.map((ad) => (
                   <AdCard
                     key={ad.id}
@@ -365,34 +364,28 @@ export function RealEstateMarketplacePage() {
             </section>
 
             <section className="tablet-and-up-only surface-card section-shell--compact rounded-[1.85rem]">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                <div className="min-w-0 space-y-3">
-                  <p className="section-kicker">{activeCategoryLabel || viewCopy.galleryTitle}</p>
-                  <div className="status-strip">
+              <div className="section-header">
+                <div className="section-header__copy min-w-0">
+                  <p className="section-kicker">{messages.home.browseAllListings}</p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h2 className="section-title">{viewCopy.galleryTitle}</h2>
                     <span className="stat-pill">{filteredAds.length} {messages.home.resultsTitle}</span>
-                    {mapEligibleAds.length > 0 ? <span className="stat-pill">{mapEligibleAds.length} {viewCopy.map}</span> : null}
-                    {featuredAds.length > 0 ? <span className="stat-pill">{featuredAds.length} {viewCopy.vipTitle}</span> : null}
-                    {query ? <Badge variant="secondary">{query}</Badge> : null}
-                    {activeCategoryLabel ? <Badge variant="outline">{activeCategoryLabel}</Badge> : null}
-                    {hasCustomFilters ? (
-                      <Badge variant="outline">
-                        {activeFilterCount} {viewCopy.activeFilters}
-                      </Badge>
-                    ) : null}
                   </div>
+                  {query || activeCategoryLabel || hasCustomFilters || mapEligibleAds.length > 0 ? (
+                    <div className="status-strip">
+                      {mapEligibleAds.length > 0 ? <span className="stat-pill">{mapEligibleAds.length} {viewCopy.map}</span> : null}
+                      {query ? <Badge variant="secondary">{query}</Badge> : null}
+                      {activeCategoryLabel ? <Badge variant="outline">{activeCategoryLabel}</Badge> : null}
+                      {hasCustomFilters ? (
+                        <Badge variant="outline">
+                          {activeFilterCount} {viewCopy.activeFilters}
+                        </Badge>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
 
-                <div className="action-cluster w-full flex-wrap sm:w-auto sm:flex-nowrap">
-                  {hasFilters ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-11 w-full rounded-[1.15rem] sm:w-auto sm:min-w-[9rem]"
-                      onClick={handleResetAllFilters}
-                    >
-                      {viewCopy.clearAll}
-                    </Button>
-                  ) : null}
+                <div className="action-cluster w-full sm:w-auto">
                   <RealEstateFilterSheet
                     locale={locale}
                     filters={filters}
@@ -445,25 +438,23 @@ export function RealEstateMarketplacePage() {
               ) : null}
 
               {galleryAds.length > 0 ? (
-                <section className="surface-card section-shell rounded-[1.85rem]">
-                  <div className="section-header">
-                    <div className="section-header__copy">
-                      <p className="section-kicker">{messages.home.browseAllListings}</p>
-                      <h2 className="section-title">
-                        {featuredAds.length > 0 ? viewCopy.regularTitle : viewCopy.galleryTitle}
-                      </h2>
-                      <p className="section-caption">
-                        {featuredAds.length > 0 ? viewCopy.regularDescription : viewCopy.galleryDescription}
-                      </p>
+                <section className="space-y-4">
+                  {featuredAds.length > 0 ? (
+                    <div className="section-header">
+                      <div className="section-header__copy">
+                        <p className="section-kicker">{messages.home.browseAllListings}</p>
+                        <h2 className="section-title">{viewCopy.regularTitle}</h2>
+                        <p className="section-caption">{viewCopy.regularDescription}</p>
+                      </div>
+                      <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
+                        <Link href="/ads/create?vertical=real_estate">
+                          {messages.home.startSelling}
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
                     </div>
-                    <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
-                      <Link href="/ads/create?vertical=real_estate">
-                        {messages.home.startSelling}
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                  <div className="listing-grid">
+                  ) : null}
+                  <div className="property-listing-grid">
                     {galleryAds.map((ad) => (
                       <AdCard
                         key={ad.id}

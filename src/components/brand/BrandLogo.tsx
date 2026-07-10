@@ -84,11 +84,11 @@ export function BrandLogo({
   const styles = sizeStyles[size];
 
   return (
-    <div className={cn('inline-flex items-center', styles.gap, className)}>
+    <div className={cn('inline-flex shrink-0 flex-nowrap items-center', styles.gap, className)}>
       <BrandMark className={cn(styles.mark, markClassName)} />
 
-      <div className="min-w-0 flex flex-col justify-center leading-none">
-        <div className={cn('font-headline font-extrabold tracking-tight', styles.title)}>
+      <div className="shrink-0 whitespace-nowrap flex flex-col justify-center leading-none">
+        <div className={cn('whitespace-nowrap font-headline font-extrabold tracking-tight', styles.title)}>
           <span className="[color:var(--brand-wordmark-primary)]">Bir</span>
           <span className="text-[#FF730A]">Joy</span>
         </div>

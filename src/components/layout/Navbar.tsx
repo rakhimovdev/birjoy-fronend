@@ -142,7 +142,7 @@ function NavbarContent() {
               <div className="tablet-and-up-only">
                 <MarketplaceDrawer />
               </div>
-              <Link href="/" className="flex min-w-0 items-center overflow-hidden">
+              <Link href="/" className="flex shrink-0 items-center whitespace-nowrap">
                 <BrandLogo size="sm" />
               </Link>
             </div>
