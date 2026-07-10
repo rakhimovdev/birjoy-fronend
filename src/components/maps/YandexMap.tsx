@@ -443,7 +443,7 @@ function YandexMapComponent({
       <div ref={canvasRef} className="yandex-map-canvas h-full w-full" />
 
       {selectedMarker ? (
-        <div className="relative marketplace-map-preview">
+        <div className="marketplace-map-preview">
           <Button
             type="button"
             variant="secondary"
