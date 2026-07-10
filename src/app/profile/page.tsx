@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Mail, Phone, MapPin, Package, Heart, Settings, Download } from 'lucide-react';
+import { Download, Edit, Globe2, Headphones, Heart, Mail, MapPin, Package, Phone, ShieldAlert, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getCategoryBySlug, getVerticalById } from '@/lib/mock-data';
 import { AdCard } from '@/components/ads/AdCard';
@@ -86,6 +86,42 @@ function ProfilePageContent() {
       errorTitle: 'Account could not be deleted',
     },
   } as const;
+  const settingsCopy =
+    locale === 'ru'
+      ? {
+          description: 'Управляйте языком интерфейса, поддержкой и безопасностью аккаунта в одном месте.',
+          languageTitle: 'Язык приложения',
+          languageDescription: 'Измените язык интерфейса для всего маркетплейса и профиля.',
+          supportTitle: 'Связаться с поддержкой',
+          supportDescription: 'Позвоните, если нужна помощь с аккаунтом, заказами или публикацией объявлений.',
+          exportTitle: 'Скачать мои данные',
+          exportDescription: 'Сохраните свои объявления в JSON для личного архива.',
+          dangerTitle: 'Опасная зона',
+          dangerDescription: 'Удаление аккаунта навсегда удалит профиль, объявления и связанные заявки.',
+        }
+      : locale === 'en'
+        ? {
+            description: 'Manage app language, support, and account safety from one place.',
+            languageTitle: 'App language',
+            languageDescription: 'Change the interface language across the marketplace and your profile.',
+            supportTitle: 'Contact support',
+            supportDescription: 'Call for help with your account, orders, or publishing listings.',
+            exportTitle: 'Download my data',
+            exportDescription: 'Save your listings as JSON for your own records.',
+            dangerTitle: 'Danger zone',
+            dangerDescription: 'Deleting your account permanently removes your profile, listings, and linked requests.',
+          }
+        : {
+            description: 'Til, support va akkaunt xavfsizligi bilan bog‘liq amallarni bir joydan boshqaring.',
+            languageTitle: 'Ilova tili',
+            languageDescription: 'Marketplace va profilingizdagi interfeys tilini shu yerdan almashtiring.',
+            supportTitle: 'Qo‘llab-quvvatlash bilan bog‘lanish',
+            supportDescription: 'Akkaunt, buyurtma yoki eʼlon joylash bo‘yicha yordam kerak bo‘lsa qo‘ng‘iroq qiling.',
+            exportTitle: "Ma'lumotlarimni yuklab olish",
+            exportDescription: "Eʼlonlaringizni JSON ko‘rinishida shaxsiy arxiv uchun saqlab oling.",
+            dangerTitle: 'Xavfli bo‘lim',
+            dangerDescription: 'Akkauntni o‘chirish profilingizni, eʼlonlaringizni va bog‘liq so‘rovlarni butunlay olib tashlaydi.',
+          };
 
   useEffect(() => {
     let cancelled = false;
@@ -250,12 +286,18 @@ function ProfilePageContent() {
               <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
                 <CardHeader className="p-4">
                   <CardTitle className="text-sm">{messages.profile.accountSettings}</CardTitle>
+                  <p className="text-sm text-muted-foreground">{settingsCopy.description}</p>
                 </CardHeader>
                 <CardContent className="space-y-4 p-4 pt-0">
-                  <div className="soft-panel space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                      <Settings className="h-4 w-4 text-primary" />
-                      <span>{messages.profile.settings}</span>
+                  <div className="soft-panel space-y-3 rounded-[1.4rem]">
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-full bg-primary/10 p-2.5 text-primary">
+                        <Globe2 className="h-4 w-4" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-foreground">{settingsCopy.languageTitle}</p>
+                        <p className="text-sm text-muted-foreground">{settingsCopy.languageDescription}</p>
+                      </div>
                     </div>
                     <Select value={locale} onValueChange={handleLocaleChange}>
                       <SelectTrigger className="h-11 rounded-[1rem] border-white/55 bg-background/80 shadow-none">
@@ -271,48 +313,78 @@ function ProfilePageContent() {
                     </Select>
                   </div>
 
-                  <Button asChild variant="ghost" className="min-h-11 w-full justify-start gap-2 text-sm">
-                    <a href="tel:+998332580404">
-                      <Phone className="h-4 w-4" />
+                  <a
+                    href="tel:+998332580404"
+                    className="soft-panel flex items-center gap-3 rounded-[1.4rem] transition-colors hover:bg-primary/5"
+                  >
+                    <div className="rounded-full bg-primary/10 p-2.5 text-primary">
+                      <Headphones className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground">{settingsCopy.supportTitle}</p>
+                      <p className="text-sm text-muted-foreground">{settingsCopy.supportDescription}</p>
+                    </div>
+                    <Button type="button" className="h-10 rounded-xl px-4">
                       {messages.navbar.callSupport}
-                    </a>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="min-h-11 w-full justify-start gap-2 text-sm"
+                    </Button>
+                  </a>
+
+                  <button
+                    type="button"
+                    className="soft-panel flex w-full items-center gap-3 rounded-[1.4rem] text-left transition-colors hover:bg-primary/5"
                     onClick={handleDownloadData}
                   >
-                    <Download className="h-4 w-4" />
-                    {messages.profile.downloadMyData}
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="min-h-11 w-full justify-start gap-2 text-sm text-destructive hover:text-destructive"
-                      >
-                        {messages.profile.deleteAccount}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{deleteAccountCopy[locale].title}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {deleteAccountCopy[locale].description}
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{deleteAccountCopy[locale].cancel}</AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          disabled={isDeletingAccount}
-                          onClick={() => void handleDeleteAccount()}
+                    <div className="rounded-full bg-primary/10 p-2.5 text-primary">
+                      <Download className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground">{settingsCopy.exportTitle}</p>
+                      <p className="text-sm text-muted-foreground">{settingsCopy.exportDescription}</p>
+                    </div>
+                    <span className="text-sm font-semibold text-primary">{messages.profile.downloadMyData}</span>
+                  </button>
+
+                  <div className="rounded-[1.4rem] border border-destructive/18 bg-destructive/5 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-full bg-destructive/10 p-2.5 text-destructive">
+                        <ShieldAlert className="h-4 w-4" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-foreground">{settingsCopy.dangerTitle}</p>
+                        <p className="text-sm text-muted-foreground">{settingsCopy.dangerDescription}</p>
+                      </div>
+                    </div>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          className="mt-4 min-h-11 w-full justify-start gap-2 rounded-[1rem]"
                         >
-                          {deleteAccountCopy[locale].confirm}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                          <Trash2 className="h-4 w-4" />
+                          {messages.profile.deleteAccount}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{deleteAccountCopy[locale].title}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {deleteAccountCopy[locale].description}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{deleteAccountCopy[locale].cancel}</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={isDeletingAccount}
+                            onClick={() => void handleDeleteAccount()}
+                          >
+                            {deleteAccountCopy[locale].confirm}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </CardContent>
               </Card>
             </div>
