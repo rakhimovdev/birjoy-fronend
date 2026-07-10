@@ -214,7 +214,7 @@
     --page-gutter: 1rem;
     --section-gap: 1.25rem;
     --bottom-nav-height: 5.5rem;
-    --page-max-width: 92rem;
+    --page-max-width: 84rem;
     --sticky-top: 7.25rem;
     --category-scroll-offset: 10rem;
     --hero-heading-size: clamp(2.2rem, 8vw, 4.8rem);
@@ -230,6 +230,12 @@
 
   .marketplace-shell {
     min-height: 100vh;
+  }
+
+  .marketplace-frame {
+    margin-inline: auto;
+    max-width: min(100%, calc(var(--page-max-width) + (var(--page-gutter) * 2)));
+    padding-inline: var(--page-gutter);
   }
 
   .marketplace-content {
@@ -261,7 +267,8 @@
   .listing-grid {
     display: grid;
     gap: clamp(0.7rem, 1.8vw, 1.5rem);
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
   }
 
   .listing-grid > * {
@@ -732,6 +739,12 @@
     backdrop-filter: blur(14px);
   }
 
+  @media (min-width: 640px) {
+    .listing-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
   .dark .marketplace-map-preview {
     background: rgba(14, 22, 41, 0.94);
     box-shadow: 0 26px 48px rgba(0, 0, 0, 0.36);
@@ -913,12 +926,22 @@
     }
 
     .listing-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .vertical-bar-shell {
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .vertical-bar-surface {
+      width: fit-content;
+      max-width: 100%;
     }
 
     .category-bar-grid {
-      flex-wrap: wrap;
-      overflow: visible;
+      flex-wrap: nowrap;
+      overflow: auto;
     }
   }
 
@@ -977,7 +1000,7 @@
     }
 
     .listing-grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .two-pane-grid {
@@ -996,9 +1019,19 @@
       grid-template-columns: minmax(19rem, 24rem) minmax(0, 1fr);
     }
 
+    .vertical-bar-shell {
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .vertical-bar-surface {
+      width: fit-content;
+      max-width: 100%;
+    }
+
     .category-bar-grid {
-      flex-wrap: wrap;
-      overflow: visible;
+      flex-wrap: nowrap;
+      overflow: auto;
     }
   }
 
@@ -1008,7 +1041,7 @@
     }
 
     .listing-grid {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
 

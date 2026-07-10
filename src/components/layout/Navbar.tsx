@@ -35,7 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 function NavbarFallback() {
   return (
     <nav className="marketplace-top-nav sticky top-0 z-40 w-full">
-      <div className="mx-auto max-w-[92rem] px-3 py-3 sm:px-4">
+      <div className="marketplace-frame py-3">
         <div className="flex items-center justify-between gap-3 rounded-[1.6rem] border border-white/50 bg-background/72 px-3 py-3 shadow-[0_18px_42px_rgba(7,28,85,0.06)] backdrop-blur-xl sm:px-4">
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-full border marketplace-glass-button" />
@@ -135,7 +135,7 @@ function NavbarContent() {
 
   return (
     <nav className="marketplace-top-nav sticky top-0 z-40 w-full">
-      <div className="mx-auto max-w-[92rem] px-3 py-3 sm:px-4">
+      <div className="marketplace-frame py-3">
         <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/50 bg-background/72 px-3 py-3 shadow-[0_18px_42px_rgba(7,28,85,0.06)] backdrop-blur-xl sm:px-4">
           <div className="flex items-center justify-between gap-2 min-[481px]:gap-3">
             <div className="flex min-w-0 items-center gap-2 min-[481px]:gap-3">
@@ -147,7 +147,7 @@ function NavbarContent() {
               </Link>
             </div>
 
-            {renderSearchForm('tablet-and-up-only w-full max-w-xl')}
+            {renderSearchForm('tablet-and-up-only w-full max-w-[36rem] xl:max-w-[40rem]')}
 
             <div className="flex shrink-0 items-center gap-1.5 min-[481px]:gap-2">
               <div className="tablet-and-up-only">

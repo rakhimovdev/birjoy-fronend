@@ -290,30 +290,6 @@ export function RealEstateMarketplacePage() {
       <main className="marketplace-main">
         <VerticalBar activeVertical="real_estate" />
 
-        {hasFilters ? (
-          <section className="tablet-and-up-only surface-card section-shell rounded-[1.85rem]">
-            <div className="section-header">
-              <div className="section-header__copy">
-                <p className="section-kicker">{messages.home.resultsTitle}</p>
-                <h2 className="section-title">{messages.home.resultsTitle}</h2>
-                <p className="section-caption">{messages.home.resultsDescription}</p>
-                <div className="status-strip">
-                  {query ? <Badge variant="secondary">{query}</Badge> : null}
-                  {activeCategoryLabel ? <Badge variant="outline">{activeCategoryLabel}</Badge> : null}
-                  {hasCustomFilters ? (
-                    <Badge variant="outline">
-                      {activeFilterCount} {viewCopy.activeFilters}
-                    </Badge>
-                  ) : null}
-                </div>
-              </div>
-              <Button type="button" variant="outline" className="w-full min-[481px]:w-auto" onClick={handleResetAllFilters}>
-                {viewCopy.clearAll}
-              </Button>
-            </div>
-          </section>
-        ) : null}
-
         {isLoadingAds ? (
           <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
             <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-primary" />
@@ -388,20 +364,35 @@ export function RealEstateMarketplacePage() {
               </section>
             </section>
 
-            <section className="tablet-and-up-only surface-card section-shell rounded-[1.85rem]">
-              <div className="section-header">
-                <div className="section-header__copy">
+            <section className="tablet-and-up-only surface-card section-shell--compact rounded-[1.85rem]">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                <div className="min-w-0 space-y-3">
                   <p className="section-kicker">{activeCategoryLabel || viewCopy.galleryTitle}</p>
-                  <h2 className="section-title">{viewCopy.galleryTitle}</h2>
-                  <p className="section-caption">{viewCopy.galleryDescription}</p>
                   <div className="status-strip">
                     <span className="stat-pill">{filteredAds.length} {messages.home.resultsTitle}</span>
                     {mapEligibleAds.length > 0 ? <span className="stat-pill">{mapEligibleAds.length} {viewCopy.map}</span> : null}
                     {featuredAds.length > 0 ? <span className="stat-pill">{featuredAds.length} {viewCopy.vipTitle}</span> : null}
+                    {query ? <Badge variant="secondary">{query}</Badge> : null}
+                    {activeCategoryLabel ? <Badge variant="outline">{activeCategoryLabel}</Badge> : null}
+                    {hasCustomFilters ? (
+                      <Badge variant="outline">
+                        {activeFilterCount} {viewCopy.activeFilters}
+                      </Badge>
+                    ) : null}
                   </div>
                 </div>
 
-                <div className="action-cluster w-full sm:w-auto">
+                <div className="action-cluster w-full flex-wrap sm:w-auto sm:flex-nowrap">
+                  {hasFilters ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 w-full rounded-[1.15rem] sm:w-auto sm:min-w-[9rem]"
+                      onClick={handleResetAllFilters}
+                    >
+                      {viewCopy.clearAll}
+                    </Button>
+                  ) : null}
                   <RealEstateFilterSheet
                     locale={locale}
                     filters={filters}
@@ -438,7 +429,7 @@ export function RealEstateMarketplacePage() {
                   </div>
                   <div className="scroll-row">
                     {featuredAds.map((ad) => (
-                      <div key={ad.id} className="w-[11.5rem] shrink-0 sm:w-[12.5rem] lg:w-[13rem] xl:w-[14rem]">
+                      <div key={ad.id} className="w-[14.25rem] shrink-0 sm:w-[15rem] lg:w-[16.25rem] xl:w-[17rem]">
                         <AdCard
                           ad={ad}
                           isFavorite={isFavorite(ad.id)}

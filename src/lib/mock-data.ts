@@ -48,6 +48,26 @@ export const MARKETPLACE_VERTICALS: MarketplaceVerticalConfig[] = [
     },
   },
   {
+    id: 'auto',
+    slug: 'avtomobil',
+    icon: 'CarFront',
+    name: {
+      uz: 'Avtomobil',
+      ru: 'Авто',
+      en: 'Auto',
+    },
+    tagline: {
+      uz: 'Mashina, moto va ehtiyot qismlar',
+      ru: 'Авто, мото и запчасти',
+      en: 'Cars, motorcycles, and parts',
+    },
+    description: {
+      uz: 'Transport uchun alohida vertikal va aniq kategoriyalar.',
+      ru: 'Отдельный вертикаль и точные категории для транспорта.',
+      en: 'A dedicated transport vertical with focused categories.',
+    },
+  },
+  {
     id: 'market',
     slug: 'market',
     icon: 'ShoppingBasket',
@@ -85,26 +105,6 @@ export const MARKETPLACE_VERTICALS: MarketplaceVerticalConfig[] = [
       uz: 'Yetkazib berishga tayyor taom va mahsulotlarni alohida to‘plang.',
       ru: 'Соберите предложения по еде и продуктам в отдельной витрине.',
       en: 'Group food and grocery offers into a dedicated surface.',
-    },
-  },
-  {
-    id: 'auto',
-    slug: 'avtomobil',
-    icon: 'CarFront',
-    name: {
-      uz: 'Avtomobil',
-      ru: 'Авто',
-      en: 'Auto',
-    },
-    tagline: {
-      uz: 'Mashina, moto va ehtiyot qismlar',
-      ru: 'Авто, мото и запчасти',
-      en: 'Cars, motorcycles, and parts',
-    },
-    description: {
-      uz: 'Transport uchun alohida vertikal va aniq kategoriyalar.',
-      ru: 'Отдельный вертикаль и точные категории для транспорта.',
-      en: 'A dedicated transport vertical with focused categories.',
     },
   },
 ];
