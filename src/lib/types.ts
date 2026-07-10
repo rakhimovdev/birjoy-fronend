@@ -46,6 +46,7 @@ export type UserProfile = {
   email: string;
   avatar?: string;
   googleId?: string;
+  yandexId?: string;
   role: 'user';
   createdAt?: string;
   updatedAt?: string;

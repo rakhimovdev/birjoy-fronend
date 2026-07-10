@@ -22,6 +22,7 @@ type RemoteAuthUser = {
   avatar?: string;
   photoUrl?: string;
   googleId?: string;
+  yandexId?: string;
   role?: 'user';
   createdAt?: string;
   updatedAt?: string;
@@ -75,12 +76,32 @@ export type DeleteAccountResult =
       message: string;
     };
 
+export type UpdateCurrentUserInput = {
+  name?: string;
+  phone?: string;
+  location?: string;
+  avatar?: string;
+  favorites?: string[];
+};
+
+export type UpdateCurrentUserResult =
+  | {
+      ok: true;
+      user: UserProfile;
+    }
+  | {
+      ok: false;
+      message: string;
+    };
+
+const shouldLogAuthDebug = process.env.NODE_ENV !== 'production';
+
 function isBrowser() {
   return typeof window !== 'undefined';
 }
 
 function authDebugLog(step: string, data?: Record<string, unknown>) {
-  if (!isBrowser()) {
+  if (!isBrowser() || !shouldLogAuthDebug) {
     return;
   }
 
@@ -134,6 +155,7 @@ function normalizeRemoteUser(user: RemoteAuthUser): UserProfile {
     email: normalizeEmail(user.email),
     avatar: user.avatar?.trim() || user.photoUrl?.trim() || undefined,
     googleId: user.googleId?.trim() || undefined,
+    yandexId: user.yandexId?.trim() || undefined,
     role: user.role || 'user',
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -430,6 +452,30 @@ export async function signInWithGoogleUser(credential: string): Promise<AuthResu
   return callAuthEndpoint('google', { credential });
 }
 
+export function completeExternalAuthSession(
+  token: string,
+  user: RemoteAuthUser
+): UpdateCurrentUserResult {
+  const normalizedToken = token.trim();
+
+  if (!normalizedToken) {
+    return {
+      ok: false,
+      message: 'Authentication token is missing.',
+    };
+  }
+
+  const normalizedUser = normalizeRemoteUser(user);
+  writeStoredToken(normalizedToken);
+  writeStoredSessionUser(normalizedUser);
+  notifyAuthSync();
+
+  return {
+    ok: true,
+    user: normalizedUser,
+  };
+}
+
 export async function restoreAuthSession() {
   const storedUser = getStoredSessionUser();
   const token = getStoredAuthToken();
@@ -510,6 +556,84 @@ export function syncStoredUser(nextUser: UserProfile) {
   writeStoredUsers(users);
   writeStoredSessionUser(sanitizeUser(updatedUser));
   notifyAuthSync();
+}
+
+export async function updateCurrentUserProfile(
+  input: UpdateCurrentUserInput
+): Promise<UpdateCurrentUserResult> {
+  const storedUser = getStoredSessionUser();
+  const token = getStoredAuthToken();
+
+  if (!storedUser) {
+    return {
+      ok: false,
+      message: 'No signed-in user was found.',
+    };
+  }
+
+  const nextUser: UserProfile = {
+    ...storedUser,
+    ...(typeof input.name === 'string' ? { name: input.name.trim() } : {}),
+    ...(typeof input.phone === 'string' ? { phone: input.phone.trim() || undefined } : {}),
+    ...(typeof input.location === 'string'
+      ? {
+          location: input.location.trim() ? toLocalizedText(input.location.trim()) : undefined,
+        }
+      : {}),
+    ...(typeof input.avatar === 'string' ? { avatar: input.avatar.trim() || undefined } : {}),
+    ...(Array.isArray(input.favorites) ? { favorites: [...new Set(input.favorites)] } : {}),
+  };
+
+  if (!backendApiBaseUrl || !token) {
+    syncStoredUser(nextUser);
+    return {
+      ok: true,
+      user: nextUser,
+    };
+  }
+
+  try {
+    const response = await fetch(`${backendApiBaseUrl}/auth/me`, {
+      method: 'PATCH',
+      credentials: 'include',
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(input),
+    });
+
+    if (response.status === 401) {
+      signOutUser();
+      return {
+        ok: false,
+        message: 'Your session has expired. Please sign in again.',
+      };
+    }
+
+    const data = (await response.json().catch(() => ({}))) as RemoteAuthResponse;
+
+    if (!response.ok || !data.user) {
+      return {
+        ok: false,
+        message: data.message || 'Profile update failed.',
+      };
+    }
+
+    const normalizedUser = normalizeRemoteUser(data.user);
+    syncStoredUser(normalizedUser);
+
+    return {
+      ok: true,
+      user: normalizedUser,
+    };
+  } catch {
+    return {
+      ok: false,
+      message: 'Profile update failed.',
+    };
+  }
 }
 
 export async function deleteCurrentUserAccount(): Promise<DeleteAccountResult> {

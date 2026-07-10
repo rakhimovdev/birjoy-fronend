@@ -12,8 +12,10 @@ import {
   signOutUser,
   signUpUser,
   syncStoredUser,
+  updateCurrentUserProfile,
   type SignInInput,
   type SignUpInput,
+  type UpdateCurrentUserInput,
 } from '@/lib/auth';
 import type { UserProfile } from '@/lib/types';
 
@@ -23,9 +25,12 @@ type AuthContextValue = {
   signIn: (input: SignInInput) => Promise<Awaited<ReturnType<typeof signInUser>>>;
   signInWithGoogle: (credential: string) => Promise<Awaited<ReturnType<typeof signInWithGoogleUser>>>;
   signUp: (input: SignUpInput) => Promise<Awaited<ReturnType<typeof signUpUser>>>;
+  updateProfile: (
+    input: UpdateCurrentUserInput
+  ) => Promise<Awaited<ReturnType<typeof updateCurrentUserProfile>>>;
   signOut: () => void;
   isFavorite: (adId: string) => boolean;
-  toggleFavorite: (adId: string) => boolean;
+  toggleFavorite: (adId: string) => Promise<{ ok: boolean; isFavorite: boolean; message?: string }>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -109,6 +114,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return result;
   };
 
+  const updateProfile = async (input: UpdateCurrentUserInput) => {
+    const result = await updateCurrentUserProfile(input);
+
+    if (result.ok) {
+      setUser(result.user);
+    }
+
+    return result;
+  };
+
   const signOut = () => {
     signOutUser();
     setUser(null);
@@ -118,9 +133,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return user?.favorites.includes(adId) ?? false;
   };
 
-  const toggleFavorite = (adId: string) => {
+  const toggleFavorite = async (adId: string) => {
     if (!user) {
-      return false;
+      return {
+        ok: false,
+        isFavorite: false,
+        message: 'Authentication is required.',
+      };
     }
 
     const nextFavorites = user.favorites.includes(adId)
@@ -135,7 +154,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     syncStoredUser(nextUser);
     setUser(nextUser);
 
-    return nextFavorites.includes(adId);
+    const result = await updateCurrentUserProfile({
+      favorites: nextFavorites,
+    });
+
+    if (!result.ok) {
+      syncStoredUser(user);
+      setUser(user);
+
+      return {
+        ok: false,
+        isFavorite: user.favorites.includes(adId),
+        message: result.message,
+      };
+    }
+
+    setUser(result.user);
+
+    return {
+      ok: true,
+      isFavorite: result.user.favorites.includes(adId),
+    };
   };
 
   return (
@@ -146,6 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn,
         signInWithGoogle,
         signUp,
+        updateProfile,
         signOut,
         isFavorite,
         toggleFavorite,

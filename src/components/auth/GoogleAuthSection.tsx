@@ -88,6 +88,14 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
+function logClientAuthDebug(message: string, data?: Record<string, unknown>) {
+  if (process.env.NODE_ENV === 'production') {
+    return;
+  }
+
+  console.info(message, data || {});
+}
+
 function describeGoogleClientId(clientId: string) {
   if (!clientId) {
     return {
@@ -413,7 +421,7 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
 
       handledRestoredResultKeyRef.current = restoredResultKey;
       window.__birjoyLastAppRestoredResult = undefined;
-      console.info('plugin restored result', {
+      logClientAuthDebug('plugin restored result', {
         success: Boolean(restoredResult.success),
         hasData: Boolean(restoredResult.data),
         hasError: Boolean(restoredResult.error),
@@ -433,7 +441,7 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
               getRestoredResultErrorMessage(restoredResult) ||
               'Google sign-in failed after returning from the Android account picker.';
 
-            console.info('plugin rejected', {
+            logClientAuthDebug('plugin rejected', {
               errorMessage,
             });
 
@@ -601,13 +609,21 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
   const handleNativeGoogleSignIn = async () => {
     const clickDiagnostics = getNativePlatformDiagnostics();
 
-    console.info('button clicked', {
+    logClientAuthDebug('button clicked', {
       redirectTo,
     });
-    console.info('isNativeAndroidApp result', clickDiagnostics.isNativeAndroidApp);
-    console.info('Capacitor.getPlatform()', clickDiagnostics.platform);
-    console.info('Capacitor.isNativePlatform()', clickDiagnostics.isNativePlatform);
-    console.info('BirJoyAuth object exists', Boolean(BirJoyAuth));
+    logClientAuthDebug('isNativeAndroidApp result', {
+      value: clickDiagnostics.isNativeAndroidApp,
+    });
+    logClientAuthDebug('Capacitor.getPlatform()', {
+      value: clickDiagnostics.platform,
+    });
+    logClientAuthDebug('Capacitor.isNativePlatform()', {
+      value: clickDiagnostics.isNativePlatform,
+    });
+    logClientAuthDebug('BirJoyAuth object exists', {
+      value: Boolean(BirJoyAuth),
+    });
     logNativeAuthDebug('google-auth-button-clicked', {
       flow: 'native',
       redirectTo,
@@ -644,7 +660,7 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
         );
       }
 
-      console.info('calling BirJoyAuth.signInWithGoogle', {
+      logClientAuthDebug('calling BirJoyAuth.signInWithGoogle', {
         serverClientIdPresent: Boolean(googleClientId),
       });
       logNativeAuthDebug('google-auth-native-plugin-call-start', {
@@ -653,14 +669,14 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
       const nativeResult = await BirJoyAuth.signInWithGoogle({
         serverClientId: googleClientId,
       });
-      console.info('plugin resolved', {
+      logClientAuthDebug('plugin resolved', {
         idTokenLength: nativeResult.idToken?.length || 0,
         email: nativeResult.email || '',
       });
 
       await completeNativeGoogleSignIn(nativeResult, 'plugin-promise');
     } catch (error) {
-      console.info('plugin rejected', {
+      logClientAuthDebug('plugin rejected', {
         errorMessage: getErrorMessage(error),
       });
       if (error instanceof Error && isGoogleFlowCancellation(error.message)) {

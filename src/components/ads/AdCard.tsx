@@ -281,16 +281,27 @@ export function AdCard({
                 return;
               }
 
-              const favoriteState = toggleFavorite(ad.id);
+              void (async () => {
+                const result = await toggleFavorite(ad.id);
 
-              toast({
-                title: favoriteState
-                  ? messages.auth.favoriteAddedTitle
-                  : messages.auth.favoriteRemovedTitle,
-                description: favoriteState
-                  ? messages.auth.favoriteAddedDescription
-                  : messages.auth.favoriteRemovedDescription,
-              });
+                if (!result.ok) {
+                  toast({
+                    title: messages.auth.requestFailedTitle,
+                    description: result.message || messages.auth.requestFailedDescription,
+                    variant: 'destructive',
+                  });
+                  return;
+                }
+
+                toast({
+                  title: result.isFavorite
+                    ? messages.auth.favoriteAddedTitle
+                    : messages.auth.favoriteRemovedTitle,
+                  description: result.isFavorite
+                    ? messages.auth.favoriteAddedDescription
+                    : messages.auth.favoriteRemovedDescription,
+                });
+              })();
             }}
             aria-label={messages.navbar.favorites}
           >

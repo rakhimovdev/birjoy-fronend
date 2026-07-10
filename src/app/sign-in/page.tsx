@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, LogIn } from 'lucide-react';
 import { AuthPageShell } from '@/components/auth/AuthPageShell';
 import { GoogleAuthSection } from '@/components/auth/GoogleAuthSection';
+import { YandexAuthSection } from '@/components/auth/YandexAuthSection';
 import { Navbar } from '@/components/layout/Navbar';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
@@ -13,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { completeExternalAuthSession } from '@/lib/auth';
 
 export default function SignInPage() {
   return (
@@ -29,7 +31,11 @@ function SignInPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/profile';
+  const externalToken = searchParams.get('token') || '';
+  const externalUser = searchParams.get('user') || '';
+  const authError = searchParams.get('authError') || '';
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCompletingExternalAuth, setIsCompletingExternalAuth] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -40,6 +46,65 @@ function SignInPageContent() {
       router.replace(redirect);
     }
   }, [isReady, redirect, router, user]);
+
+  useEffect(() => {
+    if (!authError) {
+      return;
+    }
+
+    toast({
+      title: messages.auth.requestFailedTitle,
+      description: authError,
+      variant: 'destructive',
+    });
+    router.replace(`/sign-in?redirect=${encodeURIComponent(redirect)}`);
+  }, [authError, messages.auth.requestFailedTitle, redirect, router, toast]);
+
+  useEffect(() => {
+    if (!externalToken || !externalUser) {
+      return;
+    }
+
+    setIsCompletingExternalAuth(true);
+
+    try {
+      const parsedUser = JSON.parse(externalUser) as {
+        name: string;
+        email: string;
+      };
+      const result = completeExternalAuthSession(externalToken, parsedUser);
+
+      if (!result.ok) {
+        throw new Error(result.message);
+      }
+
+      toast({
+        title: messages.auth.signInSuccessTitle,
+        description: messages.auth.signInSuccessDescription,
+      });
+      router.replace(redirect);
+    } catch (error) {
+      toast({
+        title: messages.auth.requestFailedTitle,
+        description:
+          error instanceof Error ? error.message : messages.auth.requestFailedDescription,
+        variant: 'destructive',
+      });
+      router.replace(`/sign-in?redirect=${encodeURIComponent(redirect)}`);
+    } finally {
+      setIsCompletingExternalAuth(false);
+    }
+  }, [
+    externalToken,
+    externalUser,
+    messages.auth.requestFailedDescription,
+    messages.auth.requestFailedTitle,
+    messages.auth.signInSuccessDescription,
+    messages.auth.signInSuccessTitle,
+    redirect,
+    router,
+    toast,
+  ]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -89,6 +154,7 @@ function SignInPageContent() {
         footerActionHref="/sign-up"
       >
         <GoogleAuthSection redirectTo={redirect} />
+        <YandexAuthSection redirectTo={redirect} />
         <form onSubmit={(event) => void handleSubmit(event)} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="email">{messages.auth.emailLabel}</Label>
@@ -122,7 +188,11 @@ function SignInPageContent() {
               required
             />
           </div>
-          <Button type="submit" className="h-12 w-full gap-2 text-base font-semibold" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            className="h-12 w-full gap-2 text-base font-semibold"
+            disabled={isSubmitting || isCompletingExternalAuth}
+          >
             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
             {messages.auth.signInAction}
           </Button>

@@ -5,6 +5,7 @@ import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor
 const APP_SCHEME = 'birjoy:';
 const OWNED_HOSTS = new Set(['www.bir-joy.uz', 'bir-joy.uz']);
 const NATIVE_USER_AGENT_TOKEN = 'BirJoyAndroidApp';
+const shouldLogNativeAuthInBrowser = process.env.NODE_ENV !== 'production';
 
 export type NativeGoogleAuthDebugEvent = {
   step: string;
@@ -178,7 +179,7 @@ export async function waitForBirJoyAuthPlugin(options?: {
 }
 
 export function logNativeAuthDebug(step: string, data?: Record<string, unknown>) {
-  if (!hasWindowObject()) {
+  if (!hasWindowObject() || !shouldLogNativeAuthInBrowser) {
     return;
   }
 

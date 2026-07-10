@@ -21,8 +21,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download, Edit, Globe2, Headphones, Heart, Mail, MapPin, Package, Phone, ShieldAlert, Trash2 } from 'lucide-react';
+import { Download, Edit, Globe2, Headphones, Heart, Loader2, Mail, MapPin, Package, Phone, ShieldAlert, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { getCategoryBySlug, getVerticalById } from '@/lib/mock-data';
 import { AdCard } from '@/components/ads/AdCard';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -43,7 +46,7 @@ export default function ProfilePage() {
 }
 
 function ProfilePageContent() {
-  const { user, isFavorite } = useAuth();
+  const { user, isFavorite, updateProfile } = useAuth();
   const { toast } = useToast();
   const { locale, messages, setLocale } = useI18n();
   const { isAdmin } = useAdminSession();
@@ -53,6 +56,13 @@ function ProfilePageContent() {
   const [isLoadingAds, setIsLoadingAds] = useState(true);
   const [adsError, setAdsError] = useState<string | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    phone: '',
+    location: '',
+  });
   const defaultTab = searchParams.get('tab') || 'ads';
   const deleteAccountCopy = {
     uz: {
@@ -122,6 +132,45 @@ function ProfilePageContent() {
             dangerTitle: 'Xavfli bo‘lim',
             dangerDescription: 'Akkauntni o‘chirish profilingizni, eʼlonlaringizni va bog‘liq so‘rovlarni butunlay olib tashlaydi.',
           };
+  const editProfileCopy =
+    locale === 'ru'
+      ? {
+          title: 'Редактировать профиль',
+          description: 'Обновите имя, телефон и локацию, которые видят покупатели и продавцы.',
+          name: 'Имя',
+          phone: 'Телефон',
+          location: 'Локация',
+          save: 'Сохранить изменения',
+          cancel: 'Отмена',
+          successTitle: 'Профиль обновлён',
+          successDescription: 'Изменения сразу сохранены в вашем аккаунте.',
+          errorTitle: 'Не удалось обновить профиль',
+        }
+      : locale === 'en'
+        ? {
+            title: 'Edit profile',
+            description: 'Update the name, phone, and location shown across your marketplace account.',
+            name: 'Name',
+            phone: 'Phone',
+            location: 'Location',
+            save: 'Save changes',
+            cancel: 'Cancel',
+            successTitle: 'Profile updated',
+            successDescription: 'Your account details were saved successfully.',
+            errorTitle: 'Profile update failed',
+          }
+        : {
+            title: 'Profilni tahrirlash',
+            description: 'Marketplace akkauntingizda ko‘rinadigan ism, telefon va joylashuvni yangilang.',
+            name: 'Ism',
+            phone: 'Telefon',
+            location: 'Joylashuv',
+            save: 'O‘zgarishlarni saqlash',
+            cancel: 'Bekor qilish',
+            successTitle: 'Profil yangilandi',
+            successDescription: 'Akkauntingizdagi maʼlumotlar darhol saqlandi.',
+            errorTitle: 'Profilni yangilab bo‘lmadi',
+          };
 
   useEffect(() => {
     let cancelled = false;
@@ -153,6 +202,18 @@ function ProfilePageContent() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!user || !isEditProfileOpen) {
+      return;
+    }
+
+    setProfileForm({
+      name: user.name,
+      phone: user.phone || '',
+      location: user.location ? getLocalizedText(user.location, locale) : '',
+    });
+  }, [isEditProfileOpen, locale, user]);
 
   if (!user) {
     return (
@@ -231,6 +292,43 @@ function ProfilePageContent() {
     }
   };
 
+  const handleProfileFieldChange = (field: 'name' | 'phone' | 'location', value: string) => {
+    setProfileForm((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
+  };
+
+  const handleSaveProfile = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSavingProfile(true);
+
+    try {
+      const result = await updateProfile({
+        name: profileForm.name,
+        phone: profileForm.phone,
+        location: profileForm.location,
+      });
+
+      if (!result.ok) {
+        toast({
+          title: editProfileCopy.errorTitle,
+          description: result.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: editProfileCopy.successTitle,
+        description: editProfileCopy.successDescription,
+      });
+      setIsEditProfileOpen(false);
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
   return (
     <MarketplaceShell>
       <ProtectedRoute>
@@ -276,7 +374,11 @@ function ProfilePageContent() {
                     ) : null}
                   </div>
 
-                  <Button className="mt-8 min-h-12 w-full gap-2" variant="outline">
+                  <Button
+                    className="mt-8 min-h-12 w-full gap-2"
+                    variant="outline"
+                    onClick={() => setIsEditProfileOpen(true)}
+                  >
                     <Edit className="h-4 w-4" />
                     {messages.profile.editProfile}
                   </Button>
@@ -487,6 +589,62 @@ function ProfilePageContent() {
             </div>
           </div>
         </main>
+        <Sheet open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
+          <SheetContent side="bottom" className="mx-auto w-full max-w-2xl rounded-t-[2rem] border border-border/70 px-4 pb-6 pt-10 sm:px-6">
+            <SheetHeader className="text-left">
+              <SheetTitle>{editProfileCopy.title}</SheetTitle>
+              <SheetDescription>{editProfileCopy.description}</SheetDescription>
+            </SheetHeader>
+
+            <form className="mt-6 space-y-4" onSubmit={(event) => void handleSaveProfile(event)}>
+              <div className="space-y-2">
+                <Label htmlFor="profile-name">{editProfileCopy.name}</Label>
+                <Input
+                  id="profile-name"
+                  value={profileForm.name}
+                  onChange={(event) => handleProfileFieldChange('name', event.target.value)}
+                  maxLength={80}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="profile-phone">{editProfileCopy.phone}</Label>
+                <Input
+                  id="profile-phone"
+                  value={profileForm.phone}
+                  onChange={(event) => handleProfileFieldChange('phone', event.target.value)}
+                  maxLength={40}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="profile-location">{editProfileCopy.location}</Label>
+                <Input
+                  id="profile-location"
+                  value={profileForm.location}
+                  onChange={(event) => handleProfileFieldChange('location', event.target.value)}
+                  maxLength={240}
+                />
+              </div>
+
+              <SheetFooter className="gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-11 w-full sm:w-auto"
+                  onClick={() => setIsEditProfileOpen(false)}
+                >
+                  {editProfileCopy.cancel}
+                </Button>
+                <Button type="submit" className="min-h-11 w-full sm:w-auto" disabled={isSavingProfile}>
+                  {isSavingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {editProfileCopy.save}
+                </Button>
+              </SheetFooter>
+            </form>
+          </SheetContent>
+        </Sheet>
       </ProtectedRoute>
     </MarketplaceShell>
   );
