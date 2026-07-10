@@ -8,6 +8,7 @@ import {
   Menu,
   MessageSquare,
   PlusCircle,
+  Search,
   User,
 } from 'lucide-react';
 import {
@@ -37,6 +38,8 @@ function useNavigationLinks() {
   const { user } = useAuth();
   const { messages } = useI18n();
   const homeHref = '/uy-joy';
+  const isRealEstateMarketplacePath = pathname === '/' || pathname === homeHref;
+  const searchHref = `${homeHref}#mobile-marketplace-search`;
 
   const favoritesHref = user ? '/favorites' : `/sign-in?redirect=${encodeURIComponent('/favorites')}`;
   const chatHref = user ? '/chat' : `/sign-in?redirect=${encodeURIComponent('/chat')}`;
@@ -52,10 +55,13 @@ function useNavigationLinks() {
       active: pathname === '/' || pathname === homeHref,
     },
     {
-      href: favoritesHref,
-      icon: Heart,
-      label: messages.navbar.favorites,
-      active: pathname === '/favorites' || (pathname === '/profile' && activeProfileTab === 'favorites'),
+      href: isRealEstateMarketplacePath ? searchHref : favoritesHref,
+      icon: isRealEstateMarketplacePath ? Search : Heart,
+      label: isRealEstateMarketplacePath ? messages.navbar.search : messages.navbar.favorites,
+      active:
+        isRealEstateMarketplacePath
+          ? false
+          : pathname === '/favorites' || (pathname === '/profile' && activeProfileTab === 'favorites'),
     },
     {
       href: postAdHref,

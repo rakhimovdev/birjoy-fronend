@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button';
 import { useYandexMaps, hasYandexMapsApiKey } from '@/lib/yandex-maps-loader';
 import {
   buildBounds,
+  createPropertyMarkerIconShape,
   createPropertyMarkerHtml,
   createUserLocationMarkerHtml,
+  getPropertyMarkerLayoutMetrics,
   toYandexCoordinates,
 } from '@/lib/yandex-maps';
 import type { MapProps, PropertyMarker } from '@/lib/map-types';
@@ -282,6 +284,7 @@ function YandexMapComponent({
     }
 
     markers.forEach((marker) => {
+      const { width, height } = getPropertyMarkerLayoutMetrics(marker);
       const placemark = new api.Placemark(
         toYandexCoordinates(marker),
         {
@@ -293,6 +296,9 @@ function YandexMapComponent({
         },
         {
           iconLayout: propertyMarkerLayoutRef.current,
+          iconOffset: [-Math.round(width / 2), -height],
+          iconShape: createPropertyMarkerIconShape(marker),
+          cursor: 'pointer',
           zIndex: marker.id === highlightedMarkerId ? 2500 : 1200,
         }
       );

@@ -62,6 +62,7 @@ function NavbarContent() {
   const favoritesHref = user ? favoritesPath : `/sign-in?redirect=${encodeURIComponent(favoritesPath)}`;
   const profileHref = user ? '/profile' : '/sign-in?redirect=%2Fprofile';
   const myAdsHref = user ? myAdsPath : `/sign-in?redirect=${encodeURIComponent(myAdsPath)}`;
+  const isRealEstateMarketplacePath = pathname === '/' || pathname === '/uy-joy';
 
   useEffect(() => {
     setSearchQuery(searchParams.get('q') ?? '');
@@ -255,7 +256,7 @@ function NavbarContent() {
             </div>
           </div>
 
-          {renderSearchForm('phone-nav-only w-full')}
+          {!isRealEstateMarketplacePath ? renderSearchForm('phone-nav-only w-full') : null}
         </div>
       </div>
     </nav>
