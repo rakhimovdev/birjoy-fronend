@@ -38,6 +38,7 @@ export interface MapProps {
   markers?: PropertyMarker[];
   onClick?: (location: Location) => void;
   onMarkerClick?: (marker: PropertyMarker) => void;
+  onMarkerClose?: () => void;
   height?: number | string;
   className?: string;
   fitBounds?: boolean;

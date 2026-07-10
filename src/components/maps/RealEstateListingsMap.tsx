@@ -18,7 +18,7 @@ export function RealEstateListingsMap(props: {
   ads: Ad[];
   locale: Language;
   selectedAdId?: string;
-  onSelectAd: (adId: string) => void;
+  onSelectAd: (adId?: string) => void;
   userLocation?: Location | null;
   userLocationLabel: string;
   nearbyRadiusKm: number;

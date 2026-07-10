@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { BedDouble, MapPin, RefreshCw, Ruler } from 'lucide-react';
+import { BedDouble, MapPin, RefreshCw, Ruler, X } from 'lucide-react';
 import { memo, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,7 @@ function getCopy(language: Language) {
       mapError: 'Yandex Maps не загрузился.',
       retry: 'Повторить',
       viewDetails: 'Подробнее',
+      close: 'Закрыть',
     };
   }
 
@@ -42,6 +43,7 @@ function getCopy(language: Language) {
       mapError: 'Yandex Maps could not be loaded.',
       retry: 'Retry',
       viewDetails: 'View details',
+      close: 'Close',
     };
   }
 
@@ -50,6 +52,7 @@ function getCopy(language: Language) {
     mapError: 'Yandex Maps yuklanmadi.',
     retry: 'Qayta urinish',
     viewDetails: 'Batafsil ko‘rish',
+    close: 'Yopish',
   };
 }
 
@@ -67,6 +70,7 @@ function YandexMapComponent({
   markers = [],
   onClick,
   onMarkerClick,
+  onMarkerClose,
   height,
   className,
   fitBounds = false,
@@ -112,9 +116,7 @@ function YandexMapComponent({
   }, [onClick]);
 
   useEffect(() => {
-    if (selectedMarkerId) {
-      setActiveMarkerId(selectedMarkerId);
-    }
+    setActiveMarkerId(selectedMarkerId ?? null);
   }, [selectedMarkerId]);
 
   useEffect(() => {
@@ -441,7 +443,21 @@ function YandexMapComponent({
       <div ref={canvasRef} className="yandex-map-canvas h-full w-full" />
 
       {selectedMarker ? (
-        <div className="marketplace-map-preview">
+        <div className="relative marketplace-map-preview">
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            className="absolute right-3 top-3 z-10 h-9 w-9 rounded-full border border-border/70 bg-background/92 shadow-sm backdrop-blur"
+            aria-label={copy.close}
+            onClick={() => {
+              setActiveMarkerId(null);
+              onMarkerClose?.();
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+
           <div className="relative aspect-[16/10] overflow-hidden rounded-[1rem] bg-muted/40">
             {selectedMarker.image ? (
               <Image

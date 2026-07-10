@@ -16,7 +16,7 @@ type RealEstateFullscreenMapOverlayProps = {
   ads: Ad[];
   selectedAdId?: string;
   onClose: () => void;
-  onSelectAd: (adId: string) => void;
+  onSelectAd: (adId?: string) => void;
   userLocation?: Location | null;
   userLocationLabel: string;
   nearbyRadiusKm: number;
