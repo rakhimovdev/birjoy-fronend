@@ -417,33 +417,49 @@ function ProfilePageContent() {
 
                   <a
                     href="tel:+998332580404"
-                    className="soft-panel flex items-center gap-3 rounded-[1.4rem] transition-colors hover:bg-primary/5"
+                    className="soft-panel block rounded-[1.4rem] transition-colors hover:bg-primary/5"
                   >
-                    <div className="rounded-full bg-primary/10 p-2.5 text-primary">
-                      <Headphones className="h-4 w-4" />
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-full bg-primary/10 p-2.5 text-primary">
+                        <Headphones className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground">{settingsCopy.supportTitle}</p>
+                        <p className="text-sm text-muted-foreground break-words">
+                          {settingsCopy.supportDescription}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-foreground">{settingsCopy.supportTitle}</p>
-                      <p className="text-sm text-muted-foreground">{settingsCopy.supportDescription}</p>
+
+                    <div className="mt-3">
+                      <span className="inline-flex min-h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm">
+                        {messages.navbar.callSupport}
+                      </span>
                     </div>
-                    <Button type="button" className="h-10 rounded-xl px-4">
-                      {messages.navbar.callSupport}
-                    </Button>
                   </a>
 
                   <button
                     type="button"
-                    className="soft-panel flex w-full items-center gap-3 rounded-[1.4rem] text-left transition-colors hover:bg-primary/5"
+                    className="soft-panel block w-full rounded-[1.4rem] text-left transition-colors hover:bg-primary/5"
                     onClick={handleDownloadData}
                   >
-                    <div className="rounded-full bg-primary/10 p-2.5 text-primary">
-                      <Download className="h-4 w-4" />
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-full bg-primary/10 p-2.5 text-primary">
+                        <Download className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground">{settingsCopy.exportTitle}</p>
+                        <p className="text-sm text-muted-foreground break-words">
+                          {settingsCopy.exportDescription}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-foreground">{settingsCopy.exportTitle}</p>
-                      <p className="text-sm text-muted-foreground">{settingsCopy.exportDescription}</p>
+
+                    <div className="mt-3">
+                      <span className="text-sm font-semibold text-primary">
+                        {messages.profile.downloadMyData}
+                      </span>
                     </div>
-                    <span className="text-sm font-semibold text-primary">{messages.profile.downloadMyData}</span>
                   </button>
 
                   <div className="rounded-[1.4rem] border border-destructive/18 bg-destructive/5 p-4">
