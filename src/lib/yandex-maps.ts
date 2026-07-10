@@ -266,7 +266,7 @@ export function createPropertyMarkerHtml({
   const { width } = getPropertyMarkerLayoutMetrics(marker);
 
   return `
-    <div style="position:relative;display:grid;justify-items:center;width:${width}px;pointer-events:auto;">
+    <div style="position:relative;display:grid;justify-items:center;width:${width}px;pointer-events:none;user-select:none;-webkit-user-select:none;touch-action:none;">
       ${buildMarkerLabel({ marker, theme, selected })}
     </div>
   `.trim();
