@@ -112,13 +112,8 @@ function YandexMapComponent({
   useEffect(() => {
     if (selectedMarkerId) {
       setActiveMarkerId(selectedMarkerId);
-      return;
     }
-
-    if (markers.length === 1) {
-      setActiveMarkerId(markers[0].id);
-    }
-  }, [markers, selectedMarkerId]);
+  }, [selectedMarkerId]);
 
   useEffect(() => {
     if (!api || !isLoaded || !canvasRef.current || mapRef.current) {

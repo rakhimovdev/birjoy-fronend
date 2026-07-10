@@ -205,16 +205,9 @@ export function RealEstateMarketplacePage() {
     }
 
     if (selectedAdId && !mapAds.some((ad) => ad.id === selectedAdId)) {
-      setSelectedAdId(mapAds[0]?.id);
-      return;
-    }
-
-    if (!selectedAdId) {
-      setSelectedAdId(mapAds[0]?.id);
+      setSelectedAdId(undefined);
     }
   }, [mapAds, selectedAdId]);
-
-  const selectedAd = mapAds.find((ad) => ad.id === selectedAdId) || null;
   const hasCustomFilters = hasActiveRealEstateFilters(filters);
   const activeFilterCount = getActiveRealEstateFilterCount(filters);
   const hasFilters = Boolean(query || activeCategory) || hasCustomFilters;
@@ -231,7 +224,7 @@ export function RealEstateMarketplacePage() {
           regularTitle: 'Остальные объявления',
           regularDescription: 'Ниже показаны все остальные предложения по жилью.',
           mapTitle: 'Карта жилья',
-          mapDescription: 'Полноэкранная карта с теми же фильтрами и карточками объявлений.',
+          mapDescription: 'Полноэкранная карта с теми же фильтрами. Нажмите на цену, чтобы открыть объявление.',
           yourLocation: 'Вы здесь',
           noMapTitle: 'Пока нет объявлений с координатами',
           noMapDescription: 'Чтобы объявление попало на карту, для него нужна локация на карте.',
@@ -249,7 +242,7 @@ export function RealEstateMarketplacePage() {
             regularTitle: 'Other listings',
             regularDescription: 'Browse the rest of the home listings below.',
             mapTitle: 'Property map',
-            mapDescription: 'A full-screen map with the same filters and listing previews.',
+            mapDescription: 'A full-screen map with the same filters. Tap a price marker to view the listing.',
             yourLocation: 'You are here',
             noMapTitle: 'No mapped home listings yet',
             noMapDescription: 'A housing listing needs coordinates before it can appear on the map.',
@@ -266,7 +259,7 @@ export function RealEstateMarketplacePage() {
             regularTitle: 'Boshqa eʼlonlar',
             regularDescription: 'Quyida qolgan barcha uy-joy eʼlonlari chiqadi.',
             mapTitle: 'Uy-joy xaritasi',
-            mapDescription: 'Bir xil filtrlarga ega to‘liq ekran xarita va preview kartalari.',
+            mapDescription: 'Bir xil filtrlarga ega to‘liq ekran xarita. Eʼlonni ko‘rish uchun narx markerini bosing.',
             yourLocation: 'Siz turgan joy',
             noMapTitle: 'Hali koordinatali uy eʼlonlari yo‘q',
             noMapDescription: 'Uy eʼloni xaritada ko‘rinishi uchun unga koordinata biriktirilgan bo‘lishi kerak.',
@@ -378,7 +371,10 @@ export function RealEstateMarketplacePage() {
                     type="button"
                     variant="outline"
                     className="h-11 w-full rounded-[1.15rem] border-white/55 bg-background/80 shadow-none sm:w-auto sm:min-w-[9rem]"
-                    onClick={() => setIsMapOpen(true)}
+                    onClick={() => {
+                      setSelectedAdId(undefined);
+                      setIsMapOpen(true);
+                    }}
                   >
                     <MapPinned className="h-4 w-4" />
                     {viewCopy.map}
@@ -458,8 +454,11 @@ export function RealEstateMarketplacePage() {
         open={isMapOpen}
         locale={locale}
         ads={mapAds}
-        selectedAdId={selectedAd?.id}
-        onClose={() => setIsMapOpen(false)}
+        selectedAdId={selectedAdId}
+        onClose={() => {
+          setIsMapOpen(false);
+          setSelectedAdId(undefined);
+        }}
         onSelectAd={setSelectedAdId}
         userLocation={userCoordinates}
         userLocationLabel={viewCopy.yourLocation}
