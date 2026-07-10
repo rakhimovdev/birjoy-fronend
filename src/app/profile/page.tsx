@@ -22,11 +22,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Mail, Phone, MapPin, Package, Heart, Settings, Download } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getCategoryBySlug, getVerticalById } from '@/lib/mock-data';
 import { AdCard } from '@/components/ads/AdCard';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
-import { getLocalizedText } from '@/lib/i18n';
+import { getLocalizedText, isLanguage, languageMeta, languages, type Language } from '@/lib/i18n';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { fetchAds, getConditionLabel } from '@/lib/ads';
 import { deleteCurrentUserAccount } from '@/lib/auth';
@@ -44,7 +45,7 @@ export default function ProfilePage() {
 function ProfilePageContent() {
   const { user, isFavorite } = useAuth();
   const { toast } = useToast();
-  const { locale, messages } = useI18n();
+  const { locale, messages, setLocale } = useI18n();
   const { isAdmin } = useAdminSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -188,6 +189,12 @@ function ProfilePageContent() {
     }
   };
 
+  const handleLocaleChange = (value: string) => {
+    if (isLanguage(value)) {
+      setLocale(value as Language);
+    }
+  };
+
   return (
     <MarketplaceShell>
       <ProtectedRoute>
@@ -244,10 +251,31 @@ function ProfilePageContent() {
                 <CardHeader className="p-4">
                   <CardTitle className="text-sm">{messages.profile.accountSettings}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-1 p-2 pt-0">
-                  <Button variant="ghost" className="min-h-11 w-full justify-start gap-2 text-sm">
-                    <Settings className="h-4 w-4" />
-                    {messages.profile.settings}
+                <CardContent className="space-y-4 p-4 pt-0">
+                  <div className="soft-panel space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <Settings className="h-4 w-4 text-primary" />
+                      <span>{messages.profile.settings}</span>
+                    </div>
+                    <Select value={locale} onValueChange={handleLocaleChange}>
+                      <SelectTrigger className="h-11 rounded-[1rem] border-white/55 bg-background/80 shadow-none">
+                        <SelectValue placeholder={messages.navbar.language} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {languages.map((language) => (
+                          <SelectItem key={language} value={language}>
+                            {languageMeta[language].label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button asChild variant="ghost" className="min-h-11 w-full justify-start gap-2 text-sm">
+                    <a href="tel:+998332580404">
+                      <Phone className="h-4 w-4" />
+                      {messages.navbar.callSupport}
+                    </a>
                   </Button>
                   <Button
                     variant="ghost"

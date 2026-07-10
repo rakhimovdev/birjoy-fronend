@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight, ListFilter, Loader2, MapPinned, Search } from 'lucide-react';
+import { ArrowRight, ListFilter, Loader2, MapPinned } from 'lucide-react';
 import { AdCard } from '@/components/ads/AdCard';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { VerticalBar } from '@/components/layout/VerticalBar';
@@ -27,7 +27,6 @@ import {
   type RealEstateFilterState,
 } from '@/lib/real-estate-filters';
 import type { Ad } from '@/lib/types';
-import { Input } from '@/components/ui/input';
 
 type LocationState = 'idle' | 'loading' | 'ready' | 'denied' | 'unsupported' | 'error';
 const NEARBY_RADIUS_KM = 5;
@@ -71,7 +70,6 @@ export function RealEstateMarketplacePage() {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [filters, setFilters] = useState<RealEstateFilterState>({ ...EMPTY_REAL_ESTATE_FILTERS });
   const query = searchParams.get('q')?.trim() ?? '';
-  const [mobileSearchQuery, setMobileSearchQuery] = useState(query);
   const category = searchParams.get('category')?.trim() ?? '';
   const basePath = getVerticalHref('real_estate');
   const activeCategory = category || null;
@@ -79,10 +77,6 @@ export function RealEstateMarketplacePage() {
   const activeCategoryLabel = activeCategoryRecord
     ? getLocalizedText(activeCategoryRecord.name, locale)
     : activeCategory;
-
-  useEffect(() => {
-    setMobileSearchQuery(query);
-  }, [query]);
 
   useEffect(() => {
     let cancelled = false;
@@ -289,25 +283,6 @@ export function RealEstateMarketplacePage() {
     }
   };
 
-  const buildMarketplaceUrl = (searchValue: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    const trimmedQuery = searchValue.trim();
-
-    if (trimmedQuery) {
-      params.set('q', trimmedQuery);
-    } else {
-      params.delete('q');
-    }
-
-    const queryString = params.toString();
-    return queryString ? `${basePath}?${queryString}` : basePath;
-  };
-
-  const handleMobileSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    router.push(buildMarketplaceUrl(mobileSearchQuery));
-  };
-
   const mobileAds = featuredAds.length > 0 ? [...featuredAds, ...regularAds] : filteredAds;
 
   return (
@@ -397,30 +372,6 @@ export function RealEstateMarketplacePage() {
                   </Button>
                 </div>
               </div>
-
-              <section id="mobile-marketplace-search" className="surface-card rounded-[1.65rem] p-3 scroll-mt-28">
-                <form onSubmit={handleMobileSearchSubmit} className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={mobileSearchQuery}
-                    onChange={(event) => setMobileSearchQuery(event.target.value)}
-                    placeholder={messages.navbar.searchPlaceholder}
-                    className="h-11 rounded-[1.15rem] border-white/55 bg-background/78 pl-10 pr-20 text-sm shadow-none"
-                  />
-                  {mobileSearchQuery ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMobileSearchQuery('');
-                        router.push(buildMarketplaceUrl(''));
-                      }}
-                      className="absolute right-3 top-1/2 max-w-20 -translate-y-1/2 truncate text-xs font-semibold text-muted-foreground transition-colors hover:text-primary"
-                    >
-                      {messages.navbar.clearSearch}
-                    </button>
-                  ) : null}
-                </form>
-              </section>
 
               <section className="listing-grid">
                 {mobileAds.map((ad) => (

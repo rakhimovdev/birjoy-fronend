@@ -8,7 +8,6 @@ import {
   Menu,
   MessageSquare,
   PlusCircle,
-  Search,
   User,
 } from 'lucide-react';
 import {
@@ -17,12 +16,11 @@ import {
   getVerticalHref,
 } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
-import { getLocalizedText, isLanguage, languageMeta, languages, type Language } from '@/lib/i18n';
+import { getLocalizedText } from '@/lib/i18n';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 type NavigationLink = {
@@ -38,8 +36,6 @@ function useNavigationLinks() {
   const { user } = useAuth();
   const { messages } = useI18n();
   const homeHref = '/uy-joy';
-  const isRealEstateMarketplacePath = pathname === '/' || pathname === homeHref;
-  const searchHref = `${homeHref}#mobile-marketplace-search`;
 
   const favoritesHref = user ? '/favorites' : `/sign-in?redirect=${encodeURIComponent('/favorites')}`;
   const chatHref = user ? '/chat' : `/sign-in?redirect=${encodeURIComponent('/chat')}`;
@@ -55,13 +51,10 @@ function useNavigationLinks() {
       active: pathname === '/' || pathname === homeHref,
     },
     {
-      href: isRealEstateMarketplacePath ? searchHref : favoritesHref,
-      icon: isRealEstateMarketplacePath ? Search : Heart,
-      label: isRealEstateMarketplacePath ? messages.navbar.search : messages.navbar.favorites,
-      active:
-        isRealEstateMarketplacePath
-          ? false
-          : pathname === '/favorites' || (pathname === '/profile' && activeProfileTab === 'favorites'),
+      href: favoritesHref,
+      icon: Heart,
+      label: messages.navbar.favorites,
+      active: pathname === '/favorites' || (pathname === '/profile' && activeProfileTab === 'favorites'),
     },
     {
       href: postAdHref,
@@ -119,16 +112,10 @@ export function MarketplaceBottomNav() {
 
 export function MarketplaceDrawer() {
   const { links, pathname } = useNavigationLinks();
-  const { locale, messages, setLocale } = useI18n();
+  const { locale, messages } = useI18n();
   const activeVertical = pathname === '/' ? 'real_estate' : getVerticalBySlug(pathname.slice(1))?.id || 'market';
   const verticalSectionLabel =
     locale === 'ru' ? 'Вертикали' : locale === 'en' ? 'Verticals' : 'Vertikallar';
-
-  const handleLocaleChange = (value: string) => {
-    if (isLanguage(value)) {
-      setLocale(value as Language);
-    }
-  };
 
   return (
     <Sheet>
@@ -211,32 +198,6 @@ export function MarketplaceDrawer() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <p className="text-xs font-bold uppercase tracking-[0.26em] text-muted-foreground">
-                {messages.navbar.language}
-              </p>
-              <Select value={locale} onValueChange={handleLocaleChange}>
-                <SelectTrigger className="marketplace-drawer-card h-12 rounded-2xl shadow-sm">
-                  <SelectValue placeholder={messages.navbar.language} />
-                </SelectTrigger>
-                <SelectContent>
-                  {languages.map((language) => (
-                    <SelectItem key={language} value={language}>
-                      {languageMeta[language].label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="border-t border-border/70 px-5 py-4">
-            <a
-              href="tel:+998332580404"
-              className="flex min-h-12 items-center justify-center rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              {messages.navbar.callSupport}
-            </a>
           </div>
         </div>
       </SheetContent>

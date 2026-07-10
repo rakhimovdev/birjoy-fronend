@@ -139,7 +139,9 @@ function NavbarContent() {
         <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/50 bg-background/72 px-3 py-3 shadow-[0_18px_42px_rgba(7,28,85,0.06)] backdrop-blur-xl sm:px-4">
           <div className="flex items-center justify-between gap-2 min-[481px]:gap-3">
             <div className="flex min-w-0 items-center gap-2 min-[481px]:gap-3">
-              <MarketplaceDrawer />
+              <div className="tablet-and-up-only">
+                <MarketplaceDrawer />
+              </div>
               <Link href="/" className="flex min-w-0 items-center overflow-hidden">
                 <BrandLogo size="sm" />
               </Link>
@@ -184,48 +186,50 @@ function NavbarContent() {
                     <Heart className="h-5 w-5" />
                   </Link>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="relative h-12 w-12 rounded-full border p-0 shadow-none marketplace-glass-button">
-                        <Avatar className="h-11 w-11 border-2 border-primary/10">
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-60 rounded-2xl" align="end" forceMount>
-                      <DropdownMenuLabel className="font-normal">
-                        <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium leading-none">{user.name}</p>
-                          <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                        </div>
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link href={profileHref} className="cursor-pointer">
-                          <User className="mr-2 h-4 w-4" />
-                          <span>{messages.navbar.profile}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={myAdsHref} className="cursor-pointer">
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          <span>{messages.navbar.myAds}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={favoritesHref} className="cursor-pointer">
-                          <Heart className="mr-2 h-4 w-4" />
-                          <span>{messages.navbar.favorites}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="cursor-pointer text-destructive" onClick={handleSignOut}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>{messages.navbar.logOut}</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="tablet-and-up-only">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="relative h-12 w-12 rounded-full border p-0 shadow-none marketplace-glass-button">
+                          <Avatar className="h-11 w-11 border-2 border-primary/10">
+                            <AvatarImage src={user.avatar} alt={user.name} />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-60 rounded-2xl" align="end" forceMount>
+                        <DropdownMenuLabel className="font-normal">
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-medium leading-none">{user.name}</p>
+                            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                          </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link href={profileHref} className="cursor-pointer">
+                            <User className="mr-2 h-4 w-4" />
+                            <span>{messages.navbar.profile}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={myAdsHref} className="cursor-pointer">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            <span>{messages.navbar.myAds}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={favoritesHref} className="cursor-pointer">
+                            <Heart className="mr-2 h-4 w-4" />
+                            <span>{messages.navbar.favorites}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="cursor-pointer text-destructive" onClick={handleSignOut}>
+                          <LogOut className="mr-2 h-4 w-4" />
+                          <span>{messages.navbar.logOut}</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </>
               ) : isReady ? (
                 <>
@@ -239,17 +243,6 @@ function NavbarContent() {
                   </Link>
                   <Link href="/sign-up" className="tablet-and-up-only">
                     <Button className="h-11 rounded-[1.15rem] px-4 font-semibold sm:h-12">{messages.navbar.signUp}</Button>
-                  </Link>
-                  <Link href="/sign-in" className="phone-nav-only">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="touch-target rounded-full border shadow-none marketplace-glass-button"
-                      aria-label={messages.navbar.signIn}
-                    >
-                      <User className="h-5 w-5" />
-                      <span className="sr-only">{messages.navbar.signIn}</span>
-                    </Button>
                   </Link>
                 </>
               ) : null}
