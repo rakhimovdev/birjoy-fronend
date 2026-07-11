@@ -10,7 +10,7 @@ import {
   areNativePlatformDiagnosticsEqual,
   extractInAppPath,
   getNativePlatformDiagnostics,
-  isLikelyNativeAndroidShell,
+  isLikelyNativeShell,
   type NativeAppRestoredResult,
   isOwnedSiteUrl,
   logNativeAuthDebug,
@@ -32,7 +32,7 @@ export function NativeAppBridge() {
   const [nativeDiagnostics, setNativeDiagnostics] = useState(() =>
     getNativePlatformDiagnostics()
   );
-  const nativeApp = nativeDiagnostics.isNativeAndroidApp;
+  const nativeApp = nativeDiagnostics.isNativePlatform;
 
   useEffect(() => {
     let cancelled = false;
@@ -59,7 +59,7 @@ export function NativeAppBridge() {
 
     const initialDiagnostics = syncNativeDiagnostics('mount');
 
-    if (!isLikelyNativeAndroidShell(initialDiagnostics) && !initialDiagnostics.hasAndroidBridge) {
+    if (!isLikelyNativeShell(initialDiagnostics)) {
       return () => {
         cancelled = true;
       };
@@ -73,7 +73,7 @@ export function NativeAppBridge() {
       pollAttempts += 1;
       const nextDiagnostics = syncNativeDiagnostics(`poll-${pollAttempts}`);
 
-      if (nextDiagnostics.isNativeAndroidApp) {
+      if (nextDiagnostics.isNativePlatform) {
         return;
       }
 
@@ -108,6 +108,8 @@ export function NativeAppBridge() {
 
     document.documentElement.dataset.nativePlatform = 'capacitor';
     document.body.dataset.nativePlatform = 'capacitor';
+    document.documentElement.dataset.nativeOs = diagnostics.platform;
+    document.body.dataset.nativeOs = diagnostics.platform;
 
     const originalOpen = window.open.bind(window);
     const cleanupTasks: Array<() => void> = [];
@@ -307,6 +309,8 @@ export function NativeAppBridge() {
       window.open = originalOpen;
       delete document.documentElement.dataset.nativePlatform;
       delete document.body.dataset.nativePlatform;
+      delete document.documentElement.dataset.nativeOs;
+      delete document.body.dataset.nativeOs;
     });
 
     return () => {
@@ -319,7 +323,7 @@ export function NativeAppBridge() {
   }
 
   return (
-    <div className="fixed inset-x-4 top-4 z-[70] rounded-2xl border border-amber-500/30 bg-card/95 p-4 shadow-[var(--surface-shadow)] backdrop-blur">
+    <div className="fixed inset-x-4 top-[calc(env(safe-area-inset-top)+1rem)] z-[70] rounded-2xl border border-amber-500/30 bg-card/95 p-4 shadow-[var(--surface-shadow)] backdrop-blur">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-foreground">Internet aloqasi uzildi</p>

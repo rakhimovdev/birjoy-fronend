@@ -4,7 +4,7 @@ import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor
 
 const APP_SCHEME = 'birjoy:';
 const OWNED_HOSTS = new Set(['www.bir-joy.uz', 'bir-joy.uz']);
-const NATIVE_USER_AGENT_TOKEN = 'BirJoyAndroidApp';
+const NATIVE_USER_AGENT_TOKENS = ['BirJoyNativeApp', 'BirJoyAndroidApp'];
 const shouldLogNativeAuthInBrowser = process.env.NODE_ENV !== 'production';
 
 export type NativeGoogleAuthDebugEvent = {
@@ -30,6 +30,7 @@ export type NativePlatformDiagnostics = {
   platform: string;
   isNativePlatform: boolean;
   isNativeAndroidApp: boolean;
+  isNativeIosApp: boolean;
   userAgentHasNativeToken: boolean;
   hasAndroidBridge: boolean;
   hasCapacitorObject: boolean;
@@ -81,12 +82,16 @@ export function isNativeAndroidApp() {
   return isNativeApp() && Capacitor.getPlatform() === 'android';
 }
 
+export function isNativeIosApp() {
+  return isNativeApp() && Capacitor.getPlatform() === 'ios';
+}
+
 export function isNativeUserAgent(userAgent?: string) {
   if (!userAgent) {
     return false;
   }
 
-  return userAgent.includes(NATIVE_USER_AGENT_TOKEN);
+  return NATIVE_USER_AGENT_TOKENS.some((token) => userAgent.includes(token));
 }
 
 export function isOwnedSiteHost(hostname: string) {
@@ -108,6 +113,7 @@ export function getNativePlatformDiagnostics(): NativePlatformDiagnostics {
     platform: Capacitor.getPlatform(),
     isNativePlatform: Capacitor.isNativePlatform(),
     isNativeAndroidApp: isNativeAndroidApp(),
+    isNativeIosApp: isNativeIosApp(),
     userAgentHasNativeToken: isNativeUserAgent(userAgent),
     hasAndroidBridge: hasWindowObject() && 'androidBridge' in window,
     hasCapacitorObject: hasWindowObject() && typeof window.Capacitor !== 'undefined',
@@ -130,6 +136,7 @@ export function areNativePlatformDiagnosticsEqual(
     current.platform === next.platform &&
     current.isNativePlatform === next.isNativePlatform &&
     current.isNativeAndroidApp === next.isNativeAndroidApp &&
+    current.isNativeIosApp === next.isNativeIosApp &&
     current.userAgentHasNativeToken === next.userAgentHasNativeToken &&
     current.hasAndroidBridge === next.hasAndroidBridge &&
     current.hasCapacitorObject === next.hasCapacitorObject &&
@@ -145,9 +152,18 @@ export function isLikelyNativeAndroidShell(
 ) {
   return (
     diagnostics.isNativeAndroidApp ||
-    diagnostics.userAgentHasNativeToken ||
     diagnostics.hasAndroidBridge ||
     diagnostics.birJoyAuthHeaderPresent
+  );
+}
+
+export function isLikelyNativeShell(
+  diagnostics: NativePlatformDiagnostics = getNativePlatformDiagnostics()
+) {
+  return (
+    diagnostics.isNativePlatform ||
+    diagnostics.userAgentHasNativeToken ||
+    isLikelyNativeAndroidShell(diagnostics)
   );
 }
 

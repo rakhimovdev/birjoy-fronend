@@ -31,7 +31,7 @@ import {
 } from '@/lib/imagekit-upload';
 import { syncStoredUser } from '@/lib/auth';
 import { chooseNativeImages, takeNativePhoto } from '@/lib/native-media';
-import { isNativeAndroidApp } from '@/lib/native-app';
+import { isNativeApp } from '@/lib/native-app';
 import {
   MARKETPLACE_VERTICALS,
   REAL_ESTATE_CATEGORIES,
@@ -168,7 +168,7 @@ export function AdEditorForm({
   const [locationMeta, setLocationMeta] = useState<LocationMetaState>(() =>
     initialAd ? buildLocationMetaFromAd(initialAd) : buildInitialLocationMeta()
   );
-  const nativeAndroidApp = isNativeAndroidApp();
+  const nativeApp = isNativeApp();
   const categories = getCategoriesForVertical(formData.vertical);
   const selectedCategoryConfig = categories.find((category) => category.slug === formData.category);
   const isRealEstate = formData.vertical === 'real_estate';
@@ -981,7 +981,7 @@ export function AdEditorForm({
                         className="hidden"
                         onChange={handleImageUpload}
                       />
-                      {nativeAndroidApp ? (
+                      {nativeApp ? (
                         <>
                           <button
                             type="button"

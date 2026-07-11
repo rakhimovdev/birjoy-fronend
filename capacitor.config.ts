@@ -22,7 +22,7 @@ const config: CapacitorConfig = {
   appName: 'BirJoy',
   webDir: 'mobile-shell',
   backgroundColor: '#FFFAF2',
-  appendUserAgent: ' BirJoyAndroidApp/1.0.0 Capacitor',
+  appendUserAgent: ' BirJoyNativeApp/1.0.0 BirJoyAndroidApp/1.0.0 Capacitor',
   loggingBehavior: 'none',
   android: {
     allowMixedContent: false,
@@ -31,6 +31,13 @@ const config: CapacitorConfig = {
     minWebViewVersion: 110,
     resolveServiceWorkerRequests: false,
     webContentsDebuggingEnabled: false,
+  },
+  ios: {
+    backgroundColor: '#FFFAF2',
+    contentInset: 'never',
+    preferredContentMode: 'mobile',
+    scrollEnabled: true,
+    limitsNavigationsToAppBoundDomains: false,
   },
   plugins: {
     SplashScreen: {
@@ -51,6 +58,7 @@ const config: CapacitorConfig = {
         // migration toward bundled first-party web assets.
         server: {
           androidScheme: 'https',
+          iosScheme: 'https',
           url: liveSiteUrl,
           cleartext: false,
           allowNavigation: allowedHosts,

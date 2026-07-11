@@ -9,12 +9,12 @@ const sections = [
   {
     title: '1. Scope',
     body:
-      'This Privacy Policy explains how BirJoy collects, uses, shares, stores, and deletes personal information when you use the BirJoy website, Android application, marketplace listings, messaging and order request flows, or customer support channels.',
+      'This Privacy Policy explains how BirJoy collects, uses, shares, stores, and deletes personal information when you use the BirJoy website, Android or iOS application, marketplace listings, messaging and order request flows, or customer support channels.',
   },
   {
     title: '2. Data We Collect',
     body:
-      'We may collect your name, email address, phone number, approximate location or manually entered city/district, Google account identifier for Google sign-in, profile image, favorites, listings you publish, uploaded listing photos, moderation results, order requests, device diagnostics, crash and connectivity data needed to operate the Android application, and support messages you send to BirJoy.',
+      'We may collect your name, email address, phone number, location coordinates or manually entered city/district when you choose a listing location, Google account identifier for Google sign-in, profile image, favorites, listings you publish, uploaded listing photos, moderation results, order requests, device diagnostics, crash and connectivity data needed to operate the mobile applications, and support messages you send to BirJoy.',
   },
   {
     title: '3. How We Use Data',
@@ -34,7 +34,7 @@ const sections = [
   {
     title: '6. Location Data',
     body:
-      'BirJoy currently relies on user-entered location details for listing and account setup. If device location is introduced later, it will only be requested when clearly needed for a user-facing feature and the privacy policy will be updated accordingly.',
+      'BirJoy requests location only when you use the current-location action in the listing location picker. The location is used to select an address and coordinates for a listing or to show relevant nearby properties; you can deny access and choose a point manually.',
   },
   {
     title: '7. Sharing',
