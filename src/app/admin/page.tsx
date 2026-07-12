@@ -14,7 +14,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -324,6 +323,7 @@ export default function AdminPage() {
   const [isReady, setIsReady] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [adPendingDeletion, setAdPendingDeletion] = useState<Ad | null>(null);
   const [deletingAdId, setDeletingAdId] = useState('');
   const [updatingOrderId, setUpdatingOrderId] = useState('');
   const [formData, setFormData] = useState({
@@ -436,6 +436,7 @@ export default function AdminPage() {
   };
 
   const handleDeleteAd = async (adId: string) => {
+    setAdPendingDeletion(null);
     setDeletingAdId(adId);
 
     try {
@@ -459,6 +460,7 @@ export default function AdminPage() {
   const newOrdersCount = orders.filter((order) => order.status === 'new').length;
   const contactedOrdersCount = orders.filter((order) => order.status === 'contacted').length;
   const completedOrdersCount = orders.filter((order) => order.status === 'completed').length;
+  const deleteDialogOpen = Boolean(adPendingDeletion);
 
   return (
     <div className="min-h-screen bg-background">
@@ -691,45 +693,31 @@ export default function AdminPage() {
                             <TableCell className="min-w-[190px] text-right">
                               <div className="flex flex-wrap justify-end gap-2">
                                 <Button asChild variant="outline" size="sm" className="gap-2">
-                                  <Link href={`/ads/${ad.id}`} target="_blank" rel="noreferrer">
+                                  <Link
+                                    href={`/ads/${ad.id}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    prefetch={false}
+                                  >
                                     <ExternalLink className="h-4 w-4" />
                                     {copy.view}
                                   </Link>
                                 </Button>
 
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="destructive"
-                                      size="sm"
-                                      className="gap-2"
-                                      disabled={deletingAdId === ad.id}
-                                    >
-                                      {deletingAdId === ad.id ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                      ) : (
-                                        <Trash2 className="h-4 w-4" />
-                                      )}
-                                      {copy.delete}
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>{copy.deleteConfirmTitle}</AlertDialogTitle>
-                                      <AlertDialogDescription>{copy.deleteConfirmDescription}</AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>{copy.cancel}</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                        disabled={deletingAdId === ad.id}
-                                        onClick={() => void handleDeleteAd(ad.id)}
-                                      >
-                                        {copy.delete}
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="gap-2"
+                                  disabled={deletingAdId === ad.id}
+                                  onClick={() => setAdPendingDeletion(ad)}
+                                >
+                                  {deletingAdId === ad.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4" />
+                                  )}
+                                  {copy.delete}
+                                </Button>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -740,6 +728,38 @@ export default function AdminPage() {
                 )}
               </CardContent>
             </Card>
+
+            <AlertDialog
+              open={deleteDialogOpen}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setAdPendingDeletion(null);
+                }
+              }}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{copy.deleteConfirmTitle}</AlertDialogTitle>
+                  <AlertDialogDescription>{copy.deleteConfirmDescription}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={Boolean(deletingAdId)}>{copy.cancel}</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    disabled={!adPendingDeletion || deletingAdId === adPendingDeletion.id}
+                    onClick={() => {
+                      if (!adPendingDeletion) {
+                        return;
+                      }
+
+                      void handleDeleteAd(adPendingDeletion.id);
+                    }}
+                  >
+                    {copy.delete}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         ) : (
           <div className="mx-auto max-w-md">
