@@ -18,6 +18,7 @@ workflows:
         SIMULATOR_RESULT_BUNDLE: build/ios-simulator/App-simulator.xcresult
         SIMULATOR_RESULT_BUNDLE_ZIP: build/ios-simulator/App-simulator.xcresult.zip
         SIMULATOR_APP_ZIP: build/ios-simulator/App-simulator.app.zip
+    cache:
       cache_paths:
         - ~/.npm
         - ~/Library/Caches/org.swift.swiftpm
@@ -107,6 +108,7 @@ workflows:
         EXPORT_PATH: build/ios-export
         EXPORT_OPTIONS_PLIST: build/ios-export/ExportOptions.plist
         DSYM_ZIP: build/ios-export/App-dSYMs.zip
+    cache:
       cache_paths:
         - ~/.npm
         - ~/Library/Caches/org.swift.swiftpm
