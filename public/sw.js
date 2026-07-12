@@ -1,4 +1,4 @@
-const CACHE_NAME = 'birjoy-pwa-v3';
+const CACHE_NAME = 'birjoy-pwa-v4';
 const CACHE_PREFIX = 'birjoy-pwa-';
 const APP_SHELL = ['/', '/manifest.webmanifest', '/icon.svg'];
 const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
