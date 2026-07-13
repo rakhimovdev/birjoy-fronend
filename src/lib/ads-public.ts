@@ -1,10 +1,17 @@
-import { backendApiBaseUrl } from '@/lib/api';
+import { backendApiBaseUrl, fetchWithTimeout } from '@/lib/api';
 import { normalizeRemoteAd, type AdsApiResponse } from '@/lib/ads-shared';
 
 async function requestPublicAdsApi(path: string) {
-  const response = await fetch(`${backendApiBaseUrl}${path}`, {
-    cache: 'no-store',
-  });
+  const isServer = typeof window === 'undefined';
+  const requestInit: RequestInit & {
+    next?: {
+      revalidate: number;
+    };
+  } = {
+    cache: isServer ? 'force-cache' : 'no-store',
+    ...(isServer ? { next: { revalidate: 30 } } : {}),
+  };
+  const response = await fetchWithTimeout(`${backendApiBaseUrl}${path}`, requestInit);
 
   const data = (await response.json().catch(() => ({}))) as AdsApiResponse;
 

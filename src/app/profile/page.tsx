@@ -173,35 +173,46 @@ function ProfilePageContent() {
           };
 
   useEffect(() => {
-    let cancelled = false;
+    const abortController = new AbortController();
 
     async function loadAds() {
+      if (!user?.id) {
+        setAds([]);
+        setAdsError(null);
+        setIsLoadingAds(false);
+        return;
+      }
+
       try {
         setIsLoadingAds(true);
-        const response = await fetchAds();
-
-        if (!cancelled) {
-          setAds(response);
-          setAdsError(null);
-        }
+        const response = await fetchAds({
+          userId: user.id,
+          fields: 'full',
+          limit: 100,
+          signal: abortController.signal,
+        });
+        setAds(response);
+        setAdsError(null);
       } catch (error) {
-        if (!cancelled) {
-          setAds([]);
-          setAdsError(error instanceof Error ? error.message : 'Unable to load ads.');
+        if (abortController.signal.aborted) {
+          return;
         }
+
+        setAds([]);
+        setAdsError(error instanceof Error ? error.message : 'Unable to load ads.');
       } finally {
-        if (!cancelled) {
+        if (!abortController.signal.aborted) {
           setIsLoadingAds(false);
         }
       }
     }
 
-    loadAds();
+    void loadAds();
 
     return () => {
-      cancelled = true;
+      abortController.abort();
     };
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user || !isEditProfileOpen) {

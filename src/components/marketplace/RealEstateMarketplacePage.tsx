@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/button';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { fetchAds } from '@/lib/ads';
 import { getLocalizedText } from '@/lib/i18n';
-import { filterAds } from '@/lib/listing-utils';
 import type { Location } from '@/lib/map-types';
 import { getCategoryBySlug, getVerticalHref } from '@/lib/mock-data';
 import {
@@ -79,35 +78,42 @@ export function RealEstateMarketplacePage() {
     : activeCategory;
 
   useEffect(() => {
-    let cancelled = false;
+    const abortController = new AbortController();
 
     async function loadAds() {
       try {
         setIsLoadingAds(true);
-        const response = await fetchAds();
-
-        if (!cancelled) {
-          setAds(response);
-          setAdsError(null);
-        }
+        const response = await fetchAds({
+          vertical: 'real_estate',
+          category: activeCategory || undefined,
+          search: query || undefined,
+          fields: 'card',
+          status: 'active',
+          limit: 100,
+          signal: abortController.signal,
+        });
+        setAds(response);
+        setAdsError(null);
       } catch (error) {
-        if (!cancelled) {
-          setAds([]);
-          setAdsError(error instanceof Error ? error.message : 'Unable to load ads.');
+        if (abortController.signal.aborted) {
+          return;
         }
+
+        setAds([]);
+        setAdsError(error instanceof Error ? error.message : 'Unable to load ads.');
       } finally {
-        if (!cancelled) {
+        if (!abortController.signal.aborted) {
           setIsLoadingAds(false);
         }
       }
     }
 
-    loadAds();
+    void loadAds();
 
     return () => {
-      cancelled = true;
+      abortController.abort();
     };
-  }, []);
+  }, [activeCategory, query]);
 
   useEffect(() => {
     if (!isMapOpen || locationState !== 'idle') {
@@ -145,13 +151,8 @@ export function RealEstateMarketplacePage() {
   }, [isMapOpen, locationState]);
 
   const filteredAds = useMemo(
-    () =>
-      filterAds(ads, {
-        vertical: 'real_estate',
-        category: activeCategory,
-        query,
-      }).filter((ad) => matchesRealEstateFilters(ad, filters)),
-    [activeCategory, ads, filters, query]
+    () => ads.filter((ad) => matchesRealEstateFilters(ad, filters)),
+    [ads, filters]
   );
 
   const featuredAds = useMemo(() => filteredAds.filter((ad) => ad.isFeatured), [filteredAds]);

@@ -53,6 +53,12 @@ export type RemoteAd = {
 export type AdsApiResponse = {
   ad?: RemoteAd;
   ads?: RemoteAd[];
+  pagination?: {
+    page?: number;
+    limit?: number;
+    total?: number;
+    hasMore?: boolean;
+  };
   message?: string;
 };
 

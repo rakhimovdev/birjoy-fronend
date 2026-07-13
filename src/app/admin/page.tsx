@@ -335,7 +335,13 @@ export default function AdminPage() {
     setIsRefreshing(true);
 
     try {
-      const [nextOrders, nextAds] = await Promise.all([fetchAdminOrders(), fetchAds()]);
+      const [nextOrders, nextAds] = await Promise.all([
+        fetchAdminOrders(),
+        fetchAds({
+          fields: 'card',
+          limit: 100,
+        }),
+      ]);
       setOrders(nextOrders);
       setAds(nextAds);
       setAdmin(currentAdmin || getStoredAdminProfile() || fallbackAdminProfile);

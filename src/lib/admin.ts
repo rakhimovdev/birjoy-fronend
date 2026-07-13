@@ -1,6 +1,7 @@
 'use client';
 
 import { backendApiBaseUrl } from '@/lib/api';
+import { invalidateAdsCache } from '@/lib/ads';
 import type { AdminProfile, OrderRequest, OrderRequestStatus } from '@/lib/types';
 
 export const adminTokenStorageKey = 'birjoy-admin-token';
@@ -213,4 +214,6 @@ export async function deleteAdminAd(adId: string) {
     },
     { requiresAuth: true }
   );
+
+  invalidateAdsCache();
 }

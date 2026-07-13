@@ -64,6 +64,13 @@ export default async function AdDetailsPage({
   params,
 }: AdDetailsPageProps) {
   const { id } = await params;
+  let initialAd = null;
 
-  return <AdDetailsView adId={id} />;
+  try {
+    initialAd = await fetchPublicAdById(id);
+  } catch {
+    initialAd = null;
+  }
+
+  return <AdDetailsView adId={id} initialAd={initialAd} />;
 }

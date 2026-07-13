@@ -3,15 +3,12 @@
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { backendApiBaseUrl } from '@/lib/api';
+import { fetchPublicRuntimeConfig } from '@/lib/public-config';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { Button } from '@/components/ui/button';
 
 type YandexAuthSectionProps = {
   redirectTo: string;
-};
-
-type PublicConfigResponse = {
-  yandexAuthEnabled?: boolean;
 };
 
 type YandexConfigState = 'idle' | 'loading' | 'ready' | 'disabled';
@@ -50,17 +47,8 @@ export function YandexAuthSection({ redirectTo }: YandexAuthSectionProps) {
     let isActive = true;
     setConfigState('loading');
 
-    void fetch(`${backendApiBaseUrl}/config/public`, {
-      cache: 'no-store',
-      credentials: 'include',
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error('Failed to load public config.');
-        }
-
-        const data = (await response.json().catch(() => ({}))) as PublicConfigResponse;
-
+    void fetchPublicRuntimeConfig()
+      .then((data) => {
         if (isActive) {
           setConfigState(data.yandexAuthEnabled ? 'ready' : 'disabled');
         }

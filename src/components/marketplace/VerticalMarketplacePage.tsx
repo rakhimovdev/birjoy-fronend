@@ -14,7 +14,6 @@ import { useI18n } from '@/components/providers/LocaleProvider';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { fetchAds } from '@/lib/ads';
 import { getLocalizedText } from '@/lib/i18n';
-import { filterAds } from '@/lib/listing-utils';
 import { getCategoryBySlug, getVerticalHref } from '@/lib/mock-data';
 import type { Ad, AdVertical } from '@/lib/types';
 
@@ -36,41 +35,44 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
     : activeCategory;
 
   useEffect(() => {
-    let cancelled = false;
+    const abortController = new AbortController();
 
     async function loadAds() {
       try {
         setIsLoadingAds(true);
-        const response = await fetchAds();
-
-        if (!cancelled) {
-          setAds(response);
-          setAdsError(null);
-        }
+        const response = await fetchAds({
+          vertical,
+          category: activeCategory || undefined,
+          search: query || undefined,
+          fields: 'card',
+          status: 'active',
+          limit: 100,
+          signal: abortController.signal,
+        });
+        setAds(response);
+        setAdsError(null);
       } catch (error) {
-        if (!cancelled) {
-          setAdsError(error instanceof Error ? error.message : 'Unable to load ads.');
-          setAds([]);
+        if (abortController.signal.aborted) {
+          return;
         }
+
+        setAdsError(error instanceof Error ? error.message : 'Unable to load ads.');
+        setAds([]);
       } finally {
-        if (!cancelled) {
+        if (!abortController.signal.aborted) {
           setIsLoadingAds(false);
         }
       }
     }
 
-    loadAds();
+    void loadAds();
 
     return () => {
-      cancelled = true;
+      abortController.abort();
     };
-  }, []);
+  }, [activeCategory, query, vertical]);
 
-  const filteredAds = filterAds(ads, {
-    vertical,
-    category: activeCategory,
-    query,
-  });
+  const filteredAds = ads;
   const hasFilters = Boolean(query || activeCategory);
 
   return (

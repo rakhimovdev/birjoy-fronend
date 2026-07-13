@@ -147,18 +147,19 @@ function resolveUploadFileName(source: File | string, index = 0) {
 
 export async function uploadAdImageToImageKit(
   source: File | string,
-  index = 0
+  index = 0,
+  activeSession?: ImageKitUploadSession
 ) {
-  const activeSession = await createImageKitUploadSession();
+  const uploadSession = activeSession || (await createImageKitUploadSession());
   const formData = new FormData();
 
   formData.append('file', source);
   formData.append('fileName', resolveUploadFileName(source, index));
-  formData.append('publicKey', activeSession.publicKey);
-  formData.append('token', activeSession.token);
-  formData.append('expire', String(activeSession.expire));
-  formData.append('signature', activeSession.signature);
-  formData.append('folder', activeSession.folder);
+  formData.append('publicKey', uploadSession.publicKey);
+  formData.append('token', uploadSession.token);
+  formData.append('expire', String(uploadSession.expire));
+  formData.append('signature', uploadSession.signature);
+  formData.append('folder', uploadSession.folder);
   formData.append('useUniqueFileName', 'true');
 
   const response = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
@@ -175,10 +176,11 @@ export async function uploadAdImagesToImageKit(sources: Array<File | string>) {
   }
 
   const uploadedImages: UploadedAdImage[] = [];
+  const activeSession = await createImageKitUploadSession();
 
   try {
     for (const [index, source] of sources.entries()) {
-      const uploadedImage = await uploadAdImageToImageKit(source, index);
+      const uploadedImage = await uploadAdImageToImageKit(source, index, activeSession);
       uploadedImages.push(uploadedImage);
     }
   } catch (error) {

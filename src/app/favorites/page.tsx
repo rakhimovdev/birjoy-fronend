@@ -28,26 +28,39 @@ function FavoritesPageContent() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [isLoadingAds, setIsLoadingAds] = useState(true);
   const [adsError, setAdsError] = useState<string | null>(null);
+  const favoriteIdsKey = user?.favorites.join('|') || '';
 
   useEffect(() => {
-    let cancelled = false;
+    const abortController = new AbortController();
 
     async function loadAds() {
+      if (!user?.favorites.length) {
+        setAds([]);
+        setAdsError(null);
+        setIsLoadingAds(false);
+        return;
+      }
+
       try {
         setIsLoadingAds(true);
-        const response = await fetchAds();
-
-        if (!cancelled) {
-          setAds(response);
-          setAdsError(null);
-        }
+        const response = await fetchAds({
+          ids: user.favorites,
+          fields: 'card',
+          status: 'active',
+          limit: Math.min(Math.max(user.favorites.length, 1), 100),
+          signal: abortController.signal,
+        });
+        setAds(response);
+        setAdsError(null);
       } catch (error) {
-        if (!cancelled) {
-          setAds([]);
-          setAdsError(error instanceof Error ? error.message : 'Unable to load ads.');
+        if (abortController.signal.aborted) {
+          return;
         }
+
+        setAds([]);
+        setAdsError(error instanceof Error ? error.message : 'Unable to load ads.');
       } finally {
-        if (!cancelled) {
+        if (!abortController.signal.aborted) {
           setIsLoadingAds(false);
         }
       }
@@ -56,9 +69,9 @@ function FavoritesPageContent() {
     void loadAds();
 
     return () => {
-      cancelled = true;
+      abortController.abort();
     };
-  }, []);
+  }, [favoriteIdsKey, user]);
 
   const favoriteAds = ads.filter((ad) => user?.favorites.includes(ad.id));
 

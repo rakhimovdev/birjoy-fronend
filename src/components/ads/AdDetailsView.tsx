@@ -69,18 +69,24 @@ function getDistanceKm(
   return earthRadiusKm * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
-export function AdDetailsView({ adId }: { adId: string }) {
+export function AdDetailsView({
+  adId,
+  initialAd = null,
+}: {
+  adId: string;
+  initialAd?: Ad | null;
+}) {
   const router = useRouter();
   const { isFavorite, toggleFavorite, user } = useAuth();
   const { locale, messages } = useI18n();
   const { toast } = useToast();
   const { isAdmin } = useAdminSession();
-  const [ad, setAd] = useState<Ad | null>(null);
+  const [ad, setAd] = useState<Ad | null>(initialAd);
   const [relatedAds, setRelatedAds] = useState<Ad[]>([]);
   const [nearbyAds, setNearbyAds] = useState<Ad[]>([]);
   const [selectedMapAdId, setSelectedMapAdId] = useState<string | undefined>(undefined);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialAd);
   const [error, setError] = useState<string | null>(null);
   const [isOrderSubmitting, setIsOrderSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -93,91 +99,151 @@ export function AdDetailsView({ adId }: { adId: string }) {
   });
 
   useEffect(() => {
-    let cancelled = false;
+    const abortController = new AbortController();
+
+    if (initialAd && initialAd.id === adId) {
+      setAd(initialAd);
+      setSelectedMapAdId(initialAd.id);
+      setSelectedImageIndex(0);
+      setError(null);
+      setIsLoading(false);
+      return () => {
+        abortController.abort();
+      };
+    }
 
     async function loadAd() {
       try {
         setIsLoading(true);
-        const [currentAd, allAds] = await Promise.all([fetchAdById(adId), fetchAds()]);
+        const currentAd = await fetchAdById(adId, {
+          signal: abortController.signal,
+        });
 
-        if (!cancelled) {
-          const currentAdPoint = hasCoordinates(currentAd)
-            ? {
-                lat: currentAd.latitude,
-                lng: currentAd.longitude,
-              }
-            : null;
-          const nextRelatedAds = allAds
-            .filter(
-              (item) =>
-                item.id !== currentAd.id &&
-                item.vertical === currentAd.vertical &&
-                item.category === currentAd.category
-            )
-            .slice(0, 3);
-          const nextNearbyAds =
-            currentAd.vertical === 'real_estate' && currentAdPoint
-              ? allAds
-                  .filter(
-                    (
-                      item
-                    ): item is Ad & {
-                      latitude: number;
-                      longitude: number;
-                    } =>
-                      item.id !== currentAd.id &&
-                      item.vertical === 'real_estate' &&
-                      hasCoordinates(item)
-                  )
-                  .filter(
-                    (item) =>
-                      getDistanceKm(currentAdPoint, {
-                        lat: item.latitude,
-                        lng: item.longitude,
-                      }) <= NEARBY_PROPERTIES_RADIUS_KM
-                  )
-                  .sort(
-                    (left, right) =>
-                      getDistanceKm(currentAdPoint, {
-                        lat: left.latitude,
-                        lng: left.longitude,
-                      }) -
-                      getDistanceKm(currentAdPoint, {
-                        lat: right.latitude,
-                        lng: right.longitude,
-                      })
-                  )
-                  .slice(0, 6)
-              : [];
-
-          setAd(currentAd);
-          setSelectedMapAdId(currentAd.id);
-          setSelectedImageIndex(0);
-          setRelatedAds(nextRelatedAds);
-          setNearbyAds(nextNearbyAds);
-          setError(null);
-        }
+        setAd(currentAd);
+        setSelectedMapAdId(currentAd.id);
+        setSelectedImageIndex(0);
+        setError(null);
       } catch (loadError) {
-        if (!cancelled) {
-          setAd(null);
-          setSelectedMapAdId(undefined);
-          setRelatedAds([]);
-          setNearbyAds([]);
-          setError(loadError instanceof Error ? loadError.message : messages.adDetails.notFound);
+        if (abortController.signal.aborted) {
+          return;
         }
+
+        setAd(null);
+        setSelectedMapAdId(undefined);
+        setRelatedAds([]);
+        setNearbyAds([]);
+        setError(loadError instanceof Error ? loadError.message : messages.adDetails.notFound);
       } finally {
-        if (!cancelled) {
+        if (!abortController.signal.aborted) {
           setIsLoading(false);
         }
       }
     }
 
-    loadAd();
+    void loadAd();
 
     return () => {
-      cancelled = true;
+      abortController.abort();
     };
-  }, [adId, messages.adDetails.notFound]);
+  }, [adId, initialAd, messages.adDetails.notFound]);
+
+  useEffect(() => {
+    const currentAd = ad;
+
+    if (!currentAd) {
+      return;
+    }
+
+    const stableAd = currentAd;
+
+    const abortController = new AbortController();
+    setRelatedAds([]);
+    setNearbyAds([]);
+
+    async function loadRecommendations() {
+      try {
+        const recommendationPool = await fetchAds({
+          vertical: stableAd.vertical,
+          ...(stableAd.vertical !== 'real_estate' ? { category: stableAd.category } : {}),
+          excludeId: stableAd.id,
+          fields: 'card',
+          status: 'active',
+          limit: stableAd.vertical === 'real_estate' ? 30 : 12,
+          signal: abortController.signal,
+        });
+
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        setRelatedAds(
+          recommendationPool
+            .filter(
+              (item) =>
+                item.id !== stableAd.id &&
+                item.vertical === stableAd.vertical &&
+                item.category === stableAd.category
+            )
+            .slice(0, 3)
+        );
+
+        if (stableAd.vertical !== 'real_estate' || !hasCoordinates(stableAd)) {
+          setNearbyAds([]);
+          return;
+        }
+
+        const currentAdPoint = {
+          lat: stableAd.latitude,
+          lng: stableAd.longitude,
+        };
+
+        setNearbyAds(
+          recommendationPool
+            .filter(
+              (
+                item
+              ): item is Ad & {
+                latitude: number;
+                longitude: number;
+              } =>
+                item.id !== stableAd.id &&
+                item.vertical === 'real_estate' &&
+                hasCoordinates(item)
+            )
+            .filter(
+              (item) =>
+                getDistanceKm(currentAdPoint, {
+                  lat: item.latitude,
+                  lng: item.longitude,
+                }) <= NEARBY_PROPERTIES_RADIUS_KM
+            )
+            .sort(
+              (left, right) =>
+                getDistanceKm(currentAdPoint, {
+                  lat: left.latitude,
+                  lng: left.longitude,
+                }) -
+                getDistanceKm(currentAdPoint, {
+                  lat: right.latitude,
+                  lng: right.longitude,
+                })
+            )
+            .slice(0, 6)
+        );
+      } catch {
+        if (!abortController.signal.aborted) {
+          setRelatedAds([]);
+          setNearbyAds([]);
+        }
+      }
+    }
+
+    void loadRecommendations();
+
+    return () => {
+      abortController.abort();
+    };
+  }, [ad]);
 
   useEffect(() => {
     if (!user) {

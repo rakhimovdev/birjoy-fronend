@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { backendApiBaseUrl } from '@/lib/api';
+import { fetchPublicRuntimeConfig } from '@/lib/public-config';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { Button } from '@/components/ui/button';
@@ -22,11 +23,6 @@ import {
 
 type GoogleCredentialResponse = {
   credential?: string;
-};
-
-type PublicConfigResponse = {
-  googleAuthEnabled?: boolean;
-  googleClientId?: string;
 };
 
 type GoogleConfigState = 'idle' | 'loading' | 'ready' | 'disabled' | 'error';
@@ -297,16 +293,8 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
       nativePluginAvailable,
     });
 
-    void fetch(`${backendApiBaseUrl}/config/public`, {
-      cache: 'no-store',
-      credentials: 'include',
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error('Failed to load public config.');
-        }
-
-        const data = (await response.json().catch(() => ({}))) as PublicConfigResponse;
+    void fetchPublicRuntimeConfig()
+      .then((data) => {
         const runtimeGoogleClientId =
           typeof data.googleClientId === 'string' ? data.googleClientId.trim() : '';
         const resolvedGoogleClientId = runtimeGoogleClientId || embeddedGoogleClientId;
