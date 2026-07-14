@@ -460,10 +460,6 @@ export function AdEditorForm({
         if (!file.type.startsWith('image/')) {
           throw new Error(messages.createAd.imageFormatError);
         }
-
-        if (file.size > 800 * 1024) {
-          throw new Error(messages.createAd.imageSizeError);
-        }
       });
 
       setIsUploadingImages(true);

@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { fetchAds } from '@/lib/ads';
+import { requestCurrentDeviceLocation } from '@/lib/device-location';
 import { getLocalizedText } from '@/lib/i18n';
 import type { Location } from '@/lib/map-types';
 import { getCategoryBySlug, getVerticalHref } from '@/lib/mock-data';
@@ -188,18 +189,18 @@ export function RealEstateMarketplacePage() {
           vipDescription: 'Лучшие предложения собраны в горизонтальной витрине.',
           regularTitle: 'Остальные объявления',
           regularDescription: 'Ниже показаны все остальные предложения по жилью.',
-            mapTitle: 'Карта жилья',
-            mapDescription: 'Полноэкранная карта с теми же фильтрами. Нажмите на цену, чтобы открыть объявление.',
-            yourLocation: 'Вы здесь',
-            locateMe: 'Моё местоположение',
-            locatingMe: 'Определяем место...',
-            locationDenied: 'Разрешение на геолокацию не выдано.',
-            locationUnsupported: 'Это устройство не поддерживает геолокацию.',
-            locationError: 'Не удалось определить текущее местоположение.',
-            noMapTitle: 'Пока нет объявлений с координатами',
-            noMapDescription: 'Чтобы объявление попало на карту, для него нужна локация на карте.',
-            activeFilters: 'активных фильтров',
-            clearAll: 'Очистить всё',
+          mapTitle: 'Карта жилья',
+          mapDescription: 'Полноэкранная карта с теми же фильтрами. Нажмите на цену, чтобы открыть объявление.',
+          yourLocation: 'Вы здесь',
+          locateMe: 'Моё местоположение',
+          locatingMe: 'Определяем место...',
+          locationDenied: 'Разрешение на геолокацию не выдано.',
+          locationUnsupported: 'Это устройство не поддерживает геолокацию.',
+          locationError: 'Не удалось определить текущее местоположение.',
+          noMapTitle: 'Пока нет объявлений с координатами',
+          noMapDescription: 'Чтобы объявление попало на карту, для него нужна локация на карте.',
+          activeFilters: 'активных фильтров',
+          clearAll: 'Очистить всё',
         }
       : locale === 'en'
         ? {
@@ -248,37 +249,18 @@ export function RealEstateMarketplacePage() {
           };
 
   const handleLocateUser = () => {
-    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
-      setUserCoordinates(null);
-      setLocationState('unsupported');
-      return;
-    }
-
+    setSelectedAdId(undefined);
     setLocationState('loading');
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserCoordinates({
-          lat: Number(position.coords.latitude.toFixed(6)),
-          lng: Number(position.coords.longitude.toFixed(6)),
-        });
-        setLocationState('ready');
-      },
-      (error) => {
+    void requestCurrentDeviceLocation().then((result) => {
+      if (result.status !== 'success') {
         setUserCoordinates(null);
-
-        if (error.code === error.PERMISSION_DENIED) {
-          setLocationState('denied');
-          return;
-        }
-
-        setLocationState('error');
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000,
+        setLocationState(result.status);
+        return;
       }
-    );
+
+      setUserCoordinates(result.location);
+      setLocationState('ready');
+    });
   };
 
   const locationFeedback =

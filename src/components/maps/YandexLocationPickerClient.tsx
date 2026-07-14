@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { requestCurrentDeviceLocation } from '@/lib/device-location';
 import { useYandexMaps, hasYandexMapsApiKey } from '@/lib/yandex-maps-loader';
 import {
   createUserLocationMarkerHtml,
@@ -123,37 +124,18 @@ export default function YandexLocationPickerClient({
   }, [address, api, applyResolvedLocation, copy.mapError, isLoaded]);
 
   const handleCurrentLocation = useCallback(() => {
-    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
-      setGeolocationState('unsupported');
-      return;
-    }
-
+    setSearchError(null);
     setGeolocationState('loading');
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const nextPoint = {
-          lat: Number(position.coords.latitude.toFixed(6)),
-          lng: Number(position.coords.longitude.toFixed(6)),
-        };
-
-        setGeolocationState('idle');
-        void handleReverseGeocode(nextPoint);
-      },
-      (locationError) => {
-        if (locationError.code === locationError.PERMISSION_DENIED) {
-          setGeolocationState('denied');
-          return;
-        }
-
-        setGeolocationState('error');
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000,
+    void requestCurrentDeviceLocation().then((result) => {
+      if (result.status !== 'success') {
+        setGeolocationState(result.status);
+        return;
       }
-    );
+
+      setGeolocationState('idle');
+      void handleReverseGeocode(result.location);
+    });
   }, [handleReverseGeocode]);
 
   useEffect(() => {

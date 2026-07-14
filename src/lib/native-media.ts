@@ -50,12 +50,9 @@ export async function chooseNativeImages(limit: number) {
 
 export async function takeNativePhoto() {
   const result = await Camera.takePhoto({
-    quality: 82,
-    targetWidth: 1800,
-    targetHeight: 1800,
+    quality: 100,
     saveToGallery: false,
   });
 
   return mediaPathToDataUrl(result.webPath, result.thumbnail);
 }
-

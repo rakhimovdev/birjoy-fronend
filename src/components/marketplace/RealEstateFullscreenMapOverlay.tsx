@@ -154,37 +154,23 @@ export function RealEstateFullscreenMapOverlay({
             </div>
           </div>
 
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[16rem]">
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-11 w-full rounded-[1.15rem] border-white/55 bg-background/82 shadow-none sm:w-auto"
-                onClick={onLocateUser}
-                disabled={isLocatingUser}
-              >
-                {isLocatingUser ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <LocateFixed className="h-4 w-4" />
-                )}
-                {isLocatingUser ? locatingUserLabel : locateUserLabel}
-              </Button>
+          <RealEstateFilterSheet
+            locale={locale}
+            filters={filters}
+            onApply={onApplyFilters}
+            onClear={onClearFilters}
+            buttonClassName="w-full sm:w-auto"
+          />
+        </div>
+      </div>
 
-              <RealEstateFilterSheet
-                locale={locale}
-                filters={filters}
-                onApply={onApplyFilters}
-                onClear={onClearFilters}
-                buttonClassName="w-full sm:w-auto"
-              />
-            </div>
-
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-3 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:p-4 sm:pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+        <div className="mx-auto flex max-w-6xl justify-end">
+          <div className="flex max-w-xs flex-col items-end gap-2">
             {locationFeedback ? (
               <p
                 className={cn(
-                  'inline-flex items-center gap-2 text-xs',
-                  'text-destructive sm:justify-end'
+                  'pointer-events-auto inline-flex items-center gap-2 rounded-[1.1rem] border border-destructive/20 bg-background/92 px-3 py-2 text-xs text-destructive shadow-[0_12px_28px_rgba(7,28,85,0.12)] backdrop-blur-xl'
                 )}
                 aria-live="polite"
               >
@@ -192,6 +178,23 @@ export function RealEstateFullscreenMapOverlay({
                 {locationFeedback}
               </p>
             ) : null}
+
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="pointer-events-auto h-14 w-14 rounded-full border-white/60 bg-background/92 shadow-[0_18px_34px_rgba(7,28,85,0.18)] backdrop-blur-xl"
+              onClick={onLocateUser}
+              disabled={isLocatingUser}
+              aria-label={isLocatingUser ? locatingUserLabel : locateUserLabel}
+              title={isLocatingUser ? locatingUserLabel : locateUserLabel}
+            >
+              {isLocatingUser ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <LocateFixed className="h-5 w-5" />
+              )}
+            </Button>
           </div>
         </div>
       </div>
