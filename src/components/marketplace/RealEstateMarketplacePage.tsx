@@ -115,41 +115,6 @@ export function RealEstateMarketplacePage() {
     };
   }, [activeCategory, query]);
 
-  useEffect(() => {
-    if (!isMapOpen || locationState !== 'idle') {
-      return;
-    }
-
-    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
-      setLocationState('unsupported');
-      return;
-    }
-
-    setLocationState('loading');
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserCoordinates({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-        setLocationState('ready');
-      },
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          setLocationState('denied');
-          return;
-        }
-
-        setLocationState('error');
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000,
-      }
-    );
-  }, [isMapOpen, locationState]);
-
   const filteredAds = useMemo(
     () => ads.filter((ad) => matchesRealEstateFilters(ad, filters)),
     [ads, filters]
@@ -223,13 +188,18 @@ export function RealEstateMarketplacePage() {
           vipDescription: 'Лучшие предложения собраны в горизонтальной витрине.',
           regularTitle: 'Остальные объявления',
           regularDescription: 'Ниже показаны все остальные предложения по жилью.',
-          mapTitle: 'Карта жилья',
-          mapDescription: 'Полноэкранная карта с теми же фильтрами. Нажмите на цену, чтобы открыть объявление.',
-          yourLocation: 'Вы здесь',
-          noMapTitle: 'Пока нет объявлений с координатами',
-          noMapDescription: 'Чтобы объявление попало на карту, для него нужна локация на карте.',
-          activeFilters: 'активных фильтров',
-          clearAll: 'Очистить всё',
+            mapTitle: 'Карта жилья',
+            mapDescription: 'Полноэкранная карта с теми же фильтрами. Нажмите на цену, чтобы открыть объявление.',
+            yourLocation: 'Вы здесь',
+            locateMe: 'Моё местоположение',
+            locatingMe: 'Определяем место...',
+            locationDenied: 'Разрешение на геолокацию не выдано.',
+            locationUnsupported: 'Это устройство не поддерживает геолокацию.',
+            locationError: 'Не удалось определить текущее местоположение.',
+            noMapTitle: 'Пока нет объявлений с координатами',
+            noMapDescription: 'Чтобы объявление попало на карту, для него нужна локация на карте.',
+            activeFilters: 'активных фильтров',
+            clearAll: 'Очистить всё',
         }
       : locale === 'en'
         ? {
@@ -244,6 +214,11 @@ export function RealEstateMarketplacePage() {
             mapTitle: 'Property map',
             mapDescription: 'A full-screen map with the same filters. Tap a price marker to view the listing.',
             yourLocation: 'You are here',
+            locateMe: 'My location',
+            locatingMe: 'Finding location...',
+            locationDenied: 'Location permission was denied.',
+            locationUnsupported: 'This device does not support geolocation.',
+            locationError: 'Current location could not be detected.',
             noMapTitle: 'No mapped home listings yet',
             noMapDescription: 'A housing listing needs coordinates before it can appear on the map.',
             activeFilters: 'active filters',
@@ -261,11 +236,59 @@ export function RealEstateMarketplacePage() {
             mapTitle: 'Uy-joy xaritasi',
             mapDescription: 'Bir xil filtrlarga ega to‘liq ekran xarita. Eʼlonni ko‘rish uchun narx markerini bosing.',
             yourLocation: 'Siz turgan joy',
+            locateMe: 'Mening joyim',
+            locatingMe: 'Joylashuv aniqlanmoqda...',
+            locationDenied: 'Joylashuvga ruxsat berilmadi.',
+            locationUnsupported: 'Bu qurilmada geolokatsiya qo‘llab-quvvatlanmaydi.',
+            locationError: 'Hozirgi joylashuvni aniqlab bo‘lmadi.',
             noMapTitle: 'Hali koordinatali uy eʼlonlari yo‘q',
             noMapDescription: 'Uy eʼloni xaritada ko‘rinishi uchun unga koordinata biriktirilgan bo‘lishi kerak.',
             activeFilters: 'faol filter',
             clearAll: 'Hammasini tozalash',
           };
+
+  const handleLocateUser = () => {
+    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+      setUserCoordinates(null);
+      setLocationState('unsupported');
+      return;
+    }
+
+    setLocationState('loading');
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserCoordinates({
+          lat: Number(position.coords.latitude.toFixed(6)),
+          lng: Number(position.coords.longitude.toFixed(6)),
+        });
+        setLocationState('ready');
+      },
+      (error) => {
+        setUserCoordinates(null);
+
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationState('denied');
+          return;
+        }
+
+        setLocationState('error');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000,
+      }
+    );
+  };
+
+  const locationFeedback =
+    locationState === 'denied'
+      ? viewCopy.locationDenied
+      : locationState === 'unsupported'
+        ? viewCopy.locationUnsupported
+        : locationState === 'error'
+          ? viewCopy.locationError
+          : null;
 
   const handleApplyFilters = (nextFilters: RealEstateFilterState) => {
     setFilters(nextFilters);
@@ -492,6 +515,11 @@ export function RealEstateMarketplacePage() {
         filters={filters}
         onApplyFilters={handleApplyFilters}
         onClearFilters={handleClearFilters}
+        onLocateUser={handleLocateUser}
+        isLocatingUser={locationState === 'loading'}
+        locateUserLabel={viewCopy.locateMe}
+        locatingUserLabel={viewCopy.locatingMe}
+        locationFeedback={locationFeedback}
         title={viewCopy.mapTitle}
         emptyTitle={viewCopy.noMapTitle}
         emptyDescription={viewCopy.noMapDescription}

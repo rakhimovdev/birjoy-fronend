@@ -1,10 +1,11 @@
 'use client';
 
-import { ArrowLeft, MapPinned } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Loader2, LocateFixed, MapPinned } from 'lucide-react';
 import { useEffect } from 'react';
 import { RealEstateListingsMap } from '@/components/maps/RealEstateListingsMap';
 import { RealEstateFilterSheet } from '@/components/marketplace/RealEstateFilterSheet';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import type { Language } from '@/lib/i18n';
 import { getActiveRealEstateFilterCount, type RealEstateFilterState } from '@/lib/real-estate-filters';
 import type { Location } from '@/lib/map-types';
@@ -24,6 +25,11 @@ type RealEstateFullscreenMapOverlayProps = {
   filters: RealEstateFilterState;
   onApplyFilters: (filters: RealEstateFilterState) => void;
   onClearFilters: () => void;
+  onLocateUser: () => void;
+  isLocatingUser: boolean;
+  locateUserLabel: string;
+  locatingUserLabel: string;
+  locationFeedback?: string | null;
   title: string;
   emptyTitle: string;
   emptyDescription: string;
@@ -79,6 +85,11 @@ export function RealEstateFullscreenMapOverlay({
   filters,
   onApplyFilters,
   onClearFilters,
+  onLocateUser,
+  isLocatingUser,
+  locateUserLabel,
+  locatingUserLabel,
+  locationFeedback,
   title,
   emptyTitle,
   emptyDescription,
@@ -105,7 +116,7 @@ export function RealEstateFullscreenMapOverlay({
   return (
     <div className="fixed inset-0 z-[70] bg-background">
       <div className="absolute inset-0">
-        {ads.length > 0 ? (
+        {ads.length > 0 || userLocation ? (
           <RealEstateListingsMap
             ads={ads}
             locale={locale}
@@ -131,7 +142,7 @@ export function RealEstateFullscreenMapOverlay({
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:p-4 sm:pt-[calc(env(safe-area-inset-top)+1rem)]">
-        <div className="pointer-events-auto mx-auto flex max-w-6xl flex-col gap-3 rounded-[1.85rem] border border-white/25 bg-background/74 p-3 shadow-[0_24px_50px_rgba(7,28,85,0.24)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between sm:p-4">
+        <div className="pointer-events-auto mx-auto flex max-w-6xl flex-col gap-3 rounded-[1.85rem] border border-white/25 bg-background/74 p-3 shadow-[0_24px_50px_rgba(7,28,85,0.24)] backdrop-blur-xl sm:flex-row sm:items-start sm:justify-between sm:p-4">
           <div className="flex items-center gap-2">
             <Button type="button" variant="ghost" className="h-11 rounded-[1.15rem] px-4" onClick={onClose}>
               <ArrowLeft className="h-4 w-4" />
@@ -143,13 +154,45 @@ export function RealEstateFullscreenMapOverlay({
             </div>
           </div>
 
-          <RealEstateFilterSheet
-            locale={locale}
-            filters={filters}
-            onApply={onApplyFilters}
-            onClear={onClearFilters}
-            buttonClassName="w-full sm:w-auto"
-          />
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[16rem]">
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 w-full rounded-[1.15rem] border-white/55 bg-background/82 shadow-none sm:w-auto"
+                onClick={onLocateUser}
+                disabled={isLocatingUser}
+              >
+                {isLocatingUser ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <LocateFixed className="h-4 w-4" />
+                )}
+                {isLocatingUser ? locatingUserLabel : locateUserLabel}
+              </Button>
+
+              <RealEstateFilterSheet
+                locale={locale}
+                filters={filters}
+                onApply={onApplyFilters}
+                onClear={onClearFilters}
+                buttonClassName="w-full sm:w-auto"
+              />
+            </div>
+
+            {locationFeedback ? (
+              <p
+                className={cn(
+                  'inline-flex items-center gap-2 text-xs',
+                  'text-destructive sm:justify-end'
+                )}
+                aria-live="polite"
+              >
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                {locationFeedback}
+              </p>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>
