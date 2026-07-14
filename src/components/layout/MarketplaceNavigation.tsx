@@ -3,11 +3,11 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
-  Heart,
   Home,
   Menu,
   MessageSquare,
   PlusCircle,
+  Search,
   User,
 } from 'lucide-react';
 import {
@@ -36,8 +36,13 @@ function useNavigationLinks() {
   const { user } = useAuth();
   const { messages } = useI18n();
   const homeHref = '/uy-joy';
+  const verticalPaths = new Set(['/', ...MARKETPLACE_VERTICALS.map((vertical) => `/${vertical.slug}`)]);
+  const activeMarketplacePath = verticalPaths.has(pathname) ? pathname : homeHref;
+  const activeSearchParams = new URLSearchParams(searchParams.toString());
+  const searchHref = `${activeMarketplacePath}${
+    activeSearchParams.toString() ? `?${activeSearchParams.toString()}` : ''
+  }#marketplace-mobile-search`;
 
-  const favoritesHref = user ? '/favorites' : `/sign-in?redirect=${encodeURIComponent('/favorites')}`;
   const chatHref = user ? '/chat' : `/sign-in?redirect=${encodeURIComponent('/chat')}`;
   const profileHref = user ? '/profile' : `/sign-in?redirect=${encodeURIComponent('/profile')}`;
   const postAdHref = user ? '/ads/create' : `/sign-in?redirect=${encodeURIComponent('/ads/create')}`;
@@ -51,10 +56,10 @@ function useNavigationLinks() {
       active: pathname === '/' || pathname === homeHref,
     },
     {
-      href: favoritesHref,
-      icon: Heart,
-      label: messages.navbar.favorites,
-      active: pathname === '/favorites' || (pathname === '/profile' && activeProfileTab === 'favorites'),
+      href: searchHref,
+      icon: Search,
+      label: messages.navbar.search,
+      active: Boolean(searchParams.get('q')),
     },
     {
       href: postAdHref,

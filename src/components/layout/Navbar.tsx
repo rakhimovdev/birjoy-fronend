@@ -63,10 +63,45 @@ function NavbarContent() {
   const profileHref = user ? '/profile' : '/sign-in?redirect=%2Fprofile';
   const myAdsHref = user ? myAdsPath : `/sign-in?redirect=${encodeURIComponent(myAdsPath)}`;
   const isRealEstateMarketplacePath = pathname === '/' || pathname === '/uy-joy';
+  const mobileSearchAnchorId = 'marketplace-mobile-search';
+  const mobileSearchInputId = 'marketplace-mobile-search-input';
 
   useEffect(() => {
     setSearchQuery(searchParams.get('q') ?? '');
   }, [searchParams]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const focusSearchFromHash = () => {
+      if (
+        window.location.hash !== `#${mobileSearchAnchorId}` &&
+        window.location.hash !== `#${mobileSearchInputId}`
+      ) {
+        return;
+      }
+
+      const searchInput = document.getElementById(mobileSearchInputId) as HTMLInputElement | null;
+
+      if (!searchInput) {
+        return;
+      }
+
+      window.setTimeout(() => {
+        searchInput.focus();
+        searchInput.select();
+      }, 60);
+    };
+
+    focusSearchFromHash();
+    window.addEventListener('hashchange', focusSearchFromHash);
+
+    return () => {
+      window.removeEventListener('hashchange', focusSearchFromHash);
+    };
+  }, []);
 
   const verticalPaths = new Set(['/', ...MARKETPLACE_VERTICALS.map((vertical) => `/${vertical.slug}`)]);
   const activeMarketplacePath = verticalPaths.has(pathname) ? pathname : '/market';
@@ -110,11 +145,18 @@ function NavbarContent() {
     router.push('/');
   };
 
-  const renderSearchForm = (className?: string) => (
-    <form onSubmit={handleSearchSubmit} className={className}>
+  const renderSearchForm = (
+    className?: string,
+    options?: {
+      formId?: string;
+      inputId?: string;
+    }
+  ) => (
+    <form id={options?.formId} onSubmit={handleSearchSubmit} className={className}>
       <div className="relative w-full">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
+          id={options?.inputId}
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
           placeholder={messages.navbar.searchPlaceholder}
@@ -248,8 +290,10 @@ function NavbarContent() {
               ) : null}
             </div>
           </div>
-
-          {!isRealEstateMarketplacePath ? renderSearchForm('phone-nav-only w-full') : null}
+          {renderSearchForm('phone-nav-only w-full', {
+            formId: mobileSearchAnchorId,
+            inputId: mobileSearchInputId,
+          })}
         </div>
       </div>
     </nav>
