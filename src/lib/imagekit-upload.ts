@@ -145,12 +145,8 @@ function resolveUploadFileName(source: File | string, index = 0) {
   return `ad-image-${Date.now()}-${index + 1}.jpg`;
 }
 
-export async function uploadAdImageToImageKit(
-  source: File | string,
-  index = 0,
-  activeSession?: ImageKitUploadSession
-) {
-  const uploadSession = activeSession || (await createImageKitUploadSession());
+export async function uploadAdImageToImageKit(source: File | string, index = 0) {
+  const uploadSession = await createImageKitUploadSession();
   const formData = new FormData();
 
   formData.append('file', source);
@@ -176,11 +172,10 @@ export async function uploadAdImagesToImageKit(sources: Array<File | string>) {
   }
 
   const uploadedImages: UploadedAdImage[] = [];
-  const activeSession = await createImageKitUploadSession();
 
   try {
     for (const [index, source] of sources.entries()) {
-      const uploadedImage = await uploadAdImageToImageKit(source, index, activeSession);
+      const uploadedImage = await uploadAdImageToImageKit(source, index);
       uploadedImages.push(uploadedImage);
     }
   } catch (error) {

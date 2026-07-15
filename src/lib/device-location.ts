@@ -64,10 +64,6 @@ async function requestNativeDeviceLocation(): Promise<DeviceLocationResult> {
     let permissionStatus = await Geolocation.checkPermissions();
 
     if (!hasGrantedPermission(permissionStatus)) {
-      if (hasDeniedPermission(permissionStatus)) {
-        return { status: 'denied' };
-      }
-
       permissionStatus = await Geolocation.requestPermissions();
 
       if (!hasGrantedPermission(permissionStatus)) {
