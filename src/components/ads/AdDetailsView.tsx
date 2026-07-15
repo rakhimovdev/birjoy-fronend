@@ -41,9 +41,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from '@/components/ui/carousel';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { getCategoryBySlug } from '@/lib/mock-data';
 import { getVerticalHref } from '@/lib/mock-data';
 import { Ad } from '@/lib/types';
@@ -54,7 +51,6 @@ import { useToast } from '@/hooks/use-toast';
 import { fetchAdById, fetchAds, getConditionLabel } from '@/lib/ads';
 import { deleteAdminAd } from '@/lib/admin';
 import { createChatConversation } from '@/lib/chat';
-import { createOrderRequest } from '@/lib/orders';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { getAdDisplayLocation } from '@/lib/listing-utils';
 
@@ -107,15 +103,8 @@ export function AdDetailsView({
   const [desktopDetailCarouselApi, setDesktopDetailCarouselApi] = useState<CarouselApi>();
   const [isLoading, setIsLoading] = useState(!initialAd);
   const [error, setError] = useState<string | null>(null);
-  const [isOrderSubmitting, setIsOrderSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isStartingChat, setIsStartingChat] = useState(false);
-  const [orderForm, setOrderForm] = useState({
-    customerName: '',
-    customerEmail: '',
-    customerPhone: '',
-    message: '',
-  });
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -265,19 +254,6 @@ export function AdDetailsView({
   }, [ad]);
 
   useEffect(() => {
-    if (!user) {
-      return;
-    }
-
-    setOrderForm((previous) => ({
-      customerName: previous.customerName || user.name || '',
-      customerEmail: previous.customerEmail || user.email || '',
-      customerPhone: previous.customerPhone || user.phone || '',
-      message: previous.message,
-    }));
-  }, [user]);
-
-  useEffect(() => {
     if (!mobileDetailCarouselApi) {
       return;
     }
@@ -390,51 +366,6 @@ export function AdDetailsView({
     addSuffix: true,
     locale: languageMeta[locale].dateLocale,
   });
-  const orderCopy =
-    locale === 'ru'
-      ? {
-          title: 'Оставить заявку',
-          description: 'Запрос попадет в админ-панель, и продавец сможет связаться с вами.',
-          name: 'Имя',
-          email: 'Email',
-          phone: 'Телефон',
-          message: 'Комментарий',
-          messagePlaceholder: 'Например, когда вам удобно созвониться?',
-          submit: 'Отправить заявку',
-          successTitle: 'Заявка отправлена',
-          successDescription: 'Администратор и продавец получили ваш запрос.',
-          errorTitle: 'Заявка не отправлена',
-          statusNote: 'После отправки заявка появится в панели администратора.',
-        }
-      : locale === 'en'
-        ? {
-            title: 'Send an order request',
-            description: 'Your request will go to the admin panel so the seller can follow up.',
-            name: 'Name',
-            email: 'Email',
-            phone: 'Phone',
-            message: 'Message',
-            messagePlaceholder: 'For example, what time should we contact you?',
-            submit: 'Send request',
-            successTitle: 'Request sent',
-            successDescription: 'The admin and seller received your request.',
-            errorTitle: 'Request was not sent',
-            statusNote: 'After submission the request appears in the admin panel.',
-          }
-        : {
-            title: 'Buyurtma qoldirish',
-            description: 'So‘rov admin panelga tushadi va sotuvchi siz bilan bog‘lana oladi.',
-            name: 'Ism',
-            email: 'Email',
-            phone: 'Telefon',
-            message: 'Izoh',
-            messagePlaceholder: 'Masalan, qachon bog‘lanish qulayligini yozing',
-            submit: 'Buyurtma yuborish',
-            successTitle: 'Buyurtma yuborildi',
-            successDescription: 'Admin va sotuvchiga so‘rovingiz yetkazildi.',
-            errorTitle: 'Buyurtma yuborilmadi',
-            statusNote: 'Yuborilganidan keyin buyurtma admin panelda ko‘rinadi.',
-          };
   const deleteCopy =
     locale === 'ru'
       ? {
@@ -498,7 +429,6 @@ export function AdDetailsView({
   const mobileDetailCopy =
     locale === 'ru'
       ? {
-          noteAction: 'Оставить заявку',
           callAction: 'Позвонить',
           infoAction: 'Детали',
           sellerLabel: 'Кто разместил',
@@ -509,7 +439,6 @@ export function AdDetailsView({
         }
       : locale === 'en'
         ? {
-            noteAction: 'Leave a request',
             callAction: 'Call',
             infoAction: 'Details',
             sellerLabel: 'Listed by',
@@ -519,7 +448,6 @@ export function AdDetailsView({
             mapTitle: 'Map location',
           }
         : {
-            noteAction: 'Izoh qoldiring',
             callAction: 'Qo‘ng‘iroq',
             infoAction: 'Batafsil',
             sellerLabel: 'Kim joylashtirdi',
@@ -580,41 +508,6 @@ export function AdDetailsView({
     }
 
     desktopDetailCarouselApi?.scrollTo(index);
-  };
-
-  const handleOrderSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsOrderSubmitting(true);
-
-    try {
-      await createOrderRequest({
-        adId: ad.id,
-        customerName: orderForm.customerName,
-        customerEmail: orderForm.customerEmail,
-        customerPhone: orderForm.customerPhone,
-        customerUserId: user?.id,
-        message: orderForm.message,
-      });
-
-      toast({
-        title: orderCopy.successTitle,
-        description: orderCopy.successDescription,
-      });
-
-      setOrderForm((previous) => ({
-        ...previous,
-        message: '',
-      }));
-    } catch (submitError) {
-      toast({
-        title: orderCopy.errorTitle,
-        description:
-          submitError instanceof Error ? submitError.message : messages.auth.requestFailedDescription,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsOrderSubmitting(false);
-    }
   };
 
   const handleDeleteAd = async () => {
@@ -904,7 +797,7 @@ export function AdDetailsView({
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
               {!isOwnListing ? (
                 <Button
                   type="button"
@@ -925,19 +818,11 @@ export function AdDetailsView({
                 </Button>
               )}
 
-              <Button
-                type="button"
-                variant="secondary"
-                className="min-h-14 rounded-full bg-white text-base font-semibold text-black shadow-none hover:bg-white/90"
-                onClick={() => {
-                  document.getElementById('order-request-form')?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start',
-                  });
-                }}
-              >
-                <MessageSquare className="h-4 w-4" />
-                {mobileDetailCopy.noteAction}
+              <Button asChild variant="secondary" className="min-h-14 rounded-full bg-white text-base font-semibold text-black shadow-none hover:bg-white/90">
+                <Link href={getVerticalHref(ad.vertical)}>
+                  <Info className="h-4 w-4" />
+                  {messages.adDetails.browseMore}
+                </Link>
               </Button>
             </div>
 
@@ -1249,83 +1134,6 @@ export function AdDetailsView({
                     {chatCopy.helper}
                   </div>
                 ) : null}
-              </CardContent>
-            </Card>
-
-            <Card id="order-request-form" className="surface-card rounded-[1.9rem] border-none shadow-none">
-              <CardHeader>
-                <CardTitle>{orderCopy.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={(event) => void handleOrderSubmit(event)} className="space-y-4">
-                  <p className="text-sm text-muted-foreground">{orderCopy.description}</p>
-                  <div className="space-y-2">
-                    <Label htmlFor="order-customer-name">{orderCopy.name}</Label>
-                    <Input
-                      id="order-customer-name"
-                      value={orderForm.customerName}
-                      onChange={(event) =>
-                        setOrderForm((previous) => ({
-                          ...previous,
-                          customerName: event.target.value,
-                        }))
-                      }
-                      placeholder={orderCopy.name}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="order-customer-email">{orderCopy.email}</Label>
-                    <Input
-                      id="order-customer-email"
-                      type="email"
-                      value={orderForm.customerEmail}
-                      onChange={(event) =>
-                        setOrderForm((previous) => ({
-                          ...previous,
-                          customerEmail: event.target.value,
-                        }))
-                      }
-                      placeholder="you@example.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="order-customer-phone">{orderCopy.phone}</Label>
-                    <Input
-                      id="order-customer-phone"
-                      value={orderForm.customerPhone}
-                      onChange={(event) =>
-                        setOrderForm((previous) => ({
-                          ...previous,
-                          customerPhone: event.target.value,
-                        }))
-                      }
-                      placeholder="+998 90 123 45 67"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="order-message">{orderCopy.message}</Label>
-                    <Textarea
-                      id="order-message"
-                      value={orderForm.message}
-                      onChange={(event) =>
-                        setOrderForm((previous) => ({
-                          ...previous,
-                          message: event.target.value,
-                        }))
-                      }
-                      placeholder={orderCopy.messagePlaceholder}
-                    />
-                  </div>
-                  <Button type="submit" className="h-11 w-full" disabled={isOrderSubmitting}>
-                    {isOrderSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    {orderCopy.submit}
-                  </Button>
-                  <div className="soft-panel text-sm text-muted-foreground">
-                    {orderCopy.statusNote}
-                  </div>
-                </form>
               </CardContent>
             </Card>
 
