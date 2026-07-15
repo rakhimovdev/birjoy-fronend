@@ -3,7 +3,23 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Building2, Clock, Heart, Loader2, MapPin, MessageSquare, PencilLine, Phone, Square, Tag, Trash2, User, type LucideIcon } from 'lucide-react';
+import {
+  ArrowLeft,
+  Building2,
+  Clock,
+  Heart,
+  Info,
+  Loader2,
+  MapPin,
+  MessageSquare,
+  PencilLine,
+  Phone,
+  Square,
+  Tag,
+  Trash2,
+  User,
+  type LucideIcon,
+} from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
@@ -24,6 +40,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from '@/components/ui/carousel';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -86,6 +103,8 @@ export function AdDetailsView({
   const [nearbyAds, setNearbyAds] = useState<Ad[]>([]);
   const [selectedMapAdId, setSelectedMapAdId] = useState<string | undefined>(undefined);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [mobileDetailCarouselApi, setMobileDetailCarouselApi] = useState<CarouselApi>();
+  const [desktopDetailCarouselApi, setDesktopDetailCarouselApi] = useState<CarouselApi>();
   const [isLoading, setIsLoading] = useState(!initialAd);
   const [error, setError] = useState<string | null>(null);
   const [isOrderSubmitting, setIsOrderSubmitting] = useState(false);
@@ -258,6 +277,44 @@ export function AdDetailsView({
     }));
   }, [user]);
 
+  useEffect(() => {
+    if (!mobileDetailCarouselApi) {
+      return;
+    }
+
+    const syncSelectedImage = () => {
+      setSelectedImageIndex(mobileDetailCarouselApi.selectedScrollSnap());
+    };
+
+    syncSelectedImage();
+    mobileDetailCarouselApi.on('select', syncSelectedImage);
+    mobileDetailCarouselApi.on('reInit', syncSelectedImage);
+
+    return () => {
+      mobileDetailCarouselApi.off('select', syncSelectedImage);
+      mobileDetailCarouselApi.off('reInit', syncSelectedImage);
+    };
+  }, [mobileDetailCarouselApi]);
+
+  useEffect(() => {
+    if (!desktopDetailCarouselApi) {
+      return;
+    }
+
+    const syncSelectedImage = () => {
+      setSelectedImageIndex(desktopDetailCarouselApi.selectedScrollSnap());
+    };
+
+    syncSelectedImage();
+    desktopDetailCarouselApi.on('select', syncSelectedImage);
+    desktopDetailCarouselApi.on('reInit', syncSelectedImage);
+
+    return () => {
+      desktopDetailCarouselApi.off('select', syncSelectedImage);
+      desktopDetailCarouselApi.off('reInit', syncSelectedImage);
+    };
+  }, [desktopDetailCarouselApi]);
+
   if (isLoading) {
     return (
       <MarketplaceShell>
@@ -321,12 +378,9 @@ export function AdDetailsView({
     label: string;
     value: string;
   }>;
-  const selectedImage = ad.images[selectedImageIndex] || ad.images[0];
   const propertyMapAds = isRealEstate ? [ad, ...nearbyAds] : [ad];
   const isOwnListing = user?.id === ad.userId;
   const isCurrentAdFavorite = isFavorite(ad.id);
-  const shouldDisableOptimization =
-    selectedImage.startsWith('data:') || selectedImage.startsWith('blob:');
   const formattedPrice = new Intl.NumberFormat(languageMeta[locale].numberLocale, {
     style: 'currency',
     currency: 'USD',
@@ -440,6 +494,39 @@ export function AdDetailsView({
             helper: 'Suhbatni ilova ichidagi haqiqiy chatda davom ettiring.',
             ownListing: 'Bu sizning eʼloningiz, shuning uchun o‘zingizga chat ochib bo‘lmaydi.',
             errorTitle: 'Chatni ochib bo‘lmadi',
+        };
+  const mobileDetailCopy =
+    locale === 'ru'
+      ? {
+          noteAction: 'Оставить заявку',
+          callAction: 'Позвонить',
+          infoAction: 'Детали',
+          sellerLabel: 'Кто разместил',
+          areaLabel: 'Площадь, м²',
+          floorLabel: 'Этаж',
+          roomsLabel: 'Комнаты',
+          mapTitle: 'Локация на карте',
+        }
+      : locale === 'en'
+        ? {
+            noteAction: 'Leave a request',
+            callAction: 'Call',
+            infoAction: 'Details',
+            sellerLabel: 'Listed by',
+            areaLabel: 'Area, m²',
+            floorLabel: 'Floor',
+            roomsLabel: 'Rooms',
+            mapTitle: 'Map location',
+          }
+        : {
+            noteAction: 'Izoh qoldiring',
+            callAction: 'Qo‘ng‘iroq',
+            infoAction: 'Batafsil',
+            sellerLabel: 'Kim joylashtirdi',
+            areaLabel: 'Maydon, m²',
+            floorLabel: 'Qavat',
+            roomsLabel: 'Xonalar',
+            mapTitle: 'Xaritadagi joylashuv',
           };
   const nearbyCopy =
     locale === 'ru'
@@ -456,6 +543,44 @@ export function AdDetailsView({
             title: 'Yaqin uylar',
             description: 'Ushbu joydan 5 km radiusdagi uylar.',
           };
+  const mobileMetaPills = [localizedCondition, localizedCategory, postedAgo].filter(Boolean);
+  const mobileOverviewItems = [
+    {
+      label: mobileDetailCopy.sellerLabel,
+      value: ad.userName || '—',
+    },
+    isRealEstate
+      ? {
+          label: mobileDetailCopy.areaLabel,
+          value: ad.area !== null ? String(ad.area) : '—',
+        }
+      : null,
+    isRealEstate
+      ? {
+          label: mobileDetailCopy.floorLabel,
+          value: ad.floor !== null ? String(ad.floor) : '—',
+        }
+      : null,
+    isRealEstate
+      ? {
+          label: mobileDetailCopy.roomsLabel,
+          value: ad.rooms !== null ? String(ad.rooms) : '—',
+        }
+      : null,
+  ].filter(Boolean) as Array<{
+    label: string;
+    value: string;
+  }>;
+
+  const scrollToImage = (index: number, target: 'mobile' | 'desktop') => {
+    setSelectedImageIndex(index);
+    if (target === 'mobile') {
+      mobileDetailCarouselApi?.scrollTo(index);
+      return;
+    }
+
+    desktopDetailCarouselApi?.scrollTo(index);
+  };
 
   const handleOrderSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -586,7 +711,7 @@ export function AdDetailsView({
   return (
     <MarketplaceShell>
       <main className="marketplace-main">
-        <div className="surface-card section-shell--compact rounded-[1.85rem]">
+        <div className="hidden min-[769px]:block surface-card section-shell--compact rounded-[1.85rem]">
           <div className="section-header">
             <div className="action-cluster items-center">
               <Button asChild variant="ghost" className="px-0 text-primary hover:bg-transparent">
@@ -643,18 +768,248 @@ export function AdDetailsView({
           </div>
         </div>
 
-        <div className="detail-grid">
-          <div className="space-y-6">
-            <div className="surface-card relative aspect-[4/3] overflow-hidden rounded-[1.9rem] shadow-[0_24px_56px_rgba(7,28,85,0.16)] sm:aspect-[16/10] sm:rounded-[2rem]">
-              <Image
-                src={selectedImage}
-                alt={localizedTitle}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 92vw, 64vw"
-                data-ai-hint="classified product detail"
-                unoptimized={shouldDisableOptimization}
+        <section className="phone-nav-only mx-[calc(var(--page-gutter)*-1)] flex-col overflow-hidden bg-[#050505] text-white">
+          <div className="relative">
+            <Carousel
+              setApi={(api) => {
+                setMobileDetailCarouselApi(api);
+              }}
+              opts={{
+                align: 'start',
+                loop: ad.images.length > 1,
+              }}
+              className="touch-pan-y"
+            >
+              <CarouselContent className="-ml-0">
+                {ad.images.map((image, index) => (
+                  <CarouselItem key={`${ad.id}-detail-${index}`} className="pl-0">
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      <Image
+                        src={image}
+                        alt={`${localizedTitle} ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="100vw"
+                        priority={index === 0}
+                        unoptimized={image.startsWith('data:') || image.startsWith('blob:')}
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black via-black/35 to-transparent" />
+
+            <div className="absolute left-4 top-4">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-12 w-12 rounded-full border border-white/10 bg-black/45 text-white backdrop-blur-md hover:bg-black/60 hover:text-white"
+                onClick={() => router.back()}
+                aria-label={messages.adDetails.backToListings}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <div className="absolute right-4 top-4 flex items-center gap-2 rounded-[1.35rem] border border-white/10 bg-black/40 p-2 backdrop-blur-md">
+              <AdShareActions
+                ad={ad}
+                locale={locale}
+                menuButtonClassName="!h-10 !w-10 !rounded-full !border-white/10 !bg-transparent !text-white hover:!bg-white/10 hover:!text-white"
               />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full border border-white/10 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                onClick={handleToggleFavorite}
+                aria-pressed={isCurrentAdFavorite}
+                aria-label={messages.navbar.favorites}
+              >
+                <Heart className={`h-5 w-5 ${isCurrentAdFavorite ? 'fill-current text-white' : ''}`} />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full border border-white/10 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                onClick={() => {
+                  document.getElementById('mobile-detail-info')?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                  });
+                }}
+                aria-label={mobileDetailCopy.infoAction}
+              >
+                <Info className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <div className="absolute bottom-14 left-4 flex items-center gap-2 rounded-full border border-white/10 bg-black/45 px-3 py-2 backdrop-blur-md">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15">
+                <User className="h-4 w-4" />
+              </div>
+              <span className="max-w-[12rem] truncate text-sm font-semibold">{ad.userName}</span>
+            </div>
+
+            {ad.images.length > 1 ? (
+              <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2">
+                {ad.images.map((_, index) => (
+                  <button
+                    key={`${ad.id}-detail-dot-${index}`}
+                    type="button"
+                    className={`h-2.5 rounded-full transition-all ${selectedImageIndex === index ? 'w-8 bg-amber-400' : 'w-2.5 bg-white/55'}`}
+                    onClick={() => scrollToImage(index, 'mobile')}
+                    aria-label={`Go to image ${index + 1}`}
+                    aria-current={selectedImageIndex === index}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <div id="mobile-detail-info" className="space-y-5 px-5 pb-6 pt-4">
+            <div className="flex flex-wrap gap-2">
+              {mobileMetaPills.map((pill) => (
+                <span
+                  key={pill}
+                  className="rounded-full border border-white/10 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white/92 backdrop-blur"
+                >
+                  {pill}
+                </span>
+              ))}
+            </div>
+
+            <div className="space-y-3">
+              <h1 className="text-[2rem] font-semibold leading-[1.02] tracking-[-0.03em] text-white">
+                {localizedTitle}
+              </h1>
+              <p className="text-[2.2rem] font-black leading-none tracking-[-0.04em] text-white">
+                {formattedPrice}
+              </p>
+              <p className="whitespace-pre-line text-[0.98rem] leading-7 text-white/74">
+                {localizedDescription}
+              </p>
+            </div>
+
+            <div className="space-y-3 border-t border-white/10 pt-5">
+              {mobileOverviewItems.map((item) => (
+                <div key={item.label} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+                  <span className="text-base font-semibold text-white">{item.label}</span>
+                  <span className="text-base font-semibold text-white/92">{item.value}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {!isOwnListing ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="min-h-14 rounded-full bg-white text-base font-semibold text-black shadow-none hover:bg-white/90"
+                  onClick={() => void handleStartChat()}
+                  disabled={isStartingChat}
+                >
+                  {isStartingChat ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
+                  {isStartingChat ? chatCopy.loading : chatCopy.action}
+                </Button>
+              ) : (
+                <Button asChild variant="secondary" className="min-h-14 rounded-full bg-white text-base font-semibold text-black shadow-none hover:bg-white/90">
+                  <Link href={`/ads/${ad.id}/edit`}>
+                    <PencilLine className="h-4 w-4" />
+                    {locale === 'ru' ? 'Редактировать' : locale === 'en' ? 'Edit listing' : 'Tahrirlash'}
+                  </Link>
+                </Button>
+              )}
+
+              <Button
+                type="button"
+                variant="secondary"
+                className="min-h-14 rounded-full bg-white text-base font-semibold text-black shadow-none hover:bg-white/90"
+                onClick={() => {
+                  document.getElementById('order-request-form')?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                  });
+                }}
+              >
+                <MessageSquare className="h-4 w-4" />
+                {mobileDetailCopy.noteAction}
+              </Button>
+            </div>
+
+            {ad.sellerPhone ? (
+              <Button
+                asChild
+                className="min-h-16 rounded-full border-0 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-100 text-lg font-bold text-black shadow-none hover:opacity-95"
+              >
+                <a href={`tel:${ad.sellerPhone}`}>
+                  <Phone className="h-5 w-5" />
+                  {mobileDetailCopy.callAction}
+                </a>
+              </Button>
+            ) : null}
+          </div>
+        </section>
+
+        {isRealEstate && typeof ad.latitude === 'number' && typeof ad.longitude === 'number' ? (
+          <section className="phone-nav-only flex-col surface-card rounded-[1.85rem] p-4">
+            <div className="mb-4">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+                {mobileDetailCopy.mapTitle}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">{localizedLocation}</p>
+            </div>
+            <RealEstateListingsMap
+              ads={propertyMapAds}
+              locale={locale}
+              selectedAdId={selectedMapAdId}
+              onSelectAd={setSelectedMapAdId}
+              userLocation={null}
+              userLocationLabel={
+                locale === 'ru' ? 'Вы здесь' : locale === 'en' ? 'You are here' : 'Siz turgan joy'
+              }
+              nearbyRadiusKm={NEARBY_PROPERTIES_RADIUS_KM}
+              popupActionLabel={messages.adDetails.browseMore}
+              isVisible
+            />
+          </section>
+        ) : null}
+
+        <div className="detail-grid">
+          <div className="hidden min-[769px]:block space-y-6">
+            <div className="surface-card relative overflow-hidden rounded-[1.9rem] shadow-[0_24px_56px_rgba(7,28,85,0.16)] sm:rounded-[2rem]">
+              <Carousel
+                setApi={(api) => {
+                  setDesktopDetailCarouselApi(api);
+                }}
+                opts={{
+                  align: 'start',
+                  loop: ad.images.length > 1,
+                }}
+                className="touch-pan-y"
+              >
+                <CarouselContent className="-ml-0">
+                  {ad.images.map((image, index) => (
+                    <CarouselItem key={`${ad.id}-desktop-detail-${index}`} className="pl-0">
+                      <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[16/10]">
+                        <Image
+                          src={image}
+                          alt={`${localizedTitle} ${index + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 1024px) 92vw, 64vw"
+                          data-ai-hint="classified product detail"
+                          unoptimized={image.startsWith('data:') || image.startsWith('blob:')}
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/52 via-slate-950/10 to-transparent" />
               <div className="absolute bottom-4 right-4 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
                 {selectedImageIndex + 1}/{ad.images.length}
@@ -668,14 +1023,14 @@ export function AdDetailsView({
                     type="button"
                     className={`relative aspect-square overflow-hidden rounded-[1.15rem] border transition-all ${index === selectedImageIndex ? 'border-primary ring-2 ring-primary/20' : 'border-border/70 hover:border-primary/20'
                       }`}
-                    onClick={() => setSelectedImageIndex(index)}
+                    onClick={() => scrollToImage(index, 'desktop')}
                   >
                     <Image
                       src={image}
                       alt={`${localizedTitle} ${index + 1}`}
                       fill
                       className="object-cover"
-                      sizes="(max-width: 768px) 22vw, (max-width: 1024px) 18vw, 120px"
+                      sizes="(max-width: 1024px) 18vw, 120px"
                       loading="lazy"
                       unoptimized={image.startsWith('data:') || image.startsWith('blob:')}
                     />
@@ -782,7 +1137,7 @@ export function AdDetailsView({
           </div>
 
           <div className="space-y-6">
-            <Card className="surface-card rounded-[1.9rem] border-none shadow-none min-[900px]:sticky min-[900px]:top-24">
+            <Card className="hidden min-[769px]:block surface-card rounded-[1.9rem] border-none shadow-none min-[900px]:sticky min-[900px]:top-24">
               <CardHeader>
                 <CardTitle>{messages.adDetails.overview}</CardTitle>
               </CardHeader>
@@ -897,7 +1252,7 @@ export function AdDetailsView({
               </CardContent>
             </Card>
 
-            <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
+            <Card id="order-request-form" className="surface-card rounded-[1.9rem] border-none shadow-none">
               <CardHeader>
                 <CardTitle>{orderCopy.title}</CardTitle>
               </CardHeader>

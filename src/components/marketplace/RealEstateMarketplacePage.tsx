@@ -369,7 +369,7 @@ export function RealEstateMarketplacePage() {
               </section>
             </section>
 
-            <section className="tablet-and-up-only surface-card section-shell--compact rounded-[1.85rem]">
+            <section className="hidden min-[769px]:block surface-card section-shell--compact rounded-[1.85rem]">
               <div className="section-header">
                 <div className="section-header__copy min-w-0">
                   <p className="section-kicker">{messages.home.browseAllListings}</p>
@@ -415,7 +415,7 @@ export function RealEstateMarketplacePage() {
               </div>
             </section>
 
-            <div className="tablet-and-up-only space-y-4">
+            <div className="hidden min-[769px]:block space-y-4">
               {featuredAds.length > 0 ? (
                 <section className="surface-card section-shell rounded-[1.85rem]">
                   <div className="section-header">
