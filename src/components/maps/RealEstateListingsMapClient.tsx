@@ -29,6 +29,7 @@ export default function RealEstateListingsMapClient({
   isVisible,
   mapClassName,
   mapHeight,
+  previewMode,
 }: {
   ads: Ad[];
   locale: Language;
@@ -41,6 +42,7 @@ export default function RealEstateListingsMapClient({
   isVisible: boolean;
   mapClassName?: string;
   mapHeight?: number | string;
+  previewMode?: 'full' | 'address-only' | 'hidden';
 }) {
   const validAds = useMemo(() => ads.filter(hasCoordinates), [ads]);
   const priceFormatter = useMemo(
@@ -102,6 +104,7 @@ export default function RealEstateListingsMapClient({
       isVisible={isVisible}
       height={mapHeight}
       className={mapClassName || 'marketplace-property-map-shell'}
+      previewMode={previewMode}
     />
   );
 }

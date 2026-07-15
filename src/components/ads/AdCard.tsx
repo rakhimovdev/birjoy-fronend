@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Clock, Heart, Loader2, MapPin, Phone, Trash2 } from 'lucide-react';
+import { BedDouble, ChevronLeft, ChevronRight, Clock, Heart, Loader2, MapPin, Phone, Ruler, Trash2 } from 'lucide-react';
 import { AdShareActions } from '@/components/ads/AdShareActions';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -39,6 +39,8 @@ interface AdCardProps {
   isFavorite?: boolean;
   canDelete?: boolean;
   onDeleted?: (adId: string) => void;
+  variant?: 'default' | 'real_estate_mobile' | 'real_estate_mobile_compact';
+  featuredLabel?: string;
 }
 
 export function AdCard({
@@ -47,6 +49,8 @@ export function AdCard({
   isFavorite = false,
   canDelete = false,
   onDeleted,
+  variant = 'default',
+  featuredLabel,
 }: AdCardProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -112,6 +116,15 @@ export function AdCard({
     maximumFractionDigits: 0,
   }).format(ad.price);
   const adHref = `/ads/${ad.id}`;
+  const userChipLabel = ad.userName.trim() || localizedCategory;
+  const userInitials = userChipLabel
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('') || 'B';
+  const mobileRibbonLabel =
+    featuredLabel || (ad.isFeatured ? messages.adCard.featured : '');
   const hasLocation = localizedLocation.trim().length > 0;
   const hasMultipleImages = ad.images.length > 1;
   const postedAtLabel = mounted
@@ -164,6 +177,122 @@ export function AdCard({
       setIsDeleting(false);
     }
   };
+
+  if (variant !== 'default' && !canDelete) {
+    const isCompactVariant = variant === 'real_estate_mobile_compact';
+
+    return (
+      <Link
+        href={adHref}
+        className={cn('group block focus-visible:outline-none', className)}
+      >
+        <article className="relative overflow-hidden rounded-[1.7rem] border border-white/8 bg-[#101010] shadow-[0_18px_42px_rgba(0,0,0,0.35)]">
+          <Carousel
+            setApi={(api) => {
+              setCarouselApi(api);
+            }}
+            opts={{
+              align: 'start',
+              loop: hasMultipleImages,
+            }}
+            className="touch-pan-y"
+          >
+            <CarouselContent className="-ml-0">
+              {ad.images.map((image, index) => {
+                const shouldDisableOptimization = image.startsWith('data:') || image.startsWith('blob:');
+
+                return (
+                  <CarouselItem key={`${ad.id}-${index}`} className="pl-0">
+                    <div className="relative aspect-[4/5] overflow-hidden">
+                      <Image
+                        src={image}
+                        alt={`${localizedTitle} ${index + 1}`}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes={isCompactVariant ? '188px' : '(max-width: 768px) 50vw, 33vw'}
+                        loading="lazy"
+                        data-ai-hint="classified ad product"
+                        draggable={false}
+                        unoptimized={shouldDisableOptimization}
+                      />
+                    </div>
+                  </CarouselItem>
+                );
+              })}
+            </CarouselContent>
+          </Carousel>
+
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent" />
+
+          <div className="absolute left-3 top-3 z-10 flex max-w-[calc(100%-5.5rem)] items-center gap-2 rounded-full border border-white/10 bg-black/45 px-2.5 py-1.5 text-white backdrop-blur-md">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/20 text-[0.68rem] font-bold">
+              {userInitials}
+            </span>
+            <span className="truncate text-[0.82rem] font-semibold">{userChipLabel}</span>
+          </div>
+
+          {mobileRibbonLabel ? (
+            <div className="absolute -right-9 top-4 z-10 rotate-45 bg-[#FFD028] px-10 py-1 text-[0.72rem] font-black uppercase tracking-[0.16em] text-black shadow-[0_8px_18px_rgba(0,0,0,0.26)]">
+              {mobileRibbonLabel}
+            </div>
+          ) : null}
+
+          {hasMultipleImages ? (
+            <div className="absolute bottom-3 right-3 z-10 rounded-full bg-black/55 px-2 py-1 text-[0.66rem] font-semibold text-white backdrop-blur-sm">
+              {selectedImageIndex + 1}/{ad.images.length}
+            </div>
+          ) : null}
+
+          <div className="absolute inset-x-0 bottom-0 z-10 p-3.5">
+            <div className="space-y-1.5">
+              <p
+                className={cn(
+                  'font-black leading-none tracking-[-0.03em] text-white',
+                  isCompactVariant ? 'text-[1.05rem]' : 'text-[1.15rem]'
+                )}
+              >
+                {formattedPrice}
+              </p>
+              <h3
+                className={cn(
+                  'line-clamp-2 font-semibold text-white',
+                  isCompactVariant ? 'text-[0.98rem] leading-5' : 'text-[1.02rem] leading-[1.35]'
+                )}
+              >
+                {localizedTitle}
+              </h3>
+            </div>
+
+            <div className="mt-2 space-y-1.5 text-[0.78rem] text-white/82">
+              {hasLocation ? (
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-white/92" />
+                  <span className="truncate">{localizedLocation}</span>
+                </div>
+              ) : null}
+
+              {ad.vertical === 'real_estate' && (ad.rooms || ad.area) ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  {ad.rooms ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <BedDouble className="h-3.5 w-3.5 text-white/92" />
+                      {ad.rooms}
+                    </span>
+                  ) : null}
+                  {ad.area ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Ruler className="h-3.5 w-3.5 text-white/92" />
+                      {ad.area} m²
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </article>
+      </Link>
+    );
+  }
 
   return (
     <Card

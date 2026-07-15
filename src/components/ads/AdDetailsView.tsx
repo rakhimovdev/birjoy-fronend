@@ -860,6 +860,7 @@ export function AdDetailsView({
               nearbyRadiusKm={NEARBY_PROPERTIES_RADIUS_KM}
               popupActionLabel={messages.adDetails.browseMore}
               isVisible
+              previewMode="address-only"
             />
           </section>
         ) : null}
@@ -1013,6 +1014,7 @@ export function AdDetailsView({
                         nearbyRadiusKm={NEARBY_PROPERTIES_RADIUS_KM}
                         popupActionLabel={messages.adDetails.browseMore}
                         isVisible
+                        previewMode="address-only"
                       />
                     </div>
                   </div>

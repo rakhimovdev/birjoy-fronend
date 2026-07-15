@@ -24,6 +24,7 @@ type YandexMapProps = MapProps & {
   popupActionLabel?: string;
   containerId?: string;
   isVisible?: boolean;
+  previewMode?: 'full' | 'address-only' | 'hidden';
 };
 
 function getCopy(language: Language) {
@@ -82,6 +83,7 @@ function YandexMapComponent({
   popupActionLabel,
   containerId,
   isVisible = true,
+  previewMode = 'full',
 }: YandexMapProps) {
   const { theme } = useTheme();
   const [loaderNonce, setLoaderNonce] = useState(0);
@@ -442,7 +444,7 @@ function YandexMapComponent({
     >
       <div ref={canvasRef} className="yandex-map-canvas h-full w-full" />
 
-      {selectedMarker ? (
+      {selectedMarker && previewMode !== 'hidden' ? (
         <div className="marketplace-map-preview">
           <Button
             type="button"
@@ -458,60 +460,75 @@ function YandexMapComponent({
             <X className="h-4 w-4" />
           </Button>
 
-          <div className="relative aspect-[16/10] overflow-hidden rounded-[1rem] bg-muted/40">
-            {selectedMarker.image ? (
-              <Image
-                src={selectedMarker.image}
-                alt={selectedMarker.title}
-                fill
-                className="object-cover"
-                sizes="320px"
-                unoptimized={
-                  selectedMarker.image.startsWith('data:') ||
-                  selectedMarker.image.startsWith('blob:')
-                }
-              />
-            ) : null}
-          </div>
-
-          <div className="space-y-3">
-            <div className="space-y-1">
-              {selectedMarker.priceLabel ? (
-                <p className="text-base font-bold text-primary">{selectedMarker.priceLabel}</p>
-              ) : null}
-              <h3 className="text-base font-semibold text-foreground">{selectedMarker.title}</h3>
-            </div>
-
-            <div className="space-y-2 text-sm text-muted-foreground">
-              {selectedMarker.district || selectedMarker.address ? (
-                <div className="flex items-start gap-2">
+          {previewMode === 'address-only' ? (
+            <div className="pr-10">
+              {(selectedMarker.address || selectedMarker.district) ? (
+                <div className="flex items-start gap-2 text-sm text-muted-foreground">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span>{selectedMarker.district || selectedMarker.address}</span>
+                  <span className="font-medium text-foreground">
+                    {selectedMarker.address || selectedMarker.district}
+                  </span>
                 </div>
               ) : null}
-
-              <div className="flex flex-wrap gap-3">
-                {selectedMarker.rooms ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <BedDouble className="h-4 w-4 text-primary" />
-                    {selectedMarker.rooms}
-                  </span>
-                ) : null}
-                {selectedMarker.area ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <Ruler className="h-4 w-4 text-primary" />
-                    {selectedMarker.area} m²
-                  </span>
+            </div>
+          ) : (
+            <>
+              <div className="relative aspect-[16/10] overflow-hidden rounded-[1rem] bg-muted/40">
+                {selectedMarker.image ? (
+                  <Image
+                    src={selectedMarker.image}
+                    alt={selectedMarker.title}
+                    fill
+                    className="object-cover"
+                    sizes="320px"
+                    unoptimized={
+                      selectedMarker.image.startsWith('data:') ||
+                      selectedMarker.image.startsWith('blob:')
+                    }
+                  />
                 ) : null}
               </div>
-            </div>
 
-            {selectedMarker.href ? (
-              <Button asChild className="h-10 w-full rounded-2xl">
-                <Link href={selectedMarker.href}>{popupActionLabel || copy.viewDetails}</Link>
-              </Button>
-            ) : null}
-          </div>
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  {selectedMarker.priceLabel ? (
+                    <p className="text-base font-bold text-primary">{selectedMarker.priceLabel}</p>
+                  ) : null}
+                  <h3 className="text-base font-semibold text-foreground">{selectedMarker.title}</h3>
+                </div>
+
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  {selectedMarker.district || selectedMarker.address ? (
+                    <div className="flex items-start gap-2">
+                      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                      <span>{selectedMarker.district || selectedMarker.address}</span>
+                    </div>
+                  ) : null}
+
+                  <div className="flex flex-wrap gap-3">
+                    {selectedMarker.rooms ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <BedDouble className="h-4 w-4 text-primary" />
+                        {selectedMarker.rooms}
+                      </span>
+                    ) : null}
+                    {selectedMarker.area ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Ruler className="h-4 w-4 text-primary" />
+                        {selectedMarker.area} m²
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+
+                {selectedMarker.href ? (
+                  <Button asChild className="h-10 w-full rounded-2xl">
+                    <Link href={selectedMarker.href}>{popupActionLabel || copy.viewDetails}</Link>
+                  </Button>
+                ) : null}
+              </div>
+            </>
+          )}
         </div>
       ) : null}
     </div>

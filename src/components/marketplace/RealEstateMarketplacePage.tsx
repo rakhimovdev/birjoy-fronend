@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight, ListFilter, Loader2, MapPinned } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, ListFilter, Loader2, MapPinned } from 'lucide-react';
 import { AdCard } from '@/components/ads/AdCard';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { VerticalBar } from '@/components/layout/VerticalBar';
 import { RealEstateFilterSheet } from '@/components/marketplace/RealEstateFilterSheet';
@@ -16,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { fetchAds } from '@/lib/ads';
 import { requestCurrentDeviceLocation } from '@/lib/device-location';
-import { getLocalizedText } from '@/lib/i18n';
+import { getLocalizedText, languageMeta } from '@/lib/i18n';
 import type { Location } from '@/lib/map-types';
 import { getCategoryBySlug, getVerticalHref } from '@/lib/mock-data';
 import {
@@ -201,6 +202,11 @@ export function RealEstateMarketplacePage() {
           noMapDescription: 'Чтобы объявление попало на карту, для него нужна локация на карте.',
           activeFilters: 'активных фильтров',
           clearAll: 'Очистить всё',
+          resultsPrefix: 'Мы нашли',
+          resultsSuffix: 'объявлений',
+          sortLabel: 'Сортировка',
+          sortValue: 'По умолчанию',
+          topBadge: 'TOP 10',
         }
       : locale === 'en'
         ? {
@@ -224,6 +230,11 @@ export function RealEstateMarketplacePage() {
             noMapDescription: 'A housing listing needs coordinates before it can appear on the map.',
             activeFilters: 'active filters',
             clearAll: 'Clear all',
+            resultsPrefix: 'We found',
+            resultsSuffix: 'listings',
+            sortLabel: 'Sort',
+            sortValue: 'Default order',
+            topBadge: 'TOP 10',
           }
         : {
             filter: 'Filter',
@@ -246,6 +257,11 @@ export function RealEstateMarketplacePage() {
             noMapDescription: 'Uy eʼloni xaritada ko‘rinishi uchun unga koordinata biriktirilgan bo‘lishi kerak.',
             activeFilters: 'faol filter',
             clearAll: 'Hammasini tozalash',
+            resultsPrefix: 'Biz',
+            resultsSuffix: 'ta eʼlon topdik',
+            sortLabel: 'Saralash',
+            sortValue: 'Asli bo‘yicha',
+            topBadge: 'TOP 10',
           };
 
   const handleLocateUser = () => {
@@ -288,12 +304,19 @@ export function RealEstateMarketplacePage() {
     }
   };
 
-  const mobileAds = featuredAds.length > 0 ? [...featuredAds, ...regularAds] : filteredAds;
+  const mobileFeaturedAds = featuredAds.length > 0 ? featuredAds : filteredAds.slice(0, 6);
+  const mobileGridAds = filteredAds;
+  const mobileResultsCount = useMemo(
+    () => new Intl.NumberFormat(languageMeta[locale].numberLocale).format(filteredAds.length),
+    [filteredAds.length, locale]
+  );
 
   return (
     <MarketplaceShell>
       <main className="marketplace-main">
-        <VerticalBar activeVertical="real_estate" />
+        <div className="hidden min-[769px]:block">
+          <VerticalBar activeVertical="real_estate" />
+        </div>
 
         {isLoadingAds ? (
           <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
@@ -329,38 +352,86 @@ export function RealEstateMarketplacePage() {
           </section>
         ) : (
           <>
-            <section className="phone-nav-only flex-col gap-3">
-              <div className="surface-card rounded-[1.65rem] p-3">
-                <div className="flex gap-3">
+            <section className="phone-nav-only mx-[calc(var(--page-gutter)*-1)] flex-col gap-6 bg-[#050505] px-[var(--page-gutter)] pb-6 pt-2 text-white">
+              <div className="flex items-center justify-between gap-4 rounded-[2rem] border border-white/8 bg-white/[0.03] px-4 py-4 shadow-[0_18px_38px_rgba(0,0,0,0.32)]">
+                <BrandLogo size="sm" className="[--brand-wordmark-primary:#FFFFFF] [--brand-tagline-color:rgba(255,255,255,0.7)] [--brand-tagline-line:rgba(255,255,255,0.18)]" />
+                <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full bg-[#151515] text-center text-[0.72rem] font-black uppercase leading-4 text-[#FFD028] shadow-[0_12px_24px_rgba(0,0,0,0.25)]">
+                  <span>TOP</span>
+                  <span>10</span>
+                </div>
+              </div>
+
+              {mobileFeaturedAds.length > 0 ? (
+                <div className="space-y-3">
+                  <h2 className="text-[1.95rem] font-semibold tracking-[-0.03em] text-white">
+                    {viewCopy.vipTitle}
+                  </h2>
+                  <div className="scroll-row">
+                    {mobileFeaturedAds.map((ad) => (
+                      <div key={ad.id} className="w-[11.5rem] shrink-0">
+                        <AdCard
+                          ad={ad}
+                          isFavorite={isFavorite(ad.id)}
+                          canDelete={isAdmin}
+                          variant="real_estate_mobile_compact"
+                          featuredLabel="VIP"
+                          onDeleted={(adId) => {
+                            setAds((previous) => previous.filter((item) => item.id !== adId));
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="space-y-3">
+                <h2 className="text-[2rem] font-semibold leading-tight tracking-[-0.04em] text-white">
+                  {viewCopy.resultsPrefix} {mobileResultsCount} {viewCopy.resultsSuffix}
+                </h2>
+
+                <div className="flex items-center gap-2 text-sm text-white/64">
+                  <ArrowUpDown className="h-4 w-4" />
+                  <span>
+                    {viewCopy.sortLabel}: <span className="font-medium text-white/88">{viewCopy.sortValue}</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="min-w-0">
                   <RealEstateFilterSheet
                     locale={locale}
                     filters={filters}
                     onApply={handleApplyFilters}
                     onClear={handleClearFilters}
-                    buttonClassName="flex-1"
+                    buttonVariant="ghost"
+                    buttonClassName="w-full min-h-12 justify-center rounded-[1.2rem] border border-white/10 bg-white/[0.04] text-white shadow-none hover:bg-white/[0.08] hover:text-white"
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-11 flex-1 rounded-[1.15rem] border-white/55 bg-background/80 shadow-none"
-                    onClick={() => {
-                      setSelectedAdId(undefined);
-                      setIsMapOpen(true);
-                    }}
-                  >
-                    <MapPinned className="h-4 w-4" />
-                    {viewCopy.map}
-                  </Button>
                 </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="min-h-12 rounded-[1.2rem] border border-white/10 bg-white/[0.04] text-white shadow-none hover:bg-white/[0.08] hover:text-white"
+                  onClick={() => {
+                    setSelectedAdId(undefined);
+                    setIsMapOpen(true);
+                  }}
+                >
+                  <MapPinned className="h-4 w-4" />
+                  {viewCopy.map}
+                </Button>
               </div>
 
-              <section className="property-listing-grid">
-                {mobileAds.map((ad) => (
+              <section className="grid grid-cols-2 gap-3">
+                {mobileGridAds.map((ad) => (
                   <AdCard
                     key={ad.id}
                     ad={ad}
                     isFavorite={isFavorite(ad.id)}
                     canDelete={isAdmin}
+                    variant="real_estate_mobile"
+                    featuredLabel={ad.isFeatured ? 'TOP' : undefined}
                     onDeleted={(adId) => {
                       setAds((previous) => previous.filter((item) => item.id !== adId));
                     }}
