@@ -3,12 +3,17 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight, ArrowUpDown, ListFilter, Loader2, MapPinned } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, MapPinned } from 'lucide-react';
 import { AdCard } from '@/components/ads/AdCard';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { VerticalBar } from '@/components/layout/VerticalBar';
 import { RealEstateFilterSheet } from '@/components/marketplace/RealEstateFilterSheet';
 import { RealEstateFullscreenMapOverlay } from '@/components/marketplace/RealEstateFullscreenMapOverlay';
+import {
+  ListingsShowcaseSkeleton,
+  MarketplaceErrorState,
+  MarketplaceStatusCard,
+} from '@/components/marketplace/MarketplaceStates';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +69,7 @@ export function RealEstateMarketplacePage() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [isLoadingAds, setIsLoadingAds] = useState(true);
   const [adsError, setAdsError] = useState<string | null>(null);
+  const [loadRequestNonce, setLoadRequestNonce] = useState(0);
   const [selectedAdId, setSelectedAdId] = useState<string | undefined>(undefined);
   const [locationState, setLocationState] = useState<LocationState>('idle');
   const [userCoordinates, setUserCoordinates] = useState<Location | null>(null);
@@ -77,6 +83,7 @@ export function RealEstateMarketplacePage() {
   const activeCategoryLabel = activeCategoryRecord
     ? getLocalizedText(activeCategoryRecord.name, locale)
     : activeCategory;
+  const retryLabel = locale === 'ru' ? 'Повторить' : locale === 'en' ? 'Retry' : 'Qayta urinish';
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -114,7 +121,7 @@ export function RealEstateMarketplacePage() {
     return () => {
       abortController.abort();
     };
-  }, [activeCategory, query]);
+  }, [activeCategory, loadRequestNonce, query]);
 
   const filteredAds = useMemo(
     () => ads.filter((ad) => matchesRealEstateFilters(ad, filters)),
@@ -318,37 +325,39 @@ export function RealEstateMarketplacePage() {
         </div>
 
         {isLoadingAds ? (
-          <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
-            <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-primary" />
-            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
-              {messages.home.loadingListings}
-            </h2>
-          </section>
+          <ListingsShowcaseSkeleton
+            title={messages.home.loadingListings}
+            description={viewCopy.galleryDescription}
+            count={6}
+          />
         ) : adsError ? (
-          <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
-            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
-              {messages.createAd.submitError}
-            </h2>
-            <p className="mx-auto max-w-2xl text-muted-foreground">{adsError}</p>
-          </section>
+          <MarketplaceErrorState
+            title={messages.createAd.submitError}
+            description={adsError}
+            retryLabel={retryLabel}
+            onRetry={() => {
+              setLoadRequestNonce((currentValue) => currentValue + 1);
+            }}
+            secondaryAction={{
+              label: messages.home.clearFilters,
+              onClick: handleResetAllFilters,
+              variant: 'outline',
+            }}
+          />
         ) : filteredAds.length === 0 ? (
-          <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
-            <ListFilter className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
-              {messages.home.noResultsTitle}
-            </h2>
-            <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
-              {messages.home.noResultsDescription}
-            </p>
-            <div className="flex flex-col justify-center gap-3 min-[481px]:flex-row">
-              <Button type="button" className="w-full min-[481px]:w-auto" onClick={handleResetAllFilters}>
-                {messages.home.clearFilters}
-              </Button>
-              <Button asChild variant="outline" className="w-full min-[481px]:w-auto">
-                <Link href="/ads/create?vertical=real_estate">{messages.home.startSelling}</Link>
-              </Button>
-            </div>
-          </section>
+          <MarketplaceStatusCard
+            title={messages.home.noResultsTitle}
+            description={messages.home.noResultsDescription}
+            primaryAction={{
+              label: messages.home.clearFilters,
+              onClick: handleResetAllFilters,
+            }}
+            secondaryAction={{
+              label: messages.home.startSelling,
+              href: '/ads/create?vertical=real_estate',
+              variant: 'outline',
+            }}
+          />
         ) : (
           <>
             <section className="phone-nav-only mx-[calc(var(--page-gutter)*-1)] flex-col gap-6 bg-transparent px-[var(--page-gutter)] pb-6 pt-2 text-foreground">

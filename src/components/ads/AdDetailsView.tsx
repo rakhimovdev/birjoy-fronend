@@ -25,6 +25,11 @@ import { useEffect, useState } from 'react';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { AdCard } from '@/components/ads/AdCard';
 import { AdShareActions } from '@/components/ads/AdShareActions';
+import {
+  AdDetailsSkeleton,
+  MarketplaceErrorState,
+  MarketplaceStatusCard,
+} from '@/components/marketplace/MarketplaceStates';
 import { RealEstateListingsMap } from '@/components/maps/RealEstateListingsMap';
 import {
   AlertDialog,
@@ -103,8 +108,10 @@ export function AdDetailsView({
   const [desktopDetailCarouselApi, setDesktopDetailCarouselApi] = useState<CarouselApi>();
   const [isLoading, setIsLoading] = useState(!initialAd);
   const [error, setError] = useState<string | null>(null);
+  const [loadRequestNonce, setLoadRequestNonce] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isStartingChat, setIsStartingChat] = useState(false);
+  const retryLabel = locale === 'ru' ? 'Повторить' : locale === 'en' ? 'Retry' : 'Qayta urinish';
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -153,7 +160,7 @@ export function AdDetailsView({
     return () => {
       abortController.abort();
     };
-  }, [adId, initialAd, messages.adDetails.notFound]);
+  }, [adId, initialAd, loadRequestNonce, messages.adDetails.notFound]);
 
   useEffect(() => {
     const currentAd = ad;
@@ -295,9 +302,7 @@ export function AdDetailsView({
     return (
       <MarketplaceShell>
         <main className="marketplace-main">
-          <div className="surface-card rounded-[1.75rem] px-6 py-12 text-center">
-            <h1 className="text-2xl font-bold tracking-tight">{messages.adDetails.loading}</h1>
-          </div>
+          <AdDetailsSkeleton title={messages.adDetails.loading} />
         </main>
       </MarketplaceShell>
     );
@@ -307,13 +312,30 @@ export function AdDetailsView({
     return (
       <MarketplaceShell>
         <main className="marketplace-main">
-          <div className="surface-card rounded-[1.75rem] px-6 py-12 text-center">
-            <h1 className="mb-3 text-2xl font-bold tracking-tight">{messages.adDetails.notFound}</h1>
-            <p className="mb-8 text-muted-foreground">{error || messages.adDetails.notFound}</p>
-            <Button asChild>
-              <Link href="/">{messages.adDetails.backToListings}</Link>
-            </Button>
-          </div>
+          {error ? (
+            <MarketplaceErrorState
+              title={messages.adDetails.notFound}
+              description={error}
+              retryLabel={retryLabel}
+              onRetry={() => {
+                setLoadRequestNonce((currentValue) => currentValue + 1);
+              }}
+              secondaryAction={{
+                label: messages.adDetails.backToListings,
+                href: '/',
+                variant: 'outline',
+              }}
+            />
+          ) : (
+            <MarketplaceStatusCard
+              title={messages.adDetails.notFound}
+              description={messages.adDetails.notFound}
+              primaryAction={{
+                label: messages.adDetails.backToListings,
+                href: '/',
+              }}
+            />
+          )}
         </main>
       </MarketplaceShell>
     );

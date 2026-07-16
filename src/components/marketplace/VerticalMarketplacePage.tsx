@@ -3,10 +3,15 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { VerticalBar } from '@/components/layout/VerticalBar';
 import { AdCard } from '@/components/ads/AdCard';
+import {
+  ListingsShowcaseSkeleton,
+  MarketplaceErrorState,
+  MarketplaceStatusCard,
+} from '@/components/marketplace/MarketplaceStates';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -25,6 +30,7 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
   const [ads, setAds] = useState<Ad[]>([]);
   const [isLoadingAds, setIsLoadingAds] = useState(true);
   const [adsError, setAdsError] = useState<string | null>(null);
+  const [loadRequestNonce, setLoadRequestNonce] = useState(0);
   const query = searchParams.get('q')?.trim() ?? '';
   const category = searchParams.get('category')?.trim() ?? '';
   const basePath = getVerticalHref(vertical);
@@ -33,6 +39,7 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
   const activeCategoryLabel = activeCategoryRecord
     ? getLocalizedText(activeCategoryRecord.name, locale)
     : activeCategory;
+  const retryLabel = locale === 'ru' ? 'Повторить' : locale === 'en' ? 'Retry' : 'Qayta urinish';
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -70,7 +77,7 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
     return () => {
       abortController.abort();
     };
-  }, [activeCategory, query, vertical]);
+  }, [activeCategory, loadRequestNonce, query, vertical]);
 
   const filteredAds = ads;
   const hasFilters = Boolean(query || activeCategory);
@@ -100,36 +107,39 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
         ) : null}
 
         {isLoadingAds ? (
-          <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
-            <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-primary" />
-            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
-              {messages.home.loadingListings}
-            </h2>
-          </section>
+          <ListingsShowcaseSkeleton
+            title={messages.home.loadingListings}
+            description={messages.home.resultsDescription}
+            count={6}
+          />
         ) : adsError ? (
-          <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
-            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
-              {messages.createAd.submitError}
-            </h2>
-            <p className="mx-auto max-w-2xl text-muted-foreground">{adsError}</p>
-          </section>
+          <MarketplaceErrorState
+            title={messages.createAd.submitError}
+            description={adsError}
+            retryLabel={retryLabel}
+            onRetry={() => {
+              setLoadRequestNonce((currentValue) => currentValue + 1);
+            }}
+            secondaryAction={{
+              label: messages.home.clearFilters,
+              href: basePath,
+              variant: 'outline',
+            }}
+          />
         ) : filteredAds.length === 0 ? (
-          <section className="surface-card rounded-[1.75rem] px-5 py-12 text-center sm:px-6">
-            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
-              {messages.home.noResultsTitle}
-            </h2>
-            <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
-              {messages.home.noResultsDescription}
-            </p>
-            <div className="flex flex-col justify-center gap-3 min-[481px]:flex-row">
-              <Button asChild className="w-full min-[481px]:w-auto">
-                <Link href={basePath}>{messages.home.clearFilters}</Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full min-[481px]:w-auto">
-                <Link href={`/ads/create?vertical=${vertical}`}>{messages.home.startSelling}</Link>
-              </Button>
-            </div>
-          </section>
+          <MarketplaceStatusCard
+            title={messages.home.noResultsTitle}
+            description={messages.home.noResultsDescription}
+            primaryAction={{
+              label: messages.home.clearFilters,
+              href: basePath,
+            }}
+            secondaryAction={{
+              label: messages.home.startSelling,
+              href: `/ads/create?vertical=${vertical}`,
+              variant: 'outline',
+            }}
+          />
         ) : (
           <section id="all-listings" className="surface-card section-shell rounded-[1.85rem]">
             <div className="section-header">
