@@ -375,6 +375,7 @@ export function AdDetailsView({
           title: 'Что сделать с объявлением?',
           description:
             'Вы можете отметить объявление как проданное или удалить его навсегда.',
+          manageButton: 'Продано / Удалить',
           soldAction: 'Продано',
           deleteAction: 'Удалить',
           cancel: 'Отмена',
@@ -391,6 +392,7 @@ export function AdDetailsView({
             title: 'What would you like to do with this listing?',
             description:
               'You can mark the listing as sold or delete it permanently.',
+            manageButton: 'Sold / Delete',
             soldAction: 'Mark sold',
             deleteAction: 'Delete',
             cancel: 'Cancel',
@@ -406,6 +408,7 @@ export function AdDetailsView({
             title: 'Eʼlon bilan nima qilmoqchisiz?',
             description:
               'Uni sotildi deb belgilab aktiv ro‘yxatdan yashirishingiz yoki butunlay o‘chirishingiz mumkin.',
+            manageButton: 'Sotildi / O‘chirish',
             soldAction: 'Sotildi',
             deleteAction: "O‘chirish",
             cancel: 'Bekor qilish',
@@ -804,7 +807,7 @@ export function AdDetailsView({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 rounded-full border border-white/10 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                      className="touch-target h-12 w-12 rounded-full border border-white/10 bg-transparent text-white hover:bg-white/10 hover:text-white sm:h-10 sm:w-10"
                       onClick={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
@@ -918,6 +921,45 @@ export function AdDetailsView({
                   </Link>
                 </Button>
               )}
+
+              {isOwnListing ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="min-h-14 rounded-full bg-white text-base font-semibold text-black shadow-none hover:bg-white/90"
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      {manageCopy.manageButton}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{manageCopy.title}</AlertDialogTitle>
+                      <AlertDialogDescription>{manageCopy.description}</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{manageCopy.cancel}</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        onClick={() => void handleMarkAsSold()}
+                        disabled={isDeleting}
+                      >
+                        {manageCopy.soldAction}
+                      </AlertDialogAction>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={() => void handleDeleteAd()}
+                        disabled={isDeleting}
+                      >
+                        {manageCopy.deleteAction}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : null}
 
               <Button asChild variant="secondary" className="min-h-14 rounded-full bg-white text-base font-semibold text-black shadow-none hover:bg-white/90">
                 <Link href={getVerticalHref(ad.vertical)}>

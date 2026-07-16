@@ -354,7 +354,7 @@ export function AdCard({
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  'absolute right-3 z-10 h-9 w-9 rounded-full border border-white/10 bg-black/45 text-white shadow-sm backdrop-blur-md hover:bg-black/60 hover:text-white',
+                  'touch-target absolute right-3 z-20 h-12 w-12 rounded-full border border-white/10 bg-black/45 text-white shadow-sm backdrop-blur-md hover:bg-black/60 hover:text-white sm:h-10 sm:w-10',
                   mobileRibbonLabel ? 'top-14' : 'top-3'
                 )}
                 onClick={(event) => {
@@ -464,7 +464,7 @@ export function AdCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 rounded-full border border-border/60 bg-background/88 text-destructive shadow-sm backdrop-blur-sm transition-colors hover:bg-background sm:h-10 sm:w-10"
+                  className="touch-target h-12 w-12 rounded-full border border-border/60 bg-background/88 text-destructive shadow-sm backdrop-blur-sm transition-colors hover:bg-background sm:h-10 sm:w-10"
                   onClick={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
