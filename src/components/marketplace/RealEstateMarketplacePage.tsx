@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, ArrowUpDown, ListFilter, Loader2, MapPinned } from 'lucide-react';
 import { AdCard } from '@/components/ads/AdCard';
-import { BrandLogo } from '@/components/brand/BrandLogo';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { VerticalBar } from '@/components/layout/VerticalBar';
 import { RealEstateFilterSheet } from '@/components/marketplace/RealEstateFilterSheet';
@@ -353,12 +352,29 @@ export function RealEstateMarketplacePage() {
         ) : (
           <>
             <section className="phone-nav-only mx-[calc(var(--page-gutter)*-1)] flex-col gap-6 bg-[#050505] px-[var(--page-gutter)] pb-6 pt-2 text-white">
-              <div className="flex items-center justify-between gap-4 rounded-[2rem] border border-white/8 bg-white/[0.03] px-4 py-4 shadow-[0_18px_38px_rgba(0,0,0,0.32)]">
-                <BrandLogo size="sm" className="[--brand-wordmark-primary:#FFFFFF] [--brand-tagline-color:rgba(255,255,255,0.7)] [--brand-tagline-line:rgba(255,255,255,0.18)]" />
-                <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full bg-[#151515] text-center text-[0.72rem] font-black uppercase leading-4 text-[#FFD028] shadow-[0_12px_24px_rgba(0,0,0,0.25)]">
-                  <span>TOP</span>
-                  <span>10</span>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="min-w-0">
+                  <RealEstateFilterSheet
+                    locale={locale}
+                    filters={filters}
+                    onApply={handleApplyFilters}
+                    onClear={handleClearFilters}
+                    buttonVariant="ghost"
+                    buttonClassName="w-full min-h-12 justify-center rounded-[1.2rem] border border-white/10 bg-white/[0.04] text-white shadow-none hover:bg-white/[0.08] hover:text-white"
+                  />
                 </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="min-h-12 rounded-[1.2rem] border border-white/10 bg-white/[0.04] text-white shadow-none hover:bg-white/[0.08] hover:text-white"
+                  onClick={() => {
+                    setSelectedAdId(undefined);
+                    setIsMapOpen(true);
+                  }}
+                >
+                  <MapPinned className="h-4 w-4" />
+                  {viewCopy.map}
+                </Button>
               </div>
 
               {mobileFeaturedAds.length > 0 ? (
@@ -396,31 +412,6 @@ export function RealEstateMarketplacePage() {
                     {viewCopy.sortLabel}: <span className="font-medium text-white/88">{viewCopy.sortValue}</span>
                   </span>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="min-w-0">
-                  <RealEstateFilterSheet
-                    locale={locale}
-                    filters={filters}
-                    onApply={handleApplyFilters}
-                    onClear={handleClearFilters}
-                    buttonVariant="ghost"
-                    buttonClassName="w-full min-h-12 justify-center rounded-[1.2rem] border border-white/10 bg-white/[0.04] text-white shadow-none hover:bg-white/[0.08] hover:text-white"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="min-h-12 rounded-[1.2rem] border border-white/10 bg-white/[0.04] text-white shadow-none hover:bg-white/[0.08] hover:text-white"
-                  onClick={() => {
-                    setSelectedAdId(undefined);
-                    setIsMapOpen(true);
-                  }}
-                >
-                  <MapPinned className="h-4 w-4" />
-                  {viewCopy.map}
-                </Button>
               </div>
 
               <section className="grid grid-cols-2 gap-3">
