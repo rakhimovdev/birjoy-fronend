@@ -29,9 +29,10 @@ import { getLocalizedText, languageMeta } from '@/lib/i18n';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { useToast } from '@/hooks/use-toast';
-import { getConditionLabel } from '@/lib/ads';
+import { deleteAd, getConditionLabel } from '@/lib/ads';
 import { deleteAdminAd } from '@/lib/admin';
 import { getAdDisplayLocation } from '@/lib/listing-utils';
+import { useAdminSession } from '@/hooks/use-admin-session';
 
 interface AdCardProps {
   ad: Ad;
@@ -56,6 +57,7 @@ export function AdCard({
   const router = useRouter();
   const { toast } = useToast();
   const { user, toggleFavorite } = useAuth();
+  const { isAdmin } = useAdminSession();
   const { locale, messages } = useI18n();
   const [mounted, setMounted] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -83,7 +85,7 @@ export function AdCard({
           confirm: 'Удалить',
           cancel: 'Отмена',
           successTitle: 'Объявление удалено',
-          successDescription: 'Объявление было успешно удалено администратором.',
+          successDescription: 'Объявление было успешно удалено.',
           errorTitle: 'Не удалось удалить объявление',
         }
       : locale === 'en'
@@ -95,7 +97,7 @@ export function AdCard({
             confirm: 'Delete',
             cancel: 'Cancel',
             successTitle: 'Listing deleted',
-            successDescription: 'The listing was removed by the admin.',
+            successDescription: 'The listing was removed successfully.',
             errorTitle: 'Listing could not be deleted',
           }
         : {
@@ -106,7 +108,7 @@ export function AdCard({
             confirm: "O‘chirish",
             cancel: 'Bekor qilish',
             successTitle: "Eʼlon o‘chirildi",
-            successDescription: 'Eʼlon admin tomonidan muvaffaqiyatli olib tashlandi.',
+            successDescription: 'Eʼlon muvaffaqiyatli o‘chirildi.',
             errorTitle: "Eʼlon o‘chirilmadi",
           };
 
@@ -127,6 +129,9 @@ export function AdCard({
     featuredLabel || (ad.isFeatured ? messages.adCard.featured : '');
   const hasLocation = localizedLocation.trim().length > 0;
   const hasMultipleImages = ad.images.length > 1;
+  const isOwner = user?.id === ad.userId;
+  const canManageAd = canDelete || isAdmin || isOwner;
+  const shouldDeleteAsAdmin = canDelete || (isAdmin && !isOwner);
   const postedAtLabel = mounted
     ? formatDistanceToNow(new Date(ad.createdAt), {
         addSuffix: true,
@@ -161,7 +166,12 @@ export function AdCard({
     setIsDeleting(true);
 
     try {
-      await deleteAdminAd(ad.id);
+      if (shouldDeleteAsAdmin) {
+        await deleteAdminAd(ad.id);
+      } else {
+        await deleteAd(ad.id);
+      }
+
       onDeleted?.(ad.id);
       toast({
         title: deleteCopy.successTitle,
@@ -178,7 +188,7 @@ export function AdCard({
     }
   };
 
-  if (variant !== 'default' && !canDelete) {
+  if (variant !== 'default') {
     const isCompactVariant = variant === 'real_estate_mobile_compact';
 
     return (
@@ -230,6 +240,48 @@ export function AdCard({
             </span>
             <span className="truncate text-[0.82rem] font-semibold">{userChipLabel}</span>
           </div>
+
+          {canManageAd ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    'absolute right-3 z-10 h-9 w-9 rounded-full border border-white/10 bg-black/45 text-white shadow-sm backdrop-blur-md hover:bg-black/60 hover:text-white',
+                    mobileRibbonLabel ? 'top-14' : 'top-3'
+                  )}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                  disabled={isDeleting}
+                  aria-label={deleteCopy.action}
+                >
+                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{deleteCopy.confirmTitle}</AlertDialogTitle>
+                  <AlertDialogDescription>{deleteCopy.confirmDescription}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{deleteCopy.cancel}</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      void handleDeleteAd();
+                    }}
+                    disabled={isDeleting}
+                  >
+                    {deleteCopy.confirm}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : null}
 
           {mobileRibbonLabel ? (
             <div className="absolute -right-9 top-4 z-10 rotate-45 bg-[#FFD028] px-10 py-1 text-[0.72rem] font-black uppercase tracking-[0.16em] text-black shadow-[0_8px_18px_rgba(0,0,0,0.26)]">
@@ -343,7 +395,7 @@ export function AdCard({
           </Badge>
         ) : null}
         <div className="absolute right-2 top-2 z-20 flex items-center gap-2 sm:right-3 sm:top-3">
-          {canDelete ? (
+          {canManageAd ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button

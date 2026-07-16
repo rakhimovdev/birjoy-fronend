@@ -48,7 +48,7 @@ import { getLocalizedText, languageMeta } from '@/lib/i18n';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { useToast } from '@/hooks/use-toast';
-import { fetchAdById, fetchAds, getConditionLabel } from '@/lib/ads';
+import { deleteAd, fetchAdById, fetchAds, getConditionLabel } from '@/lib/ads';
 import { deleteAdminAd } from '@/lib/admin';
 import { createChatConversation } from '@/lib/chat';
 import { useAdminSession } from '@/hooks/use-admin-session';
@@ -356,6 +356,8 @@ export function AdDetailsView({
   }>;
   const propertyMapAds = isRealEstate ? [ad, ...nearbyAds] : [ad];
   const isOwnListing = user?.id === ad.userId;
+  const canDeleteListing = isAdmin || isOwnListing;
+  const shouldDeleteAsAdmin = isAdmin && !isOwnListing;
   const isCurrentAdFavorite = isFavorite(ad.id);
   const formattedPrice = new Intl.NumberFormat(languageMeta[locale].numberLocale, {
     style: 'currency',
@@ -376,7 +378,7 @@ export function AdDetailsView({
           confirm: 'Удалить',
           cancel: 'Отмена',
           successTitle: 'Объявление удалено',
-          successDescription: 'Объявление было успешно удалено администратором.',
+          successDescription: 'Объявление было успешно удалено.',
           errorTitle: 'Не удалось удалить объявление',
         }
       : locale === 'en'
@@ -388,7 +390,7 @@ export function AdDetailsView({
             confirm: 'Delete',
             cancel: 'Cancel',
             successTitle: 'Listing deleted',
-            successDescription: 'The listing was removed by the admin.',
+            successDescription: 'The listing was removed successfully.',
             errorTitle: 'Listing could not be deleted',
           }
         : {
@@ -399,7 +401,7 @@ export function AdDetailsView({
             confirm: "O‘chirish",
             cancel: 'Bekor qilish',
             successTitle: "Eʼlon o‘chirildi",
-            successDescription: 'Eʼlon admin tomonidan muvaffaqiyatli olib tashlandi.',
+            successDescription: 'Eʼlon muvaffaqiyatli o‘chirildi.',
             errorTitle: "Eʼlon o‘chirilmadi",
           };
   const chatCopy =
@@ -518,12 +520,17 @@ export function AdDetailsView({
     setIsDeleting(true);
 
     try {
-      await deleteAdminAd(ad.id);
+      if (shouldDeleteAsAdmin) {
+        await deleteAdminAd(ad.id);
+      } else {
+        await deleteAd(ad.id);
+      }
+
       toast({
         title: deleteCopy.successTitle,
         description: deleteCopy.successDescription,
       });
-      router.push('/');
+      router.push(getVerticalHref(ad.vertical));
     } catch (deleteError) {
       toast({
         title: deleteCopy.errorTitle,
@@ -631,7 +638,7 @@ export function AdDetailsView({
                 quickActionClassName="w-full min-[481px]:w-auto"
                 menuButtonClassName="h-11 w-11 rounded-[1.15rem]"
               />
-              {isAdmin ? (
+              {canDeleteListing ? (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" className="w-full gap-2 min-[481px]:w-auto" disabled={isDeleting}>
@@ -739,6 +746,42 @@ export function AdDetailsView({
               >
                 <Info className="h-5 w-5" />
               </Button>
+              {canDeleteListing ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 rounded-full border border-white/10 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                      }}
+                      disabled={isDeleting}
+                      aria-label={deleteCopy.action}
+                    >
+                      {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-5 w-5" />}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{deleteCopy.confirmTitle}</AlertDialogTitle>
+                      <AlertDialogDescription>{deleteCopy.confirmDescription}</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{deleteCopy.cancel}</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={() => void handleDeleteAd()}
+                        disabled={isDeleting}
+                      >
+                        {deleteCopy.confirm}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : null}
             </div>
 
             <div className="absolute bottom-14 left-4 flex items-center gap-2 rounded-full border border-white/10 bg-black/45 px-3 py-2 backdrop-blur-md">

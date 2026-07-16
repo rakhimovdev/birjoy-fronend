@@ -362,6 +362,21 @@ export async function updateAd(id: string, input: CreateAdInput) {
   return normalizeRemoteAd(data.ad);
 }
 
+export async function deleteAd(id: string) {
+  const data = await requestAdsApi(
+    `/ads/${id}`,
+    {
+      method: 'DELETE',
+    },
+    {
+      skipCache: true,
+    }
+  );
+
+  invalidateAdsCache();
+  return data.ad ? normalizeRemoteAd(data.ad) : null;
+}
+
 export function getConditionLabel(condition: AdCondition, locale: Language) {
   return AD_CONDITIONS.find((item) => item.value === condition)?.label[locale] || condition;
 }
