@@ -37,7 +37,7 @@ export type Ad = {
   sellerPhone: string;
   createdAt: string;
   isFeatured?: boolean;
-  status: 'active' | 'pending' | 'flagged';
+  status: 'active' | 'pending' | 'flagged' | 'sold';
 };
 
 export type UserProfile = {

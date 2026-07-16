@@ -113,6 +113,7 @@ const adminPageTranslations = {
     activeStatus: 'Faol',
     pendingStatus: 'Kutilmoqda',
     flaggedStatus: 'Flag qilingan',
+    soldStatus: 'Sotildi',
     deleteConfirmTitle: 'Eʼlonni o‘chirasizmi?',
     deleteConfirmDescription:
       'Bu amal qaytarilmaydi. Eʼlon marketplace ichidan olib tashlanadi, lekin eski buyurtma yozuvlari saqlanib qoladi.',
@@ -185,6 +186,7 @@ const adminPageTranslations = {
     activeStatus: 'Активно',
     pendingStatus: 'Ожидает',
     flaggedStatus: 'Помечено',
+    soldStatus: 'Продано',
     deleteConfirmTitle: 'Удалить объявление?',
     deleteConfirmDescription:
       'Это действие необратимо. Объявление исчезнет из маркетплейса, но старые записи заявок сохранятся.',
@@ -257,6 +259,7 @@ const adminPageTranslations = {
     activeStatus: 'Active',
     pendingStatus: 'Pending',
     flaggedStatus: 'Flagged',
+    soldStatus: 'Sold',
     deleteConfirmTitle: 'Delete this listing?',
     deleteConfirmDescription:
       'This action cannot be undone. The listing will be removed from the marketplace, but existing order records will remain.',
@@ -690,7 +693,9 @@ export default function AdminPage() {
                                   ? copy.activeStatus
                                   : ad.status === 'pending'
                                     ? copy.pendingStatus
-                                    : copy.flaggedStatus}
+                                    : ad.status === 'flagged'
+                                      ? copy.flaggedStatus
+                                      : copy.soldStatus}
                               </Badge>
                             </TableCell>
                             <TableCell className="min-w-[160px] text-sm text-muted-foreground">

@@ -559,6 +559,11 @@ function ProfilePageContent() {
                           onDeleted={(adId) => {
                             setAds((previous) => previous.filter((item) => item.id !== adId));
                           }}
+                          onUpdated={(updatedAd) => {
+                            setAds((previous) =>
+                              previous.map((item) => (item.id === updatedAd.id ? updatedAd : item))
+                            );
+                          }}
                         />
                       ))
                     ) : (
@@ -595,6 +600,11 @@ function ProfilePageContent() {
                           canDelete={isAdmin}
                           onDeleted={(adId) => {
                             setAds((previous) => previous.filter((item) => item.id !== adId));
+                          }}
+                          onUpdated={(updatedAd) => {
+                            setAds((previous) =>
+                              previous.map((item) => (item.id === updatedAd.id ? updatedAd : item))
+                            );
                           }}
                         />
                       ))

@@ -66,7 +66,7 @@ export const AD_CONDITIONS: Array<{ value: AdCondition; label: LocalizedText }> 
   },
 ];
 
-type AdsStatus = 'active' | 'pending' | 'flagged';
+type AdsStatus = Ad['status'];
 
 type RequestAdsApiOptions = {
   cacheTtlMs?: number;
@@ -356,6 +356,26 @@ export async function updateAd(id: string, input: CreateAdInput) {
 
   if (!data.ad) {
     throw new Error('Ad was not updated.');
+  }
+
+  invalidateAdsCache();
+  return normalizeRemoteAd(data.ad);
+}
+
+export async function updateAdStatus(id: string, status: AdsStatus) {
+  const data = await requestAdsApi(
+    `/ads/${id}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    },
+    {
+      skipCache: true,
+    }
+  );
+
+  if (!data.ad) {
+    throw new Error('Ad status was not updated.');
   }
 
   invalidateAdsCache();

@@ -29,7 +29,7 @@ import { getLocalizedText, languageMeta } from '@/lib/i18n';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { useToast } from '@/hooks/use-toast';
-import { deleteAd, getConditionLabel } from '@/lib/ads';
+import { deleteAd, getConditionLabel, updateAdStatus } from '@/lib/ads';
 import { deleteAdminAd } from '@/lib/admin';
 import { getAdDisplayLocation } from '@/lib/listing-utils';
 import { useAdminSession } from '@/hooks/use-admin-session';
@@ -40,6 +40,7 @@ interface AdCardProps {
   isFavorite?: boolean;
   canDelete?: boolean;
   onDeleted?: (adId: string) => void;
+  onUpdated?: (ad: Ad) => void;
   variant?: 'default' | 'real_estate_mobile' | 'real_estate_mobile_compact';
   featuredLabel?: string;
 }
@@ -50,6 +51,7 @@ export function AdCard({
   isFavorite = false,
   canDelete = false,
   onDeleted,
+  onUpdated,
   variant = 'default',
   featuredLabel,
 }: AdCardProps) {
@@ -75,42 +77,54 @@ export function AdCard({
       ? [ad.rooms ? `${ad.rooms}R` : '', ad.area ? `${ad.area} m²` : ''].filter(Boolean).join(' · ')
       : '';
   const secondaryMetaLabel = ad.vertical === 'real_estate' && realEstateMeta ? realEstateMeta : localizedCondition;
-  const deleteCopy =
+  const manageCopy =
     locale === 'ru'
       ? {
           action: 'Удалить',
-          confirmTitle: 'Удалить объявление?',
-          confirmDescription:
-            'Это действие необратимо. Объявление исчезнет из витрины для всех пользователей.',
-          confirm: 'Удалить',
+          title: 'Что сделать с объявлением?',
+          description:
+            'Вы можете отметить объявление как проданное или удалить его навсегда.',
+          soldAction: 'Продано',
+          deleteAction: 'Удалить',
           cancel: 'Отмена',
-          successTitle: 'Объявление удалено',
-          successDescription: 'Объявление было успешно удалено.',
-          errorTitle: 'Не удалось удалить объявление',
+          soldSuccessTitle: 'Объявление отмечено как проданное',
+          soldSuccessDescription: 'Объявление снято с активной витрины.',
+          deleteSuccessTitle: 'Объявление удалено',
+          deleteSuccessDescription: 'Объявление было успешно удалено.',
+          errorTitle: 'Не удалось выполнить действие',
+          soldStatus: 'Продано',
         }
       : locale === 'en'
         ? {
-            action: 'Delete',
-            confirmTitle: 'Delete this listing?',
-            confirmDescription:
-              'This action cannot be undone. The listing will disappear from the marketplace for everyone.',
-            confirm: 'Delete',
-            cancel: 'Cancel',
-            successTitle: 'Listing deleted',
-            successDescription: 'The listing was removed successfully.',
-            errorTitle: 'Listing could not be deleted',
-          }
-        : {
-            action: "O‘chirish",
-            confirmTitle: "Eʼlonni o‘chirasizmi?",
-            confirmDescription:
-              "Bu amal qaytarilmaydi. Eʼlon barcha foydalanuvchilar uchun marketplace'dan olib tashlanadi.",
-            confirm: "O‘chirish",
-            cancel: 'Bekor qilish',
-            successTitle: "Eʼlon o‘chirildi",
-            successDescription: 'Eʼlon muvaffaqiyatli o‘chirildi.',
-            errorTitle: "Eʼlon o‘chirilmadi",
-          };
+          action: 'Delete',
+          title: 'What would you like to do with this listing?',
+          description:
+            'You can mark the listing as sold or delete it permanently.',
+          soldAction: 'Mark sold',
+          deleteAction: 'Delete',
+          cancel: 'Cancel',
+          soldSuccessTitle: 'Listing marked as sold',
+          soldSuccessDescription: 'The listing was removed from active browsing.',
+          deleteSuccessTitle: 'Listing deleted',
+          deleteSuccessDescription: 'The listing was removed successfully.',
+          errorTitle: 'The action could not be completed',
+          soldStatus: 'Sold',
+        }
+      : {
+          action: "O‘chirish",
+          title: 'Eʼlon bilan nima qilmoqchisiz?',
+          description:
+            'Uni sotildi deb belgilab aktiv ro‘yxatdan yashirishingiz yoki butunlay o‘chirishingiz mumkin.',
+          soldAction: 'Sotildi',
+          deleteAction: "O‘chirish",
+          cancel: 'Bekor qilish',
+          soldSuccessTitle: 'Eʼlon sotildi deb belgilandi',
+          soldSuccessDescription: 'Eʼlon aktiv ro‘yxatdan olib tashlandi.',
+          deleteSuccessTitle: "Eʼlon o‘chirildi",
+          deleteSuccessDescription: 'Eʼlon muvaffaqiyatli o‘chirildi.',
+          errorTitle: 'Amal bajarilmadi',
+          soldStatus: 'Sotildi',
+        };
 
   const formattedPrice = new Intl.NumberFormat(languageMeta[locale].numberLocale, {
     style: 'currency',
@@ -162,6 +176,33 @@ export function AdCard({
     };
   }, [carouselApi]);
 
+  const handleMarkAsSold = async () => {
+    setIsDeleting(true);
+
+    try {
+      const updatedAd = await updateAdStatus(ad.id, 'sold');
+
+      if (onUpdated) {
+        onUpdated(updatedAd);
+      } else if (updatedAd.status !== 'active') {
+        onDeleted?.(ad.id);
+      }
+
+      toast({
+        title: manageCopy.soldSuccessTitle,
+        description: manageCopy.soldSuccessDescription,
+      });
+    } catch (error) {
+      toast({
+        title: manageCopy.errorTitle,
+        description: error instanceof Error ? error.message : messages.auth.requestFailedDescription,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleDeleteAd = async () => {
     setIsDeleting(true);
 
@@ -174,12 +215,12 @@ export function AdCard({
 
       onDeleted?.(ad.id);
       toast({
-        title: deleteCopy.successTitle,
-        description: deleteCopy.successDescription,
+        title: manageCopy.deleteSuccessTitle,
+        description: manageCopy.deleteSuccessDescription,
       });
     } catch (error) {
       toast({
-        title: deleteCopy.errorTitle,
+        title: manageCopy.errorTitle,
         description: error instanceof Error ? error.message : messages.auth.requestFailedDescription,
         variant: 'destructive',
       });
@@ -321,18 +362,28 @@ export function AdCard({
                   event.stopPropagation();
                 }}
                 disabled={isDeleting}
-                aria-label={deleteCopy.action}
+                aria-label={manageCopy.action}
               >
                 {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>{deleteCopy.confirmTitle}</AlertDialogTitle>
-                <AlertDialogDescription>{deleteCopy.confirmDescription}</AlertDialogDescription>
+                <AlertDialogTitle>{manageCopy.title}</AlertDialogTitle>
+                <AlertDialogDescription>{manageCopy.description}</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>{deleteCopy.cancel}</AlertDialogCancel>
+                <AlertDialogCancel>{manageCopy.cancel}</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    void handleMarkAsSold();
+                  }}
+                  disabled={isDeleting}
+                >
+                  {manageCopy.soldAction}
+                </AlertDialogAction>
                 <AlertDialogAction
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   onClick={(event) => {
@@ -341,7 +392,7 @@ export function AdCard({
                   }}
                   disabled={isDeleting}
                 >
-                  {deleteCopy.confirm}
+                  {manageCopy.deleteAction}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -394,11 +445,18 @@ export function AdCard({
           </CarouselContent>
         </Carousel>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/45 via-slate-950/10 to-transparent" />
-        {ad.isFeatured ? (
-          <Badge className="absolute left-2 top-2 z-20 rounded-full bg-accent px-2.5 py-1 text-[0.68rem] font-bold text-accent-foreground shadow-sm">
-            {messages.adCard.featured}
-          </Badge>
-        ) : null}
+        <div className="absolute left-2 top-2 z-20 flex flex-wrap items-center gap-2">
+          {ad.status === 'sold' ? (
+            <Badge className="rounded-full border-transparent bg-amber-500/18 px-2.5 py-1 text-[0.68rem] font-bold text-amber-100 shadow-sm dark:text-amber-200">
+              {manageCopy.soldStatus}
+            </Badge>
+          ) : null}
+          {ad.isFeatured ? (
+            <Badge className="rounded-full bg-accent px-2.5 py-1 text-[0.68rem] font-bold text-accent-foreground shadow-sm">
+              {messages.adCard.featured}
+            </Badge>
+          ) : null}
+        </div>
         <div className="absolute right-2 top-2 z-20 flex items-center gap-2 sm:right-3 sm:top-3">
           {canManageAd ? (
             <AlertDialog>
@@ -412,18 +470,28 @@ export function AdCard({
                     event.stopPropagation();
                   }}
                   disabled={isDeleting}
-                  aria-label={deleteCopy.action}
+                  aria-label={manageCopy.action}
                 >
                   {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>{deleteCopy.confirmTitle}</AlertDialogTitle>
-                  <AlertDialogDescription>{deleteCopy.confirmDescription}</AlertDialogDescription>
+                  <AlertDialogTitle>{manageCopy.title}</AlertDialogTitle>
+                  <AlertDialogDescription>{manageCopy.description}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>{deleteCopy.cancel}</AlertDialogCancel>
+                  <AlertDialogCancel>{manageCopy.cancel}</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      void handleMarkAsSold();
+                    }}
+                    disabled={isDeleting}
+                  >
+                    {manageCopy.soldAction}
+                  </AlertDialogAction>
                   <AlertDialogAction
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={(event) => {
@@ -432,7 +500,7 @@ export function AdCard({
                     }}
                     disabled={isDeleting}
                   >
-                    {deleteCopy.confirm}
+                    {manageCopy.deleteAction}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

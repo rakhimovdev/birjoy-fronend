@@ -111,7 +111,7 @@ function normalizePropertyType(value: string | undefined): RealEstatePropertyTyp
 }
 
 function normalizeStatus(value: string | undefined): Ad['status'] {
-  if (value === 'active' || value === 'pending' || value === 'flagged') {
+  if (value === 'active' || value === 'pending' || value === 'flagged' || value === 'sold') {
     return value;
   }
 
