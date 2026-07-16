@@ -192,11 +192,16 @@ export function AdCard({
     const isCompactVariant = variant === 'real_estate_mobile_compact';
 
     return (
-      <Link
-        href={adHref}
-        className={cn('group block focus-visible:outline-none', className)}
+      <article
+        className={cn(
+          'group relative overflow-hidden rounded-[1.7rem] border border-border/55 bg-card/92 shadow-[0_18px_42px_rgba(7,28,85,0.14)] dark:shadow-[0_18px_42px_rgba(0,0,0,0.32)]',
+          className
+        )}
       >
-        <article className="relative overflow-hidden rounded-[1.7rem] border border-border/55 bg-card/92 shadow-[0_18px_42px_rgba(7,28,85,0.14)] dark:shadow-[0_18px_42px_rgba(0,0,0,0.32)]">
+        <Link
+          href={adHref}
+          className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        >
           <Carousel
             setApi={(api) => {
               setCarouselApi(api);
@@ -240,48 +245,6 @@ export function AdCard({
             </span>
             <span className="truncate text-[0.82rem] font-semibold">{userChipLabel}</span>
           </div>
-
-          {canManageAd ? (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    'absolute right-3 z-10 h-9 w-9 rounded-full border border-white/10 bg-black/45 text-white shadow-sm backdrop-blur-md hover:bg-black/60 hover:text-white',
-                    mobileRibbonLabel ? 'top-14' : 'top-3'
-                  )}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                  }}
-                  disabled={isDeleting}
-                  aria-label={deleteCopy.action}
-                >
-                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{deleteCopy.confirmTitle}</AlertDialogTitle>
-                  <AlertDialogDescription>{deleteCopy.confirmDescription}</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{deleteCopy.cancel}</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      void handleDeleteAd();
-                    }}
-                    disabled={isDeleting}
-                  >
-                    {deleteCopy.confirm}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          ) : null}
 
           {mobileRibbonLabel ? (
             <div className="absolute -right-9 top-4 z-10 rotate-45 bg-[#FFD028] px-10 py-1 text-[0.72rem] font-black uppercase tracking-[0.16em] text-black shadow-[0_8px_18px_rgba(0,0,0,0.26)]">
@@ -341,8 +304,50 @@ export function AdCard({
               ) : null}
             </div>
           </div>
-        </article>
-      </Link>
+        </Link>
+
+        {canManageAd ? (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  'absolute right-3 z-10 h-9 w-9 rounded-full border border-white/10 bg-black/45 text-white shadow-sm backdrop-blur-md hover:bg-black/60 hover:text-white',
+                  mobileRibbonLabel ? 'top-14' : 'top-3'
+                )}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
+                disabled={isDeleting}
+                aria-label={deleteCopy.action}
+              >
+                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{deleteCopy.confirmTitle}</AlertDialogTitle>
+                <AlertDialogDescription>{deleteCopy.confirmDescription}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{deleteCopy.cancel}</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    void handleDeleteAd();
+                  }}
+                  disabled={isDeleting}
+                >
+                  {deleteCopy.confirm}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : null}
+      </article>
     );
   }
 
