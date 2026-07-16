@@ -186,7 +186,7 @@ export function AdCard({
         href={adHref}
         className={cn('group block focus-visible:outline-none', className)}
       >
-        <article className="relative overflow-hidden rounded-[1.7rem] border border-white/8 bg-[#101010] shadow-[0_18px_42px_rgba(0,0,0,0.35)]">
+        <article className="relative overflow-hidden rounded-[1.7rem] border border-border/55 bg-card/92 shadow-[0_18px_42px_rgba(7,28,85,0.14)] dark:shadow-[0_18px_42px_rgba(0,0,0,0.32)]">
           <Carousel
             setApi={(api) => {
               setCarouselApi(api);

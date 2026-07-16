@@ -351,7 +351,7 @@ export function RealEstateMarketplacePage() {
           </section>
         ) : (
           <>
-            <section className="phone-nav-only mx-[calc(var(--page-gutter)*-1)] flex-col gap-6 bg-[#050505] px-[var(--page-gutter)] pb-6 pt-2 text-white">
+            <section className="phone-nav-only mx-[calc(var(--page-gutter)*-1)] flex-col gap-6 bg-transparent px-[var(--page-gutter)] pb-6 pt-2 text-foreground">
               <div className="grid grid-cols-2 gap-3">
                 <div className="min-w-0">
                   <RealEstateFilterSheet
@@ -360,13 +360,13 @@ export function RealEstateMarketplacePage() {
                     onApply={handleApplyFilters}
                     onClear={handleClearFilters}
                     buttonVariant="ghost"
-                    buttonClassName="w-full min-h-12 justify-center rounded-[1.2rem] border border-white/10 bg-white/[0.04] text-white shadow-none hover:bg-white/[0.08] hover:text-white"
+                    buttonClassName="w-full min-h-12 justify-center rounded-[1.2rem] border-border/60 bg-background/82 text-foreground shadow-[0_14px_30px_rgba(7,28,85,0.08)] hover:bg-background hover:text-foreground dark:shadow-[0_18px_36px_rgba(0,0,0,0.26)]"
                   />
                 </div>
                 <Button
                   type="button"
                   variant="ghost"
-                  className="min-h-12 rounded-[1.2rem] border border-white/10 bg-white/[0.04] text-white shadow-none hover:bg-white/[0.08] hover:text-white"
+                  className="min-h-12 rounded-[1.2rem] border-border/60 bg-background/82 text-foreground shadow-[0_14px_30px_rgba(7,28,85,0.08)] hover:bg-background hover:text-foreground dark:shadow-[0_18px_36px_rgba(0,0,0,0.26)]"
                   onClick={() => {
                     setSelectedAdId(undefined);
                     setIsMapOpen(true);
@@ -379,7 +379,7 @@ export function RealEstateMarketplacePage() {
 
               {mobileFeaturedAds.length > 0 ? (
                 <div className="space-y-3">
-                  <h2 className="text-[1.95rem] font-semibold tracking-[-0.03em] text-white">
+                  <h2 className="text-[1.95rem] font-semibold tracking-[-0.03em] text-foreground">
                     {viewCopy.vipTitle}
                   </h2>
                   <div className="scroll-row">
@@ -402,14 +402,14 @@ export function RealEstateMarketplacePage() {
               ) : null}
 
               <div className="space-y-3">
-                <h2 className="text-[2rem] font-semibold leading-tight tracking-[-0.04em] text-white">
+                <h2 className="text-[2rem] font-semibold leading-tight tracking-[-0.04em] text-foreground">
                   {viewCopy.resultsPrefix} {mobileResultsCount} {viewCopy.resultsSuffix}
                 </h2>
 
-                <div className="flex items-center gap-2 text-sm text-white/64">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <ArrowUpDown className="h-4 w-4" />
                   <span>
-                    {viewCopy.sortLabel}: <span className="font-medium text-white/88">{viewCopy.sortValue}</span>
+                    {viewCopy.sortLabel}: <span className="font-medium text-foreground">{viewCopy.sortValue}</span>
                   </span>
                 </div>
               </div>
