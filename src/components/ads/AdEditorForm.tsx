@@ -820,7 +820,11 @@ export function AdEditorForm({
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    <Label htmlFor="description" className="sr-only">
+                      {messages.createAd.descriptionTitle}
+                    </Label>
                     <Textarea
+                      id="description"
                       placeholder={messages.createAd.descriptionPlaceholder}
                       className="min-h-[180px] sm:min-h-[200px]"
                       value={formData.description}

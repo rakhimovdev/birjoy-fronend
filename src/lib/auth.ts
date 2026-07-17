@@ -61,6 +61,8 @@ export type AuthResult =
       ok: false;
       error:
         | 'email_in_use'
+        | 'phone_in_use'
+        | 'phone_invalid'
         | 'invalid_credentials'
         | 'server_unavailable'
         | 'validation_error';
@@ -118,6 +120,33 @@ function notifyAuthSync() {
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
+}
+
+function normalizePhone(phone?: string | null) {
+  if (typeof phone !== 'string') {
+    return '';
+  }
+
+  const trimmed = phone.trim();
+
+  if (!trimmed) {
+    return '';
+  }
+
+  const compact = trimmed.replace(/[\s()-]+/g, '');
+  const withInternationalPrefix = compact.startsWith('00') ? `+${compact.slice(2)}` : compact;
+
+  if (!/^\+?\d+$/.test(withInternationalPrefix)) {
+    return null;
+  }
+
+  const digits = withInternationalPrefix.replace(/^\+/, '');
+
+  if (digits.length < 9 || digits.length > 15) {
+    return null;
+  }
+
+  return `+${digits}`;
 }
 
 function toLocalizedText(value: string): LocalizedText {
@@ -260,9 +289,21 @@ function deleteStoredUserById(userId: string) {
 function signUpUserLocally(input: SignUpInput): AuthResult {
   const users = readStoredUsers();
   const normalizedEmail = normalizeEmail(input.email);
+  const normalizedPhone = normalizePhone(input.phone);
 
   if (users.some((user) => normalizeEmail(user.email) === normalizedEmail)) {
     return { ok: false, error: 'email_in_use' };
+  }
+
+  if (normalizedPhone === null) {
+    return { ok: false, error: 'phone_invalid' };
+  }
+
+  if (
+    normalizedPhone &&
+    users.some((user) => normalizePhone(user.phone) === normalizedPhone)
+  ) {
+    return { ok: false, error: 'phone_in_use' };
   }
 
   const storedUser: StoredAuthUser = {
@@ -272,7 +313,7 @@ function signUpUserLocally(input: SignUpInput): AuthResult {
     password: input.password,
     role: 'user',
     googleId: undefined,
-    phone: input.phone?.trim() || undefined,
+    phone: normalizedPhone || undefined,
     avatar: undefined,
     location: input.location?.trim()
       ? toLocalizedText(input.location.trim())
@@ -369,6 +410,14 @@ async function callAuthEndpoint(
     });
 
     if (!response.ok) {
+      if (data.code === 'PHONE_IN_USE') {
+        return { ok: false, error: 'phone_in_use', message: data.message };
+      }
+
+      if (data.code === 'INVALID_PHONE') {
+        return { ok: false, error: 'phone_invalid', message: data.message };
+      }
+
       if (response.status === 409 || data.code === 'EMAIL_IN_USE') {
         return { ok: false, error: 'email_in_use', message: data.message };
       }
@@ -571,10 +620,22 @@ export async function updateCurrentUserProfile(
     };
   }
 
+  const normalizedPhone =
+    typeof input.phone === 'string' ? normalizePhone(input.phone) : undefined;
+
+  if (normalizedPhone === null) {
+    return {
+      ok: false,
+      message: 'Phone number must contain 9 to 15 digits and use only numbers, spaces, parentheses, or dashes.',
+    };
+  }
+
   const nextUser: UserProfile = {
     ...storedUser,
     ...(typeof input.name === 'string' ? { name: input.name.trim() } : {}),
-    ...(typeof input.phone === 'string' ? { phone: input.phone.trim() || undefined } : {}),
+    ...(typeof input.phone === 'string'
+      ? { phone: normalizedPhone || undefined }
+      : {}),
     ...(typeof input.location === 'string'
       ? {
           location: input.location.trim() ? toLocalizedText(input.location.trim()) : undefined,
@@ -585,6 +646,20 @@ export async function updateCurrentUserProfile(
   };
 
   if (!backendApiBaseUrl || !token) {
+    if (typeof input.phone === 'string' && normalizedPhone) {
+      const duplicatePhoneUser = readStoredUsers().find(
+        (user) =>
+          user.id !== storedUser.id && normalizePhone(user.phone) === normalizedPhone
+      );
+
+      if (duplicatePhoneUser) {
+        return {
+          ok: false,
+          message: 'A user with this phone number already exists.',
+        };
+      }
+    }
+
     syncStoredUser(nextUser);
     return {
       ok: true,

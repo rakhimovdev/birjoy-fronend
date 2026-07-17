@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, LogIn } from 'lucide-react';
+import { Eye, EyeOff, Loader2, LogIn } from 'lucide-react';
 import { AuthPageShell } from '@/components/auth/AuthPageShell';
 import { GoogleAuthSection } from '@/components/auth/GoogleAuthSection';
 import { YandexAuthSection } from '@/components/auth/YandexAuthSection';
@@ -36,6 +36,7 @@ function SignInPageContent() {
   const authError = searchParams.get('authError') || '';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompletingExternalAuth, setIsCompletingExternalAuth] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -174,19 +175,36 @@ function SignInPageContent() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">{messages.auth.passwordLabel}</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder={messages.auth.passwordPlaceholder}
-              value={formData.password}
-              onChange={(event) =>
-                setFormData((previous) => ({
-                  ...previous,
-                  password: event.target.value,
-                }))
-              }
-              required
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={isPasswordVisible ? 'text' : 'password'}
+                placeholder={messages.auth.passwordPlaceholder}
+                value={formData.password}
+                onChange={(event) =>
+                  setFormData((previous) => ({
+                    ...previous,
+                    password: event.target.value,
+                  }))
+                }
+                className="pr-14"
+                required
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 h-9 w-9 -translate-y-1/2 rounded-xl text-muted-foreground hover:text-foreground"
+                onClick={() => setIsPasswordVisible((previous) => !previous)}
+                aria-label={
+                  isPasswordVisible
+                    ? messages.auth.hidePassword
+                    : messages.auth.showPassword
+                }
+              >
+                {isPasswordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
           <Button
             type="submit"

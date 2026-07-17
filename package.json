@@ -9,7 +9,9 @@
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
     "start": "next start",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "qa:prod": "PLAYWRIGHT_BROWSERS_PATH=.playwright-browsers playwright test tests/e2e/prod-smoke.spec.ts",
+    "qa:local": "PLAYWRIGHT_BROWSERS_PATH=.playwright-browsers PLAYWRIGHT_USE_LOCAL=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:9002 PLAYWRIGHT_ENABLE_MUTATION_TESTS=1 playwright test"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",
@@ -67,6 +69,7 @@
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.4.1",
     "@capacitor/ios": "^8.4.1",
+    "@playwright/test": "^1.61.1",
     "@types/node": "^20",
     "@types/react": "^19.2.1",
     "@types/react-dom": "^19.2.1",

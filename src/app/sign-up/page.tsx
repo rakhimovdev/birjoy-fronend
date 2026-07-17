@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, Loader2, UserPlus } from 'lucide-react';
 import { AuthPageShell } from '@/components/auth/AuthPageShell';
 import { GoogleAuthSection } from '@/components/auth/GoogleAuthSection';
 import { YandexAuthSection } from '@/components/auth/YandexAuthSection';
 import { Navbar } from '@/components/layout/Navbar';
 import { useAuth } from '@/components/providers/AuthProvider';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +37,9 @@ function SignUpPageContent() {
   const authError = searchParams.get('authError') || '';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompletingExternalAuth, setIsCompletingExternalAuth] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+  const [hasAcceptedAgreement, setHasAcceptedAgreement] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -131,6 +135,15 @@ function SignUpPageContent() {
       return;
     }
 
+    if (!hasAcceptedAgreement) {
+      toast({
+        title: messages.auth.agreementRequiredTitle,
+        description: messages.auth.agreementRequiredDescription,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     const result = await signUp({
@@ -148,11 +161,19 @@ function SignUpPageContent() {
       toast({
         title: isServerError
           ? messages.auth.serverUnavailableTitle
+          : result.error === 'phone_in_use'
+            ? messages.auth.phoneInUseTitle
+            : result.error === 'phone_invalid'
+              ? messages.auth.phoneInvalidTitle
           : result.error === 'email_in_use'
             ? messages.auth.emailInUseTitle
             : messages.auth.requestFailedTitle,
         description: isServerError
           ? messages.auth.serverUnavailableDescription
+          : result.error === 'phone_in_use'
+            ? messages.auth.phoneInUseDescription
+            : result.error === 'phone_invalid'
+              ? messages.auth.phoneInvalidDescription
           : result.error === 'email_in_use'
             ? messages.auth.emailInUseDescription
             : result.message || (isValidationError
@@ -252,36 +273,88 @@ function SignUpPageContent() {
           <div className="grid gap-4 min-[481px]:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="password">{messages.auth.passwordLabel}</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder={messages.auth.passwordPlaceholder}
-                value={formData.password}
-                onChange={(event) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    password: event.target.value,
-                  }))
-                }
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={isPasswordVisible ? 'text' : 'password'}
+                  placeholder={messages.auth.passwordPlaceholder}
+                  value={formData.password}
+                  onChange={(event) =>
+                    setFormData((previous) => ({
+                      ...previous,
+                      password: event.target.value,
+                    }))
+                  }
+                  className="pr-14"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 h-9 w-9 -translate-y-1/2 rounded-xl text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsPasswordVisible((previous) => !previous)}
+                  aria-label={
+                    isPasswordVisible
+                      ? messages.auth.hidePassword
+                      : messages.auth.showPassword
+                  }
+                >
+                  {isPasswordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">{messages.auth.confirmPasswordLabel}</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder={messages.auth.confirmPasswordPlaceholder}
-                value={formData.confirmPassword}
-                onChange={(event) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    confirmPassword: event.target.value,
-                  }))
-                }
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={isConfirmPasswordVisible ? 'text' : 'password'}
+                  placeholder={messages.auth.confirmPasswordPlaceholder}
+                  value={formData.confirmPassword}
+                  onChange={(event) =>
+                    setFormData((previous) => ({
+                      ...previous,
+                      confirmPassword: event.target.value,
+                    }))
+                  }
+                  className="pr-14"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 h-9 w-9 -translate-y-1/2 rounded-xl text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsConfirmPasswordVisible((previous) => !previous)}
+                  aria-label={
+                    isConfirmPasswordVisible
+                      ? messages.auth.hidePassword
+                      : messages.auth.showPassword
+                  }
+                >
+                  {isConfirmPasswordVisible ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
+          </div>
+          <div className="flex items-start gap-3 rounded-[1.35rem] border border-border/70 bg-muted/30 p-4">
+            <Checkbox
+              id="account-agreement"
+              checked={hasAcceptedAgreement}
+              onCheckedChange={(checked) => setHasAcceptedAgreement(checked === true)}
+              className="mt-1"
+            />
+            <Label
+              htmlFor="account-agreement"
+              className="cursor-pointer text-sm font-normal leading-6 text-foreground"
+            >
+              {messages.auth.agreementLabel}
+            </Label>
           </div>
           <Button
             type="submit"

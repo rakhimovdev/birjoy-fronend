@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
-import { VerticalBar } from '@/components/layout/VerticalBar';
 import { AdCard } from '@/components/ads/AdCard';
 import {
   ListingsShowcaseSkeleton,
@@ -85,8 +84,6 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
   return (
     <MarketplaceShell>
       <main className="marketplace-main">
-        <VerticalBar activeVertical={vertical} />
-
         {hasFilters ? (
           <section className="surface-card section-shell rounded-[1.85rem]">
             <div className="section-header">

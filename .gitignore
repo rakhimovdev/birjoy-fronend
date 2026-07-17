@@ -51,3 +51,6 @@ firestore-debug.log
 # Android signing material
 /keystore/
 /android/keystore.properties
+
+# Playwright downloaded browsers
+/.playwright-browsers/

@@ -511,6 +511,11 @@
     z-index: 35;
   }
 
+  .vertical-bar-shell--inline {
+    position: static;
+    min-width: 0;
+  }
+
   .vertical-bar-surface {
     width: 100%;
     overflow: hidden;
@@ -524,6 +529,20 @@
   .dark .vertical-bar-surface {
     background: rgba(10, 16, 31, 0.72);
     box-shadow: 0 24px 48px rgba(0, 0, 0, 0.24);
+  }
+
+  .vertical-bar-surface--inline {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .dark .vertical-bar-surface--inline {
+    background: transparent;
+    box-shadow: none;
   }
 
   @supports (backdrop-filter: blur(1px)) {

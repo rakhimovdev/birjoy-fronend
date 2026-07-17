@@ -10,6 +10,8 @@ export type UploadedAdImage = {
   thumbnailUrl: string;
 };
 
+type ImageUploadSource = File | Blob | string;
+
 type ImageKitUploadSession = {
   publicKey: string;
   urlEndpoint: string;
@@ -24,6 +26,8 @@ type UploadApiResponse = {
   upload?: Partial<ImageKitUploadSession>;
 };
 
+let cachedUploadSession: ImageKitUploadSession | null = null;
+
 function normalizeString(value: string | undefined) {
   return String(value || '').trim();
 }
@@ -36,6 +40,32 @@ function sanitizeFileName(value: string) {
   }
 
   return normalizedValue.replace(/[^a-zA-Z0-9._-]/g, '-');
+}
+
+function normalizeExpireTime(expire: number) {
+  return expire > 1_000_000_000_000 ? expire : expire * 1000;
+}
+
+function hasFreshUploadSession(session: ImageKitUploadSession | null) {
+  if (!session) {
+    return false;
+  }
+
+  return normalizeExpireTime(session.expire) - Date.now() > 30_000;
+}
+
+function extensionFromMimeType(mimeType: string) {
+  switch (mimeType) {
+    case 'image/png':
+      return 'png';
+    case 'image/webp':
+      return 'webp';
+    case 'image/heic':
+    case 'image/heif':
+      return 'heic';
+    default:
+      return 'jpg';
+  }
 }
 
 async function requestUploadApi(path: string, init?: RequestInit) {
@@ -69,7 +99,13 @@ async function requestUploadApi(path: string, init?: RequestInit) {
   return data;
 }
 
-async function createImageKitUploadSession() {
+async function createImageKitUploadSession(): Promise<ImageKitUploadSession> {
+  const existingSession = cachedUploadSession;
+
+  if (existingSession && hasFreshUploadSession(existingSession)) {
+    return existingSession;
+  }
+
   const data = await requestUploadApi('/uploads/imagekit/auth', {
     method: 'POST',
   });
@@ -86,7 +122,7 @@ async function createImageKitUploadSession() {
     throw new Error('ImageKit upload configuration is incomplete.');
   }
 
-  return {
+  const nextSession = {
     publicKey: normalizeString(upload.publicKey),
     urlEndpoint: normalizeString(upload.urlEndpoint),
     folder: normalizeString(upload.folder),
@@ -94,6 +130,9 @@ async function createImageKitUploadSession() {
     expire: Number(upload.expire),
     signature: normalizeString(upload.signature),
   } satisfies ImageKitUploadSession;
+
+  cachedUploadSession = nextSession;
+  return nextSession;
 }
 
 function parseImageKitUploadAsset(data: {
@@ -137,25 +176,66 @@ async function parseImageKitUploadResponse(response: Response) {
   return parseImageKitUploadAsset(data);
 }
 
-function resolveUploadFileName(source: File | string, index = 0) {
+function resolveUploadFileName(source: ImageUploadSource, index = 0) {
   if (source instanceof File) {
     return sanitizeFileName(source.name) || `ad-image-${Date.now()}-${index + 1}.jpg`;
+  }
+
+  if (source instanceof Blob) {
+    return `ad-image-${Date.now()}-${index + 1}.${extensionFromMimeType(source.type)}`;
   }
 
   return `ad-image-${Date.now()}-${index + 1}.jpg`;
 }
 
-export async function uploadAdImageToImageKit(source: File | string, index = 0) {
-  const uploadSession = await createImageKitUploadSession();
+function appendUploadFile(formData: FormData, source: ImageUploadSource, index = 0) {
+  const fileName = resolveUploadFileName(source, index);
+
+  if (typeof source === 'string') {
+    formData.append('file', source);
+  } else {
+    formData.append('file', source, fileName);
+  }
+
+  formData.append('fileName', fileName);
+}
+
+function resolveBatchConcurrency(total: number) {
+  if (total <= 1) {
+    return total;
+  }
+
+  if (typeof navigator !== 'undefined') {
+    const connection = (
+      navigator as Navigator & {
+        connection?: {
+          effectiveType?: string;
+        };
+      }
+    ).connection;
+
+    if (connection?.effectiveType && /(slow-2g|2g|3g)/i.test(connection.effectiveType)) {
+      return Math.min(2, total);
+    }
+  }
+
+  return Math.min(3, total);
+}
+
+export async function uploadAdImageToImageKit(
+  source: ImageUploadSource,
+  index = 0,
+  uploadSession?: ImageKitUploadSession
+) {
+  const activeUploadSession = uploadSession ?? (await createImageKitUploadSession());
   const formData = new FormData();
 
-  formData.append('file', source);
-  formData.append('fileName', resolveUploadFileName(source, index));
-  formData.append('publicKey', uploadSession.publicKey);
-  formData.append('token', uploadSession.token);
-  formData.append('expire', String(uploadSession.expire));
-  formData.append('signature', uploadSession.signature);
-  formData.append('folder', uploadSession.folder);
+  appendUploadFile(formData, source, index);
+  formData.append('publicKey', activeUploadSession.publicKey);
+  formData.append('token', activeUploadSession.token);
+  formData.append('expire', String(activeUploadSession.expire));
+  formData.append('signature', activeUploadSession.signature);
+  formData.append('folder', activeUploadSession.folder);
   formData.append('useUniqueFileName', 'true');
 
   const response = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
@@ -166,27 +246,55 @@ export async function uploadAdImageToImageKit(source: File | string, index = 0) 
   return parseImageKitUploadResponse(response);
 }
 
-export async function uploadAdImagesToImageKit(sources: Array<File | string>) {
+export async function uploadAdImagesToImageKit(sources: ImageUploadSource[]) {
   if (sources.length === 0) {
     return [];
   }
 
-  const uploadedImages: UploadedAdImage[] = [];
+  const uploadSession = await createImageKitUploadSession();
+  const uploadedImagesByIndex: Array<UploadedAdImage | null> = new Array(sources.length).fill(
+    null
+  );
+  const concurrency = resolveBatchConcurrency(sources.length);
+  let nextIndex = 0;
+  let firstError: unknown = null;
 
-  try {
-    for (const [index, source] of sources.entries()) {
-      const uploadedImage = await uploadAdImageToImageKit(source, index);
-      uploadedImages.push(uploadedImage);
+  const workers = Array.from({ length: concurrency }, async () => {
+    while (nextIndex < sources.length) {
+      const currentIndex = nextIndex;
+
+      nextIndex += 1;
+
+      if (firstError) {
+        return;
+      }
+
+      try {
+        uploadedImagesByIndex[currentIndex] = await uploadAdImageToImageKit(
+          sources[currentIndex],
+          currentIndex,
+          uploadSession
+        );
+      } catch (error) {
+        firstError = firstError ?? error;
+        return;
+      }
     }
-  } catch (error) {
+  });
+
+  await Promise.allSettled(workers);
+
+  const uploadedImages = uploadedImagesByIndex.filter(
+    (image): image is UploadedAdImage => Boolean(image)
+  );
+
+  if (firstError) {
     if (uploadedImages.length > 0) {
-      await Promise.allSettled(
-        uploadedImages.map((image) => deleteUploadedAdImage(image.fileId))
-      );
+      await Promise.allSettled(uploadedImages.map((image) => deleteUploadedAdImage(image.fileId)));
     }
 
-    throw error instanceof Error
-      ? error
+    throw firstError instanceof Error
+      ? firstError
       : new Error('One or more images could not be uploaded.');
   }
 

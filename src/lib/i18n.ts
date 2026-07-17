@@ -200,6 +200,11 @@ export const dictionaries = {
       invalidCredentialsDescription: 'Email yoki parol mos kelmadi.',
       emailInUseTitle: 'Bu email band',
       emailInUseDescription: 'Shu email bilan akkaunt allaqachon mavjud.',
+      phoneInUseTitle: 'Bu telefon raqami band',
+      phoneInUseDescription: 'Shu telefon raqami bilan akkaunt allaqachon mavjud.',
+      phoneInvalidTitle: "Telefon raqami noto'g'ri",
+      phoneInvalidDescription:
+        "Telefon raqami 9 tadan 15 tagacha raqamdan iborat bo'lsin va faqat raqam, bo'sh joy, qavs yoki chiziq ishlatsin.",
       serverUnavailableTitle: 'Server bilan ulanishda muammo bor',
       serverUnavailableDescription:
         "Backend ishga tushganini va MongoDB linki `backend/.env` ichida to'g'ri qo'yilganini tekshiring.",
@@ -211,6 +216,12 @@ export const dictionaries = {
       passwordMismatchDescription: 'Ikkala parol ham bir xil bo‘lishi kerak.',
       passwordTooShortTitle: 'Parol juda qisqa',
       passwordTooShortDescription: 'Parol kamida 6 ta belgidan iborat bo‘lsin.',
+      agreementLabel: 'Men Foydalanish shartlari va maxfiylik siyosatiga roziman.',
+      agreementRequiredTitle: 'Rozilik talab qilinadi',
+      agreementRequiredDescription:
+        "Davom etish uchun Foydalanish shartlari va maxfiylik siyosatiga rozilik bildiring.",
+      showPassword: "Parolni ko'rsatish",
+      hidePassword: 'Parolni yashirish',
       noAccount: "Akkauntingiz yo'qmi?",
       haveAccount: 'Akkauntingiz bormi?',
       registerHint: "Avval ro'yxatdan o'tib, keyin shu sahifadan kirishingiz mumkin.",
@@ -456,6 +467,11 @@ export const dictionaries = {
       invalidCredentialsDescription: 'Email или пароль не совпали.',
       emailInUseTitle: 'Email уже используется',
       emailInUseDescription: 'Аккаунт с таким email уже существует.',
+      phoneInUseTitle: 'Этот номер уже используется',
+      phoneInUseDescription: 'Аккаунт с таким номером телефона уже существует.',
+      phoneInvalidTitle: 'Некорректный номер телефона',
+      phoneInvalidDescription:
+        'Номер должен содержать от 9 до 15 цифр и может включать только цифры, пробелы, скобки или дефисы.',
       serverUnavailableTitle: 'Не удалось подключиться к серверу',
       serverUnavailableDescription:
         'Проверьте, что backend запущен и `MONGODB_URI` правильно указан в `backend/.env`.',
@@ -467,6 +483,12 @@ export const dictionaries = {
       passwordMismatchDescription: 'Оба пароля должны быть одинаковыми.',
       passwordTooShortTitle: 'Пароль слишком короткий',
       passwordTooShortDescription: 'Пароль должен содержать минимум 6 символов.',
+      agreementLabel: 'Я принимаю Условия использования и политику конфиденциальности.',
+      agreementRequiredTitle: 'Требуется согласие',
+      agreementRequiredDescription:
+        'Чтобы продолжить, подтвердите согласие с Условиями использования и политикой конфиденциальности.',
+      showPassword: 'Показать пароль',
+      hidePassword: 'Скрыть пароль',
       noAccount: 'Нет аккаунта?',
       haveAccount: 'Уже есть аккаунт?',
       registerHint: 'Сначала зарегистрируйтесь, а затем вернитесь сюда для входа.',
@@ -712,6 +734,11 @@ export const dictionaries = {
       invalidCredentialsDescription: 'The email or password did not match.',
       emailInUseTitle: 'Email already in use',
       emailInUseDescription: 'An account with this email already exists.',
+      phoneInUseTitle: 'Phone number already in use',
+      phoneInUseDescription: 'An account with this phone number already exists.',
+      phoneInvalidTitle: 'Invalid phone number',
+      phoneInvalidDescription:
+        'Phone numbers must contain 9 to 15 digits and may use only numbers, spaces, parentheses, or dashes.',
       serverUnavailableTitle: 'Unable to reach the server',
       serverUnavailableDescription:
         'Make sure the backend is running and `MONGODB_URI` is set correctly in `backend/.env`.',
@@ -723,6 +750,12 @@ export const dictionaries = {
       passwordMismatchDescription: 'Both password fields must match exactly.',
       passwordTooShortTitle: 'Password is too short',
       passwordTooShortDescription: 'Your password must be at least 6 characters long.',
+      agreementLabel: 'I agree to the Terms of Use and Privacy Policy.',
+      agreementRequiredTitle: 'Consent required',
+      agreementRequiredDescription:
+        'Please accept the Terms of Use and Privacy Policy before continuing.',
+      showPassword: 'Show password',
+      hidePassword: 'Hide password',
       noAccount: "Don't have an account?",
       haveAccount: 'Already have an account?',
       registerHint: 'Create an account first, then come back here to sign in.',

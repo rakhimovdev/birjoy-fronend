@@ -36,12 +36,21 @@ function useNavigationLinks() {
   const { user } = useAuth();
   const { messages } = useI18n();
   const homeHref = '/uy-joy';
-  const verticalPaths = new Set(['/', ...MARKETPLACE_VERTICALS.map((vertical) => `/${vertical.slug}`)]);
-  const activeMarketplacePath = verticalPaths.has(pathname) ? pathname : homeHref;
-  const activeSearchParams = new URLSearchParams(searchParams.toString());
-  const searchHref = `${activeMarketplacePath}${
-    activeSearchParams.toString() ? `?${activeSearchParams.toString()}` : ''
-  }#marketplace-mobile-search`;
+  const currentQuery = searchParams.get('q')?.trim() ?? '';
+  const currentScope = pathname === '/search' ? searchParams.get('scope')?.trim() ?? '' : '';
+  const searchPageParams = new URLSearchParams();
+
+  if (currentQuery) {
+    searchPageParams.set('q', currentQuery);
+  }
+
+  if (currentScope && currentScope !== 'all') {
+    searchPageParams.set('scope', currentScope);
+  }
+
+  const searchHref = searchPageParams.toString()
+    ? `/search?${searchPageParams.toString()}`
+    : '/search';
 
   const chatHref = user ? '/chat' : `/sign-in?redirect=${encodeURIComponent('/chat')}`;
   const profileHref = user ? '/profile' : `/sign-in?redirect=${encodeURIComponent('/profile')}`;
@@ -59,7 +68,7 @@ function useNavigationLinks() {
       href: searchHref,
       icon: Search,
       label: messages.navbar.search,
-      active: Boolean(searchParams.get('q')),
+      active: pathname === '/search',
     },
     {
       href: postAdHref,

@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, ArrowUpDown, MapPinned } from 'lucide-react';
 import { AdCard } from '@/components/ads/AdCard';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
-import { VerticalBar } from '@/components/layout/VerticalBar';
 import { RealEstateFilterSheet } from '@/components/marketplace/RealEstateFilterSheet';
 import { RealEstateFullscreenMapOverlay } from '@/components/marketplace/RealEstateFullscreenMapOverlay';
 import {
@@ -320,10 +319,6 @@ export function RealEstateMarketplacePage() {
   return (
     <MarketplaceShell>
       <main className="marketplace-main">
-        <div className="hidden min-[769px]:block">
-          <VerticalBar activeVertical="real_estate" />
-        </div>
-
         {isLoadingAds ? (
           <ListingsShowcaseSkeleton
             title={messages.home.loadingListings}

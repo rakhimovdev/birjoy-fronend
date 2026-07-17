@@ -2,25 +2,42 @@
 
 import { Camera, MediaTypeSelection } from '@capacitor/camera';
 
-function blobToDataUrl(blob: Blob) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
+const MOBILE_UPLOAD_QUALITY = 82;
+const MOBILE_UPLOAD_TARGET_WIDTH = 1600;
+const MOBILE_UPLOAD_TARGET_HEIGHT = 1600;
 
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
-        return;
-      }
-
-      reject(new Error('Failed to read image data.'));
-    };
-
-    reader.onerror = () => reject(new Error('Failed to read image data.'));
-    reader.readAsDataURL(blob);
-  });
+function extensionFromMimeType(mimeType?: string) {
+  switch (mimeType) {
+    case 'image/png':
+      return 'png';
+    case 'image/webp':
+      return 'webp';
+    case 'image/heic':
+    case 'image/heif':
+      return 'heic';
+    default:
+      return 'jpg';
+  }
 }
 
-async function mediaPathToDataUrl(webPath?: string, thumbnail?: string) {
+function buildNativeImageFileName(index = 0, mimeType?: string) {
+  return `native-image-${Date.now()}-${index + 1}.${extensionFromMimeType(mimeType)}`;
+}
+
+function toUploadFile(blob: Blob, index = 0) {
+  const mimeType = blob.type || 'image/jpeg';
+  const fileName = buildNativeImageFileName(index, mimeType);
+
+  if (typeof File === 'function') {
+    return new File([blob], fileName, {
+      type: mimeType,
+    });
+  }
+
+  return blob;
+}
+
+async function loadMediaBlob(webPath?: string, thumbnail?: string) {
   if (webPath) {
     const response = await fetch(webPath);
 
@@ -28,11 +45,23 @@ async function mediaPathToDataUrl(webPath?: string, thumbnail?: string) {
       throw new Error('Failed to load selected image.');
     }
 
-    return blobToDataUrl(await response.blob());
+    const blob = await response.blob();
+
+    if (!blob.size) {
+      throw new Error('Selected image is empty.');
+    }
+
+    return blob;
   }
 
   if (thumbnail) {
-    return `data:image/jpeg;base64,${thumbnail}`;
+    const response = await fetch(`data:image/jpeg;base64,${thumbnail}`);
+
+    if (!response.ok) {
+      throw new Error('Failed to read selected image.');
+    }
+
+    return response.blob();
   }
 
   throw new Error('Selected image is missing.');
@@ -43,16 +72,29 @@ export async function chooseNativeImages(limit: number) {
     allowMultipleSelection: true,
     limit,
     mediaType: MediaTypeSelection.Photo,
+    quality: MOBILE_UPLOAD_QUALITY,
+    targetWidth: MOBILE_UPLOAD_TARGET_WIDTH,
+    targetHeight: MOBILE_UPLOAD_TARGET_HEIGHT,
+    correctOrientation: true,
   });
 
-  return Promise.all(results.map((result) => mediaPathToDataUrl(result.webPath, result.thumbnail)));
+  return Promise.all(
+    results.map(async (result, index) => {
+      const blob = await loadMediaBlob(result.webPath, result.thumbnail);
+      return toUploadFile(blob, index);
+    })
+  );
 }
 
 export async function takeNativePhoto() {
   const result = await Camera.takePhoto({
-    quality: 100,
+    quality: MOBILE_UPLOAD_QUALITY,
+    targetWidth: MOBILE_UPLOAD_TARGET_WIDTH,
+    targetHeight: MOBILE_UPLOAD_TARGET_HEIGHT,
+    correctOrientation: true,
     saveToGallery: false,
   });
 
-  return mediaPathToDataUrl(result.webPath, result.thumbnail);
+  const blob = await loadMediaBlob(result.webPath, result.thumbnail);
+  return toUploadFile(blob);
 }

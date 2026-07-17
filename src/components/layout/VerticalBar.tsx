@@ -10,7 +10,15 @@ import { MARKETPLACE_VERTICALS, getVerticalHref } from '@/lib/mock-data';
 import type { AdVertical } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-export function VerticalBar({ activeVertical }: { activeVertical: AdVertical }) {
+type VerticalBarProps = {
+  activeVertical?: AdVertical | null;
+  variant?: 'content' | 'navbar';
+};
+
+export function VerticalBar({
+  activeVertical = null,
+  variant = 'content',
+}: VerticalBarProps) {
   const searchParams = useSearchParams();
   const { locale } = useI18n();
   const currentQuery = searchParams.get('q')?.trim();
@@ -29,8 +37,16 @@ export function VerticalBar({ activeVertical }: { activeVertical: AdVertical }) 
   };
 
   return (
-    <section aria-label="Marketplace verticals" className="vertical-bar-shell">
-      <div className="vertical-bar-surface px-2.5 py-2.5 sm:px-3.5 sm:py-3.5">
+    <section
+      aria-label="Marketplace verticals"
+      className={cn(variant === 'navbar' ? 'vertical-bar-shell--inline' : 'vertical-bar-shell')}
+    >
+      <div
+        className={cn(
+          'vertical-bar-surface px-2.5 py-2.5 sm:px-3.5 sm:py-3.5',
+          variant === 'navbar' && 'vertical-bar-surface--inline px-0 py-0'
+        )}
+      >
         <div className="category-bar-grid">
           {MARKETPLACE_VERTICALS.map((vertical) => {
             const Icon = (Icons as unknown as Record<string, LucideIcon>)[vertical.icon];
