@@ -205,7 +205,7 @@ export function getPropertyMarkerLayoutMetrics(marker: PropertyMarker) {
 
   return {
     width: Math.max(92, Math.min(168, 38 + label.length * 8)),
-    height: 48,
+    height: 58,
   };
 }
 
@@ -215,8 +215,8 @@ export function createPropertyMarkerIconShape(marker: PropertyMarker) {
   return {
     type: 'Rectangle',
     coordinates: [
-      [-Math.round(width / 2), -height],
-      [Math.round(width / 2), 0],
+      [0, 0],
+      [width, height],
     ],
   };
 }
@@ -244,10 +244,10 @@ function buildMarkerLabel({
 
   const accent = selected ? '#0b48d6' : PROPERTY_TYPE_ACCENT[marker.propertyType || ''];
   const label = escapeHtml(marker.priceLabel || marker.title);
-  const { width } = getPropertyMarkerLayoutMetrics(marker);
+  const { width, height } = getPropertyMarkerLayoutMetrics(marker);
 
   return `
-    <div style="display:inline-flex;width:${width}px;max-width:${width}px;align-items:center;justify-content:center;border-radius:999px;background:${accent};padding:0.6rem 0.85rem;color:#fff;font:800 13px/1.1 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;letter-spacing:-0.01em;box-shadow:${selected ? '0 18px 32px rgba(11,72,214,0.34)' : '0 12px 22px rgba(15,23,42,0.24)'};border:3px solid ${theme === 'dark' ? '#f8fafc' : '#ffffff'};cursor:pointer;box-sizing:border-box;">
+    <div style="display:inline-flex;width:${width}px;max-width:${width}px;min-height:${height - 14}px;align-items:center;justify-content:center;border-radius:999px;background:${accent};padding:0.6rem 0.85rem;color:#fff;font:800 13px/1.1 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;letter-spacing:-0.01em;box-shadow:${selected ? '0 18px 32px rgba(11,72,214,0.34)' : '0 12px 22px rgba(15,23,42,0.24)'};border:3px solid ${theme === 'dark' ? '#f8fafc' : '#ffffff'};cursor:pointer;box-sizing:border-box;">
       <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</span>
     </div>
     <div style="margin:-0.05rem auto 0;height:0;width:0;border-left:0.6rem solid transparent;border-right:0.6rem solid transparent;border-top:0.8rem solid ${accent};filter:drop-shadow(0 5px 8px rgba(15,23,42,0.18));"></div>
@@ -263,10 +263,10 @@ export function createPropertyMarkerHtml({
   theme: ThemeMode;
   selected: boolean;
 }) {
-  const { width } = getPropertyMarkerLayoutMetrics(marker);
+  const { width, height } = getPropertyMarkerLayoutMetrics(marker);
 
   return `
-    <div style="position:relative;display:grid;justify-items:center;width:${width}px;pointer-events:none;user-select:none;-webkit-user-select:none;touch-action:none;">
+    <div style="position:relative;display:grid;justify-items:center;width:${width}px;height:${height}px;user-select:none;-webkit-user-select:none;touch-action:manipulation;">
       ${buildMarkerLabel({ marker, theme, selected })}
     </div>
   `.trim();

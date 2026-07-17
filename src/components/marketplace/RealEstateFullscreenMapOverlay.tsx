@@ -37,14 +37,14 @@ type RealEstateFullscreenMapOverlayProps = {
 
 function getBackLabel(language: Language) {
   if (language === 'ru') {
-    return '← Назад';
+    return 'Назад';
   }
 
   if (language === 'en') {
-    return '← Back';
+    return 'Back';
   }
 
-  return '← Orqaga';
+  return 'Orqaga';
 }
 
 function getSubtitle(language: Language, activeFilterCount: number) {

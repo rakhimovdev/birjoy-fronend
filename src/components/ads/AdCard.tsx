@@ -451,9 +451,9 @@ export function AdCard({
               {manageCopy.soldStatus}
             </Badge>
           ) : null}
-          {ad.isFeatured ? (
+          {featuredLabel || ad.isFeatured ? (
             <Badge className="rounded-full bg-accent px-2.5 py-1 text-[0.68rem] font-bold text-accent-foreground shadow-sm">
-              {messages.adCard.featured}
+              {featuredLabel || messages.adCard.featured}
             </Badge>
           ) : null}
         </div>

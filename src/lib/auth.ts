@@ -2,7 +2,7 @@
 
 import { backendApiBaseUrl } from '@/lib/api';
 import type { LocalizedText } from '@/lib/i18n';
-import type { UserProfile } from '@/lib/types';
+import type { UserAccountType, UserProfile } from '@/lib/types';
 
 export const authUsersStorageKey = 'marketnest-auth-users';
 export const authSessionStorageKey = 'marketnest-auth-session';
@@ -24,6 +24,7 @@ type RemoteAuthUser = {
   googleId?: string;
   yandexId?: string;
   role?: 'user';
+  accountType?: UserAccountType;
   createdAt?: string;
   updatedAt?: string;
   phone?: string;
@@ -83,6 +84,7 @@ export type UpdateCurrentUserInput = {
   phone?: string;
   location?: string;
   avatar?: string;
+  accountType?: UserAccountType;
   favorites?: string[];
 };
 
@@ -157,6 +159,10 @@ function toLocalizedText(value: string): LocalizedText {
   };
 }
 
+function normalizeAccountType(value: unknown): UserAccountType | undefined {
+  return value === 'regular' || value === 'realtor' ? value : undefined;
+}
+
 function createUserId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
@@ -186,6 +192,7 @@ function normalizeRemoteUser(user: RemoteAuthUser): UserProfile {
     googleId: user.googleId?.trim() || undefined,
     yandexId: user.yandexId?.trim() || undefined,
     role: user.role || 'user',
+    accountType: normalizeAccountType(user.accountType),
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
     phone: user.phone?.trim() || undefined,
@@ -525,6 +532,34 @@ export function completeExternalAuthSession(
   };
 }
 
+function normalizeFrontendRedirectPath(value: string) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return '/profile';
+  }
+
+  if (trimmedValue.startsWith('/')) {
+    return trimmedValue;
+  }
+
+  return '/profile';
+}
+
+export function buildPostAuthRedirect(user: UserProfile, fallbackPath = '/profile') {
+  const normalizedFallbackPath = normalizeFrontendRedirectPath(fallbackPath);
+
+  if (normalizedFallbackPath.startsWith('/account-type')) {
+    return normalizedFallbackPath;
+  }
+
+  if (user.accountType) {
+    return normalizedFallbackPath;
+  }
+
+  return `/account-type?redirect=${encodeURIComponent(normalizedFallbackPath)}`;
+}
+
 export async function restoreAuthSession() {
   const storedUser = getStoredSessionUser();
   const token = getStoredAuthToken();
@@ -642,6 +677,9 @@ export async function updateCurrentUserProfile(
         }
       : {}),
     ...(typeof input.avatar === 'string' ? { avatar: input.avatar.trim() || undefined } : {}),
+    ...(typeof input.accountType === 'string'
+      ? { accountType: normalizeAccountType(input.accountType) }
+      : {}),
     ...(Array.isArray(input.favorites) ? { favorites: [...new Set(input.favorites)] } : {}),
   };
 

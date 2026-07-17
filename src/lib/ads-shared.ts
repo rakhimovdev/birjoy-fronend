@@ -1,6 +1,6 @@
 import type { LocalizedText } from '@/lib/i18n';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { Ad, AdVertical, RealEstatePropertyType } from '@/lib/types';
+import type { Ad, AdVertical, RealEstateListingType, RealEstatePropertyType } from '@/lib/types';
 
 export type AdCondition = 'new' | 'like-new' | 'used' | 'needs-repair';
 
@@ -31,6 +31,7 @@ export type RemoteAd = {
   latitude?: number | null;
   longitude?: number | null;
   propertyType?: string;
+  listingType?: string;
   rooms?: number | null;
   area?: number | null;
   floor?: number | null;
@@ -47,6 +48,8 @@ export type RemoteAd = {
   createdAt?: string;
   updatedAt?: string;
   isFeatured?: boolean;
+  viewCount?: number;
+  contactCount?: number;
   status?: string;
 };
 
@@ -110,6 +113,14 @@ function normalizePropertyType(value: string | undefined): RealEstatePropertyTyp
   return '';
 }
 
+function normalizeListingType(value: string | undefined): RealEstateListingType | '' {
+  if (value === 'sale' || value === 'rent') {
+    return value;
+  }
+
+  return '';
+}
+
 function normalizeStatus(value: string | undefined): Ad['status'] {
   if (value === 'active' || value === 'pending' || value === 'flagged' || value === 'sold') {
     return value;
@@ -124,6 +135,10 @@ function getFallbackImage() {
 
 function normalizeNullableNumber(value: number | null | undefined) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function normalizeCounter(value: number | undefined) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
 function normalizePrice(value: RemoteAd['price']): number {
@@ -203,6 +218,7 @@ export function normalizeRemoteAd(ad: RemoteAd): Ad {
     latitude: normalizeNullableNumber(ad.latitude),
     longitude: normalizeNullableNumber(ad.longitude),
     propertyType: normalizePropertyType(ad.propertyType),
+    listingType: normalizeListingType(ad.listingType),
     rooms: normalizeNullableNumber(ad.rooms),
     area: normalizeNullableNumber(ad.area),
     floor: normalizeNullableNumber(ad.floor),
@@ -212,6 +228,8 @@ export function normalizeRemoteAd(ad: RemoteAd): Ad {
     sellerPhone: ad.sellerPhone || ad.contactPhone || '',
     createdAt: ad.createdAt || new Date().toISOString(),
     isFeatured: Boolean(ad.isFeatured),
+    viewCount: normalizeCounter(ad.viewCount),
+    contactCount: normalizeCounter(ad.contactCount),
     status: normalizeStatus(ad.status),
   };
 }

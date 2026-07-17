@@ -483,15 +483,21 @@ function ProfilePageContent() {
 
   const userLocation = user?.location ? getLocalizedText(user.location, locale) : '';
   const soldAdsCount = myAds.filter((ad) => ad.status === 'sold').length;
+  const totalViewCount = myAds.reduce((sum, ad) => sum + ad.viewCount, 0);
+  const totalContactCount = myAds.reduce((sum, ad) => sum + ad.contactCount, 0);
   const availableVerticals = [...new Set(myAds.map((ad) => ad.vertical))];
   const availablePropertyTypes = [...new Set(myAds.map((ad) => ad.propertyType).filter(Boolean))] as Array<
     Exclude<Ad['propertyType'], ''>
   >;
+  const statsFormatter = useMemo(
+    () => new Intl.NumberFormat(languageMeta[locale].numberLocale),
+    [locale]
+  );
 
   const mobileStats = [
     { value: myAds.length, label: mobileCopy.listings, icon: Megaphone },
-    { value: 0, label: mobileCopy.views, icon: Eye },
-    { value: 0, label: mobileCopy.calls, icon: Phone },
+    { value: totalViewCount, label: mobileCopy.views, icon: Eye },
+    { value: totalContactCount, label: mobileCopy.calls, icon: Phone },
     { value: soldAdsCount, label: mobileCopy.sales, icon: WalletCards },
   ] as const;
 
@@ -681,7 +687,7 @@ function ProfilePageContent() {
               <header className="space-y-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="truncate text-[1.95rem] font-black leading-none tracking-[-0.06em]">
+                    <p className="truncate text-[1.5rem] font-black leading-none tracking-[-0.04em] sm:text-[1.7rem]">
                       {profileHandle}
                     </p>
                     <p className="mt-3 max-w-[17rem] text-sm text-white/55">{messages.profile.memberSince}</p>
@@ -718,16 +724,18 @@ function ProfilePageContent() {
                 <p className="text-sm text-white/45">{mobileCopy.tabHint}</p>
               </header>
 
-              <section className="grid grid-cols-[6.2rem_minmax(0,1fr)] gap-4">
-                <div className="space-y-3">
-                  <Avatar className="h-24 w-24 border-2 border-white/20 bg-white/10">
+              <section className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-24 w-24 shrink-0 border-2 border-white/20 bg-white/10">
                     <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback className="bg-white/10 text-xl font-bold text-white">
                       {user.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="space-y-1">
-                    <h1 className="text-[1.75rem] font-extrabold leading-none tracking-[-0.04em]">{user.name}</h1>
+                  <div className="min-w-0 space-y-1">
+                    <h1 className="break-words text-[1.35rem] font-extrabold leading-tight tracking-[-0.03em]">
+                      {user.name}
+                    </h1>
                     {userLocation ? <p className="text-sm text-white/55">{userLocation}</p> : null}
                   </div>
                 </div>
@@ -739,7 +747,9 @@ function ProfilePageContent() {
                     return (
                       <div key={item.label} className={cn(MOBILE_PROFILE_CARD, 'p-3')}>
                         <div className="flex items-start justify-between gap-2">
-                          <span className="text-3xl font-black tracking-[-0.05em]">{item.value}</span>
+                          <span className="text-[2rem] font-black tracking-[-0.05em]">
+                            {isLoadingAds ? '...' : statsFormatter.format(item.value)}
+                          </span>
                           <Icon className="mt-1 h-5 w-5 text-white/45" />
                         </div>
                         <p className="mt-3 text-[1.05rem] text-white/88">{item.label}</p>

@@ -129,7 +129,8 @@ export function RealEstateMarketplacePage() {
 
   const featuredAds = useMemo(() => filteredAds.filter((ad) => ad.isFeatured), [filteredAds]);
   const regularAds = useMemo(() => filteredAds.filter((ad) => !ad.isFeatured), [filteredAds]);
-  const galleryAds = featuredAds.length > 0 ? regularAds : filteredAds;
+  const topTenAds = useMemo(() => regularAds.slice(0, 10), [regularAds]);
+  const remainingAds = useMemo(() => regularAds.slice(10), [regularAds]);
   const mapEligibleAds = useMemo(() => filteredAds.filter(hasCoordinates), [filteredAds]);
 
   const adsWithDistance = useMemo(
@@ -193,6 +194,8 @@ export function RealEstateMarketplacePage() {
           galleryDescription: 'Подберите жильё из ленты или откройте полноэкранную карту.',
           vipTitle: 'VIP объявления',
           vipDescription: 'Лучшие предложения собраны в горизонтальной витрине.',
+          topTenTitle: 'TOP 10',
+          topTenDescription: 'Отобранные объявления вынесены в отдельную короткую витрину.',
           regularTitle: 'Остальные объявления',
           regularDescription: 'Ниже показаны все остальные предложения по жилью.',
           mapTitle: 'Карта жилья',
@@ -212,6 +215,7 @@ export function RealEstateMarketplacePage() {
           sortLabel: 'Сортировка',
           sortValue: 'По умолчанию',
           topBadge: 'TOP 10',
+          topRibbon: 'TOP',
         }
       : locale === 'en'
         ? {
@@ -221,6 +225,8 @@ export function RealEstateMarketplacePage() {
             galleryDescription: 'Browse the feed or open the full-screen property map.',
             vipTitle: 'VIP listings',
             vipDescription: 'Featured homes appear first in a side-scrolling carousel.',
+            topTenTitle: 'TOP 10',
+            topTenDescription: 'A short strip of standout listings appears separately before the full grid.',
             regularTitle: 'Other listings',
             regularDescription: 'Browse the rest of the home listings below.',
             mapTitle: 'Property map',
@@ -240,6 +246,7 @@ export function RealEstateMarketplacePage() {
             sortLabel: 'Sort',
             sortValue: 'Default order',
             topBadge: 'TOP 10',
+            topRibbon: 'TOP',
           }
         : {
             filter: 'Filter',
@@ -248,6 +255,8 @@ export function RealEstateMarketplacePage() {
             galleryDescription: 'Ro‘yxatdan tanlang yoki to‘liq ekran xaritada ko‘ring.',
             vipTitle: 'VIP eʼlonlar',
             vipDescription: 'Tanlangan uylar tepada yonlama karuselda ko‘rsatiladi.',
+            topTenTitle: 'TOP 10',
+            topTenDescription: 'Ajratib ko‘rsatiladigan 10 ta tanlangan eʼlon shu bo‘limda chiqadi.',
             regularTitle: 'Boshqa eʼlonlar',
             regularDescription: 'Quyida qolgan barcha uy-joy eʼlonlari chiqadi.',
             mapTitle: 'Uy-joy xaritasi',
@@ -267,6 +276,7 @@ export function RealEstateMarketplacePage() {
             sortLabel: 'Saralash',
             sortValue: 'Asli bo‘yicha',
             topBadge: 'TOP 10',
+            topRibbon: 'TOP',
           };
 
   const handleLocateUser = () => {
@@ -309,8 +319,9 @@ export function RealEstateMarketplacePage() {
     }
   };
 
-  const mobileFeaturedAds = featuredAds.length > 0 ? featuredAds : filteredAds.slice(0, 6);
-  const mobileGridAds = filteredAds;
+  const mobileFeaturedAds = featuredAds;
+  const mobileTopTenAds = topTenAds;
+  const mobileGridAds = remainingAds;
   const mobileResultsCount = useMemo(
     () => new Intl.NumberFormat(languageMeta[locale].numberLocale).format(filteredAds.length),
     [filteredAds.length, locale]
@@ -405,6 +416,36 @@ export function RealEstateMarketplacePage() {
                 </div>
               ) : null}
 
+              {mobileTopTenAds.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-[1.65rem] font-semibold tracking-[-0.03em] text-foreground">
+                        {viewCopy.topTenTitle}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">{viewCopy.topTenDescription}</p>
+                    </div>
+                    <Badge variant="secondary">{viewCopy.topBadge}</Badge>
+                  </div>
+                  <div className="scroll-row">
+                    {mobileTopTenAds.map((ad) => (
+                      <div key={ad.id} className="w-[11.5rem] shrink-0">
+                        <AdCard
+                          ad={ad}
+                          isFavorite={isFavorite(ad.id)}
+                          canDelete={isAdmin}
+                          variant="real_estate_mobile_compact"
+                          featuredLabel={viewCopy.topRibbon}
+                          onDeleted={(adId) => {
+                            setAds((previous) => previous.filter((item) => item.id !== adId));
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               <div className="space-y-3">
                 <h2 className="text-[2rem] font-semibold leading-tight tracking-[-0.04em] text-foreground">
                   {viewCopy.resultsPrefix} {mobileResultsCount} {viewCopy.resultsSuffix}
@@ -418,21 +459,22 @@ export function RealEstateMarketplacePage() {
                 </div>
               </div>
 
-              <section className="grid grid-cols-2 gap-3">
-                {mobileGridAds.map((ad) => (
-                  <AdCard
-                    key={ad.id}
-                    ad={ad}
-                    isFavorite={isFavorite(ad.id)}
-                    canDelete={isAdmin}
-                    variant="real_estate_mobile"
-                    featuredLabel={ad.isFeatured ? 'TOP' : undefined}
-                    onDeleted={(adId) => {
-                      setAds((previous) => previous.filter((item) => item.id !== adId));
-                    }}
-                  />
-                ))}
-              </section>
+              {mobileGridAds.length > 0 ? (
+                <section className="grid grid-cols-2 gap-3">
+                  {mobileGridAds.map((ad) => (
+                    <AdCard
+                      key={ad.id}
+                      ad={ad}
+                      isFavorite={isFavorite(ad.id)}
+                      canDelete={isAdmin}
+                      variant="real_estate_mobile"
+                      onDeleted={(adId) => {
+                        setAds((previous) => previous.filter((item) => item.id !== adId));
+                      }}
+                    />
+                  ))}
+                </section>
+              ) : null}
             </section>
 
             <section className="hidden min-[769px]:block surface-card section-shell--compact rounded-[1.85rem]">
@@ -509,9 +551,40 @@ export function RealEstateMarketplacePage() {
                 </section>
               ) : null}
 
-              {galleryAds.length > 0 ? (
+              {topTenAds.length > 0 ? (
+                <section className="surface-card section-shell rounded-[1.85rem]">
+                  <div className="section-header">
+                    <div className="section-header__copy">
+                      <p className="section-kicker">{viewCopy.topTenTitle}</p>
+                      <h2 className="section-title">{viewCopy.topTenTitle}</h2>
+                      <p className="section-caption">{viewCopy.topTenDescription}</p>
+                    </div>
+                    <Badge variant="secondary">{viewCopy.topBadge}</Badge>
+                  </div>
+                  <div className="scroll-row">
+                    {topTenAds.map((ad) => (
+                      <div
+                        key={ad.id}
+                        className="w-[14.25rem] shrink-0 sm:w-[15rem] lg:w-[16.25rem] xl:w-[17rem]"
+                      >
+                        <AdCard
+                          ad={ad}
+                          isFavorite={isFavorite(ad.id)}
+                          canDelete={isAdmin}
+                          featuredLabel={viewCopy.topRibbon}
+                          onDeleted={(adId) => {
+                            setAds((previous) => previous.filter((item) => item.id !== adId));
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              {remainingAds.length > 0 ? (
                 <section className="space-y-4">
-                  {featuredAds.length > 0 ? (
+                  {featuredAds.length > 0 || topTenAds.length > 0 ? (
                     <div className="section-header">
                       <div className="section-header__copy">
                         <p className="section-kicker">{messages.home.browseAllListings}</p>
@@ -527,7 +600,7 @@ export function RealEstateMarketplacePage() {
                     </div>
                   ) : null}
                   <div className="property-listing-grid">
-                    {galleryAds.map((ad) => (
+                    {remainingAds.map((ad) => (
                       <AdCard
                         key={ad.id}
                         ad={ad}

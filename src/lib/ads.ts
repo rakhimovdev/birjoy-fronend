@@ -4,7 +4,7 @@ import { getStoredAuthToken, signOutUser } from '@/lib/auth';
 import { backendApiBaseUrl, fetchWithTimeout } from '@/lib/api';
 import type { UploadedAdImage } from '@/lib/imagekit-upload';
 import type { LocalizedText, Language } from '@/lib/i18n';
-import type { Ad, AdVertical, RealEstatePropertyType } from '@/lib/types';
+import type { Ad, AdVertical, RealEstateListingType, RealEstatePropertyType } from '@/lib/types';
 import type { AdCondition, AdsApiResponse } from '@/lib/ads-shared';
 import { normalizeRemoteAd } from '@/lib/ads-shared';
 
@@ -23,6 +23,7 @@ export type CreateAdInput = {
   latitude?: number | null;
   longitude?: number | null;
   propertyType?: RealEstatePropertyType | '';
+  listingType?: RealEstateListingType | '';
   rooms?: number | null;
   area?: number | null;
   floor?: number | null;

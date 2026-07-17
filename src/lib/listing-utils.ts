@@ -63,6 +63,7 @@ export function filterAds(
       ad.userName,
       ad.sellerPhone,
       ad.propertyType,
+      ad.listingType,
       ...(category ? Object.values(category.name) : []),
       ad.rooms !== null ? String(ad.rooms) : '',
       ad.area !== null ? String(ad.area) : '',

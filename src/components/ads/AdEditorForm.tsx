@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { formatMessage, getLocalizedText, languageMeta } from '@/lib/i18n';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
-import { AD_CONDITIONS, createAd, updateAd } from '@/lib/ads';
+import { AD_CONDITIONS, createAd, updateAd, type CreateAdInput } from '@/lib/ads';
 import {
   deleteUploadedAdImage,
   uploadAdImagesToImageKit,
@@ -39,7 +39,7 @@ import {
   getVerticalById,
   getVerticalHref,
 } from '@/lib/mock-data';
-import type { Ad, AdVertical } from '@/lib/types';
+import type { Ad, AdVertical, RealEstateListingType } from '@/lib/types';
 import type { Location, ResolvedLocation } from '@/lib/map-types';
 
 type FormState = {
@@ -52,6 +52,7 @@ type FormState = {
   location: string;
   address: string;
   contactPhone: string;
+  listingType: RealEstateListingType | '';
   rooms: string;
   area: string;
   floor: string;
@@ -77,6 +78,7 @@ function buildInitialFormState(initialVertical: AdVertical = 'market'): FormStat
     location: '',
     address: '',
     contactPhone: '',
+    listingType: initialVertical === 'real_estate' ? 'sale' : '',
     rooms: '',
     area: '',
     floor: '',
@@ -94,6 +96,7 @@ function buildFormStateFromAd(ad: Ad): FormState {
     location: getLocalizedText(ad.location, 'uz'),
     address: getLocalizedText(ad.formattedAddress, 'uz') || getLocalizedText(ad.address, 'uz'),
     contactPhone: ad.sellerPhone,
+    listingType: ad.vertical === 'real_estate' ? ad.listingType || 'sale' : '',
     rooms: ad.rooms !== null ? String(ad.rooms) : '',
     area: ad.area !== null ? String(ad.area) : '',
     floor: ad.floor !== null ? String(ad.floor) : '',
@@ -190,6 +193,10 @@ export function AdEditorForm({
           searchAddressPending: 'Поиск...',
           locationHint: 'Район / ориентир',
           locationHintPlaceholder: 'Например, рядом с метро Айбек',
+          listingType: 'Тип сделки',
+          selectListingType: 'Выберите тип сделки',
+          sale: 'Продажа',
+          rent: 'Аренда',
           rooms: 'Комнаты',
           area: 'Площадь, м²',
           floor: 'Этаж',
@@ -224,6 +231,10 @@ export function AdEditorForm({
             searchAddressPending: 'Searching...',
             locationHint: 'Area / landmark',
             locationHintPlaceholder: 'For example, near Oybek metro',
+            listingType: 'Deal type',
+            selectListingType: 'Select deal type',
+            sale: 'Sale',
+            rent: 'Rent',
             rooms: 'Rooms',
             area: 'Area, m²',
             floor: 'Floor',
@@ -257,6 +268,10 @@ export function AdEditorForm({
             searchAddressPending: 'Qidirilmoqda...',
             locationHint: 'Hudud / orientir',
             locationHintPlaceholder: 'Masalan, Oybek metro yaqinida',
+            listingType: 'Bitim turi',
+            selectListingType: 'Bitim turini tanlang',
+            sale: 'Sotuv',
+            rent: 'Ijara',
             rooms: 'Xonalar',
             area: 'Maydon, m²',
             floor: 'Qavat',
@@ -560,6 +575,7 @@ export function AdEditorForm({
       category: nextCategories.some((category) => category.slug === previous.category)
         ? previous.category
         : nextCategories[0]?.slug || '',
+      listingType: normalizedVertical === 'real_estate' ? previous.listingType || 'sale' : '',
     }));
   };
 
@@ -600,7 +616,7 @@ export function AdEditorForm({
         return;
       }
 
-      const payload = {
+      const payload: CreateAdInput = {
         title: formData.title.trim(),
         vertical: formData.vertical,
         category: formData.category.trim(),
@@ -621,6 +637,7 @@ export function AdEditorForm({
           isRealEstate && REAL_ESTATE_CATEGORIES.some((category) => category.slug === formData.category)
             ? (formData.category as Ad['propertyType'])
             : '',
+        listingType: isRealEstate ? ((formData.listingType || 'sale') as RealEstateListingType) : '',
         rooms: isRealEstate && formData.rooms ? Number(formData.rooms) : null,
         area: isRealEstate && formData.area ? Number(formData.area) : null,
         floor: isRealEstate && formData.floor ? Number(formData.floor) : null,
@@ -855,7 +872,27 @@ export function AdEditorForm({
                   <CardContent className="space-y-4">
                     {isRealEstate ? (
                       <>
-                        <div className="grid gap-4 min-[481px]:grid-cols-3">
+                        <div className="grid gap-4 min-[481px]:grid-cols-2 xl:grid-cols-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="listingType">{editorCopy.listingType}</Label>
+                            <Select
+                              value={formData.listingType || 'sale'}
+                              onValueChange={(value) =>
+                                setFormData((previous) => ({
+                                  ...previous,
+                                  listingType: value as RealEstateListingType,
+                                }))
+                              }
+                            >
+                              <SelectTrigger id="listingType">
+                                <SelectValue placeholder={editorCopy.selectListingType} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="sale">{editorCopy.sale}</SelectItem>
+                                <SelectItem value="rent">{editorCopy.rent}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                           <div className="space-y-2">
                             <Label htmlFor="rooms">{editorCopy.rooms}</Label>
                             <Input

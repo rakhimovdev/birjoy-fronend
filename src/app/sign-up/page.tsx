@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { completeExternalAuthSession } from '@/lib/auth';
+import { buildPostAuthRedirect, completeExternalAuthSession } from '@/lib/auth';
 
 export default function SignUpPage() {
   return (
@@ -51,7 +51,7 @@ function SignUpPageContent() {
 
   useEffect(() => {
     if (isReady && user) {
-      router.replace(redirect);
+      router.replace(buildPostAuthRedirect(user, redirect));
     }
   }, [isReady, redirect, router, user]);
 
@@ -90,7 +90,7 @@ function SignUpPageContent() {
         title: messages.auth.signUpSuccessTitle,
         description: messages.auth.signUpSuccessDescription,
       });
-      router.replace(redirect);
+      router.replace(buildPostAuthRedirect(result.user, redirect));
     } catch (error) {
       toast({
         title: messages.auth.requestFailedTitle,
@@ -190,7 +190,7 @@ function SignUpPageContent() {
       description: messages.auth.signUpSuccessDescription,
     });
 
-    router.replace(redirect);
+    router.replace(buildPostAuthRedirect(result.user, redirect));
   };
 
   return (

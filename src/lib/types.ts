@@ -2,6 +2,8 @@ import type { LocalizedText } from './i18n';
 
 export type AdVertical = 'market' | 'real_estate' | 'food' | 'auto';
 export type RealEstatePropertyType = 'apartment' | 'house' | 'land' | 'commercial';
+export type RealEstateListingType = 'sale' | 'rent';
+export type UserAccountType = 'regular' | 'realtor';
 
 export type Category = {
   id: string;
@@ -28,6 +30,7 @@ export type Ad = {
   latitude: number | null;
   longitude: number | null;
   propertyType: RealEstatePropertyType | '';
+  listingType: RealEstateListingType | '';
   rooms: number | null;
   area: number | null;
   floor: number | null;
@@ -37,6 +40,8 @@ export type Ad = {
   sellerPhone: string;
   createdAt: string;
   isFeatured?: boolean;
+  viewCount: number;
+  contactCount: number;
   status: 'active' | 'pending' | 'flagged' | 'sold';
 };
 
@@ -48,6 +53,7 @@ export type UserProfile = {
   googleId?: string;
   yandexId?: string;
   role: 'user';
+  accountType?: UserAccountType;
   createdAt?: string;
   updatedAt?: string;
   phone?: string;

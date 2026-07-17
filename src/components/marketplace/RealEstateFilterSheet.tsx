@@ -51,6 +51,7 @@ function getCopy(language: Language) {
       priceMin: 'Цена от',
       priceMax: 'Цена до',
       propertyType: 'Тип недвижимости',
+      listingType: 'Тип сделки',
       rooms: 'Комнаты',
       location: 'Локация',
       city: 'Город',
@@ -58,11 +59,14 @@ function getCopy(language: Language) {
       areaMin: 'Площадь от',
       areaMax: 'Площадь до',
       anyPropertyType: 'Все типы',
+      anyListingType: 'Все сделки',
       anyRooms: 'Любое количество',
       apartment: 'Квартира',
       house: 'Дом',
       land: 'Участок',
       commercial: 'Коммерческая',
+      sale: 'Продажа',
+      rent: 'Аренда',
     };
   }
 
@@ -77,6 +81,7 @@ function getCopy(language: Language) {
       priceMin: 'Min price',
       priceMax: 'Max price',
       propertyType: 'Property type',
+      listingType: 'Deal type',
       rooms: 'Rooms',
       location: 'Location',
       city: 'City',
@@ -84,11 +89,14 @@ function getCopy(language: Language) {
       areaMin: 'Min area',
       areaMax: 'Max area',
       anyPropertyType: 'All property types',
+      anyListingType: 'All deals',
       anyRooms: 'Any amount',
       apartment: 'Apartment',
       house: 'House',
       land: 'Land',
       commercial: 'Commercial',
+      sale: 'Sale',
+      rent: 'Rent',
     };
   }
 
@@ -102,6 +110,7 @@ function getCopy(language: Language) {
     priceMin: 'Narx min',
     priceMax: 'Narx max',
     propertyType: 'Uy turi',
+    listingType: 'Bitim turi',
     rooms: 'Xonalar',
     location: 'Joylashuv',
     city: 'Shahar',
@@ -109,11 +118,14 @@ function getCopy(language: Language) {
     areaMin: 'Maydon min',
     areaMax: 'Maydon max',
     anyPropertyType: 'Barcha turlar',
+    anyListingType: 'Barcha bitimlar',
     anyRooms: 'Istalgan son',
     apartment: 'Kvartira',
     house: 'Hovli',
     land: 'Yer',
     commercial: 'Tijorat',
+    sale: 'Sotuv',
+    rent: 'Ijara',
   };
 }
 
@@ -163,6 +175,11 @@ export function RealEstateFilterSheet({
     { value: 'house', label: copy.house },
     { value: 'land', label: copy.land },
     { value: 'commercial', label: copy.commercial },
+  ] as const;
+  const listingTypeOptions = [
+    { value: 'all', label: copy.anyListingType },
+    { value: 'sale', label: copy.sale },
+    { value: 'rent', label: copy.rent },
   ] as const;
 
   const roomOptions: Array<{ value: RealEstateRoomsFilter; label: string }> = [
@@ -244,6 +261,25 @@ export function RealEstateFilterSheet({
                 </SelectTrigger>
                 <SelectContent>
                   {propertyTypeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="real-estate-listing-type">{copy.listingType}</Label>
+              <Select
+                value={draftFilters.listingType}
+                onValueChange={(value) => updateDraft('listingType', value as RealEstateFilterState['listingType'])}
+              >
+                <SelectTrigger id="real-estate-listing-type">
+                  <SelectValue placeholder={copy.anyListingType} />
+                </SelectTrigger>
+                <SelectContent>
+                  {listingTypeOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>

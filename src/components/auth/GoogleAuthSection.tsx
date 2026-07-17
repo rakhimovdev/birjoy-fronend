@@ -10,6 +10,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { buildPostAuthRedirect } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import {
   areNativePlatformDiagnosticsEqual,
@@ -385,7 +386,7 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
       description: messages.auth.googleSuccessDescription,
     });
 
-    router.replace(redirectTo);
+    router.replace(buildPostAuthRedirect(result.user, redirectTo));
     return true;
   };
 
@@ -563,7 +564,7 @@ export function GoogleAuthSection({ redirectTo }: GoogleAuthSectionProps) {
           });
 
           window.google?.accounts.id.cancel();
-          router.replace(redirectTo);
+          router.replace(buildPostAuthRedirect(result.user, redirectTo));
         })();
       },
     });

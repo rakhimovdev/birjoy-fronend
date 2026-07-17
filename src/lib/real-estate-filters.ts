@@ -6,6 +6,7 @@ export type RealEstateFilterState = {
   priceMin: string;
   priceMax: string;
   propertyType: Ad['propertyType'] | 'all';
+  listingType: Ad['listingType'] | 'all';
   rooms: RealEstateRoomsFilter;
   location: string;
   city: string;
@@ -18,6 +19,7 @@ export const EMPTY_REAL_ESTATE_FILTERS: RealEstateFilterState = {
   priceMin: '',
   priceMax: '',
   propertyType: 'all',
+  listingType: 'all',
   rooms: 'any',
   location: '',
   city: '',
@@ -65,6 +67,7 @@ export function getActiveRealEstateFilterCount(filters: RealEstateFilterState) {
     filters.priceMin.trim(),
     filters.priceMax.trim(),
     filters.propertyType !== 'all' ? filters.propertyType : '',
+    filters.listingType !== 'all' ? filters.listingType : '',
     filters.rooms !== 'any' ? filters.rooms : '',
     filters.location.trim(),
     filters.city.trim(),
@@ -93,6 +96,10 @@ export function matchesRealEstateFilters(ad: Ad, filters: RealEstateFilterState)
   }
 
   if (filters.propertyType !== 'all' && ad.propertyType !== filters.propertyType) {
+    return false;
+  }
+
+  if (filters.listingType !== 'all' && ad.listingType !== filters.listingType) {
     return false;
   }
 
