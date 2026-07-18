@@ -67,6 +67,62 @@ type PropertyTypeFilter = 'all' | Exclude<Ad['propertyType'], ''>;
 
 const MOBILE_PROFILE_BACKGROUND = 'bg-[#050505]';
 const MOBILE_PROFILE_CARD = 'rounded-[1.75rem] border border-white/8 bg-[#181818]';
+const PROFILE_AD_STATUSES: Ad['status'][] = ['active', 'pending', 'sold', 'flagged'];
+
+function normalizeComparableText(value?: string | null) {
+  return value?.trim().toLowerCase() || '';
+}
+
+function normalizeComparablePhone(value?: string | null) {
+  return value?.replace(/\D+/g, '') || '';
+}
+
+function dedupeAds(ads: Ad[]) {
+  const seenIds = new Set<string>();
+
+  return ads.filter((ad) => {
+    if (!ad.id || seenIds.has(ad.id)) {
+      return false;
+    }
+
+    seenIds.add(ad.id);
+    return true;
+  });
+}
+
+async function fetchAdsAcrossStatuses(
+  options: Omit<Parameters<typeof fetchAds>[0], 'status'>,
+  statuses: readonly Ad['status'][]
+) {
+  const results = await Promise.allSettled(
+    statuses.map((status) =>
+      fetchAds({
+        ...options,
+        status,
+      })
+    )
+  );
+
+  return results.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
+}
+
+function matchesProfileOwner(ad: Ad, user: NonNullable<ReturnType<typeof useAuth>['user']>) {
+  if (ad.userId === user.id) {
+    return true;
+  }
+
+  const comparableUserPhone = normalizeComparablePhone(user.phone);
+  const comparableAdPhone = normalizeComparablePhone(ad.sellerPhone);
+
+  if (comparableUserPhone && comparableAdPhone && comparableUserPhone === comparableAdPhone) {
+    return true;
+  }
+
+  const comparableUserName = normalizeComparableText(user.name);
+  const comparableAdName = normalizeComparableText(ad.userName);
+
+  return Boolean(comparableUserName && comparableAdName && comparableUserName === comparableAdName);
+}
 
 export default function ProfilePage() {
   return (
@@ -377,13 +433,16 @@ function ProfilePageContent() {
 
       try {
         setIsLoadingAds(true);
-        const [myListings, favoriteListings] = await Promise.all([
-          fetchAds({
-            userId: user.id,
-            fields: 'full',
-            limit: 100,
-            signal: abortController.signal,
-          }),
+        const [myListingsByStatus, favoriteListings] = await Promise.all([
+          fetchAdsAcrossStatuses(
+            {
+              userId: user.id,
+              fields: 'full',
+              limit: 100,
+              signal: abortController.signal,
+            },
+            PROFILE_AD_STATUSES
+          ),
           user.favorites.length
             ? fetchAds({
                 ids: user.favorites,
@@ -397,6 +456,27 @@ function ProfilePageContent() {
 
         if (abortController.signal.aborted) {
           return;
+        }
+
+        let myListings = dedupeAds(myListingsByStatus);
+
+        if (myListings.length === 0) {
+          const fallbackListingsByStatus = await fetchAdsAcrossStatuses(
+            {
+              fields: 'full',
+              limit: 100,
+              signal: abortController.signal,
+            },
+            PROFILE_AD_STATUSES
+          );
+
+          if (abortController.signal.aborted) {
+            return;
+          }
+
+          myListings = dedupeAds(fallbackListingsByStatus).filter((ad) =>
+            matchesProfileOwner(ad, user)
+          );
         }
 
         setMyAds(myListings);
