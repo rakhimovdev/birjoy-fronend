@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Eye, Loader2, Phone, RefreshCcw, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/components/providers/LocaleProvider';
@@ -8,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetFooter,
   SheetHeader,
@@ -25,6 +27,7 @@ type RealEstateTopUsersSheetProps = {
 
 type RankedUser = {
   key: string;
+  userId: string;
   name: string;
   listingCount: number;
   totalViews: number;
@@ -37,7 +40,9 @@ function buildRankedUsers(ads: Ad[]) {
 
   ads.forEach((ad) => {
     const sellerName = ad.userName.trim() || 'BirJoy user';
-    const userKey = ad.userId.trim() || sellerName.toLowerCase();
+    const normalizedUserId = ad.userId.trim();
+    const normalizedPhone = ad.sellerPhone.trim();
+    const userKey = normalizedUserId || `${sellerName.toLowerCase()}-${normalizedPhone}`;
     const existing = groupedUsers.get(userKey);
 
     if (existing) {
@@ -54,6 +59,7 @@ function buildRankedUsers(ads: Ad[]) {
 
     groupedUsers.set(userKey, {
       key: userKey,
+      userId: normalizedUserId,
       name: sellerName,
       listingCount: 1,
       totalViews: ad.viewCount,
@@ -101,6 +107,7 @@ export function RealEstateTopUsersSheet({ className }: RealEstateTopUsersSheetPr
           empty: 'Пока нет пользователей для рейтинга.',
           retry: 'Повторить',
           close: 'Закрыть',
+          openProfile: 'Открыть профиль',
         }
       : locale === 'en'
         ? {
@@ -112,6 +119,7 @@ export function RealEstateTopUsersSheet({ className }: RealEstateTopUsersSheetPr
             empty: 'No ranked users yet.',
             retry: 'Retry',
             close: 'Close',
+            openProfile: 'Open profile',
           }
         : {
             button: 'TOP 10',
@@ -122,6 +130,7 @@ export function RealEstateTopUsersSheet({ className }: RealEstateTopUsersSheetPr
             empty: 'Hozircha reyting uchun userlar yo‘q.',
             retry: 'Qayta urinish',
             close: 'Yopish',
+            openProfile: 'Profilni ochish',
           };
 
   useEffect(() => {
@@ -254,12 +263,11 @@ export function RealEstateTopUsersSheet({ className }: RealEstateTopUsersSheetPr
                 const localizedLocation =
                   getLocalizedText(user.topAd.formattedAddress, locale) ||
                   getLocalizedText(user.topAd.location, locale);
-
-                return (
-                  <div
-                    key={user.key}
-                    className="soft-panel flex items-start gap-3 rounded-[1.45rem] p-4"
-                  >
+                const profileHref = user.userId ? `/users/${encodeURIComponent(user.userId)}` : null;
+                const itemClassName =
+                  'soft-panel flex items-start gap-3 rounded-[1.45rem] p-4 transition-colors';
+                const itemContent = (
+                  <>
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/12 text-sm font-black text-primary">
                       {index + 1}
                     </div>
@@ -298,6 +306,27 @@ export function RealEstateTopUsersSheet({ className }: RealEstateTopUsersSheetPr
                         </Badge>
                       </div>
                     </div>
+
+                    {profileHref ? (
+                      <span className="shrink-0 self-center text-xs font-semibold text-primary">
+                        {copy.openProfile}
+                      </span>
+                    ) : null}
+                  </>
+                );
+
+                return profileHref ? (
+                  <SheetClose key={user.key} asChild>
+                    <Link
+                      href={profileHref}
+                      className={cn(itemClassName, 'hover:bg-primary/5')}
+                    >
+                      {itemContent}
+                    </Link>
+                  </SheetClose>
+                ) : (
+                  <div key={user.key} className={itemClassName}>
+                    {itemContent}
                   </div>
                 );
               })}

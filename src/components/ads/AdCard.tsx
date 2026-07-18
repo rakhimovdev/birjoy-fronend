@@ -134,13 +134,6 @@ export function AdCard({
     maximumFractionDigits: 0,
   }).format(ad.price);
   const adHref = `/ads/${ad.id}`;
-  const userChipLabel = ad.userName.trim() || localizedCategory;
-  const userInitials = userChipLabel
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join('') || 'B';
   const mobileRibbonLabel =
     featuredLabel || (ad.isFeatured ? messages.adCard.featured : '');
   const hasLocation = localizedLocation.trim().length > 0;
@@ -281,13 +274,6 @@ export function AdCard({
           </Carousel>
 
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent" />
-
-          <div className="absolute left-3 top-3 z-10 flex max-w-[calc(100%-5.5rem)] items-center gap-2 rounded-full border border-white/10 bg-black/45 px-2.5 py-1.5 text-white backdrop-blur-md">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/20 text-[0.68rem] font-bold">
-              {userInitials}
-            </span>
-            <span className="truncate text-[0.82rem] font-semibold">{userChipLabel}</span>
-          </div>
 
           {mobileRibbonLabel ? (
             <div className="absolute -right-9 top-4 z-10 rotate-45 bg-[#FFD028] px-10 py-1 text-[0.72rem] font-black uppercase tracking-[0.16em] text-black shadow-[0_8px_18px_rgba(0,0,0,0.26)]">
