@@ -129,8 +129,6 @@ export function RealEstateMarketplacePage() {
 
   const featuredAds = useMemo(() => filteredAds.filter((ad) => ad.isFeatured), [filteredAds]);
   const regularAds = useMemo(() => filteredAds.filter((ad) => !ad.isFeatured), [filteredAds]);
-  const topTenAds = useMemo(() => regularAds.slice(0, 10), [regularAds]);
-  const remainingAds = useMemo(() => regularAds.slice(10), [regularAds]);
   const mapEligibleAds = useMemo(() => filteredAds.filter(hasCoordinates), [filteredAds]);
 
   const adsWithDistance = useMemo(
@@ -320,8 +318,7 @@ export function RealEstateMarketplacePage() {
   };
 
   const mobileFeaturedAds = featuredAds;
-  const mobileTopTenAds = topTenAds;
-  const mobileGridAds = remainingAds;
+  const mobileGridAds = regularAds;
   const mobileResultsCount = useMemo(
     () => new Intl.NumberFormat(languageMeta[locale].numberLocale).format(filteredAds.length),
     [filteredAds.length, locale]
@@ -404,38 +401,9 @@ export function RealEstateMarketplacePage() {
                           ad={ad}
                           isFavorite={isFavorite(ad.id)}
                           canDelete={isAdmin}
+                          showManageActions={false}
                           variant="real_estate_mobile_compact"
                           featuredLabel="VIP"
-                          onDeleted={(adId) => {
-                            setAds((previous) => previous.filter((item) => item.id !== adId));
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              {mobileTopTenAds.length > 0 ? (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <h2 className="text-[1.65rem] font-semibold tracking-[-0.03em] text-foreground">
-                        {viewCopy.topTenTitle}
-                      </h2>
-                      <p className="text-sm text-muted-foreground">{viewCopy.topTenDescription}</p>
-                    </div>
-                    <Badge variant="secondary">{viewCopy.topBadge}</Badge>
-                  </div>
-                  <div className="scroll-row">
-                    {mobileTopTenAds.map((ad) => (
-                      <div key={ad.id} className="w-[11.5rem] shrink-0">
-                        <AdCard
-                          ad={ad}
-                          isFavorite={isFavorite(ad.id)}
-                          canDelete={isAdmin}
-                          variant="real_estate_mobile_compact"
-                          featuredLabel={viewCopy.topRibbon}
                           onDeleted={(adId) => {
                             setAds((previous) => previous.filter((item) => item.id !== adId));
                           }}
@@ -467,6 +435,7 @@ export function RealEstateMarketplacePage() {
                       ad={ad}
                       isFavorite={isFavorite(ad.id)}
                       canDelete={isAdmin}
+                      showManageActions={false}
                       variant="real_estate_mobile"
                       onDeleted={(adId) => {
                         setAds((previous) => previous.filter((item) => item.id !== adId));
@@ -541,6 +510,7 @@ export function RealEstateMarketplacePage() {
                           ad={ad}
                           isFavorite={isFavorite(ad.id)}
                           canDelete={isAdmin}
+                          showManageActions={false}
                           onDeleted={(adId) => {
                             setAds((previous) => previous.filter((item) => item.id !== adId));
                           }}
@@ -551,40 +521,9 @@ export function RealEstateMarketplacePage() {
                 </section>
               ) : null}
 
-              {topTenAds.length > 0 ? (
-                <section className="surface-card section-shell rounded-[1.85rem]">
-                  <div className="section-header">
-                    <div className="section-header__copy">
-                      <p className="section-kicker">{viewCopy.topTenTitle}</p>
-                      <h2 className="section-title">{viewCopy.topTenTitle}</h2>
-                      <p className="section-caption">{viewCopy.topTenDescription}</p>
-                    </div>
-                    <Badge variant="secondary">{viewCopy.topBadge}</Badge>
-                  </div>
-                  <div className="scroll-row">
-                    {topTenAds.map((ad) => (
-                      <div
-                        key={ad.id}
-                        className="w-[14.25rem] shrink-0 sm:w-[15rem] lg:w-[16.25rem] xl:w-[17rem]"
-                      >
-                        <AdCard
-                          ad={ad}
-                          isFavorite={isFavorite(ad.id)}
-                          canDelete={isAdmin}
-                          featuredLabel={viewCopy.topRibbon}
-                          onDeleted={(adId) => {
-                            setAds((previous) => previous.filter((item) => item.id !== adId));
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
-              {remainingAds.length > 0 ? (
+              {regularAds.length > 0 ? (
                 <section className="space-y-4">
-                  {featuredAds.length > 0 || topTenAds.length > 0 ? (
+                  {featuredAds.length > 0 ? (
                     <div className="section-header">
                       <div className="section-header__copy">
                         <p className="section-kicker">{messages.home.browseAllListings}</p>
@@ -600,12 +539,13 @@ export function RealEstateMarketplacePage() {
                     </div>
                   ) : null}
                   <div className="property-listing-grid">
-                    {remainingAds.map((ad) => (
+                    {regularAds.map((ad) => (
                       <AdCard
                         key={ad.id}
                         ad={ad}
                         isFavorite={isFavorite(ad.id)}
                         canDelete={isAdmin}
+                        showManageActions={false}
                         onDeleted={(adId) => {
                           setAds((previous) => previous.filter((item) => item.id !== adId));
                         }}

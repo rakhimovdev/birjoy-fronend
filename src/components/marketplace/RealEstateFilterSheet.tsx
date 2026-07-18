@@ -138,6 +138,7 @@ export function RealEstateFilterSheet({
   buttonVariant = 'outline',
 }: RealEstateFilterSheetProps) {
   const [open, setOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [draftFilters, setDraftFilters] = useState<RealEstateFilterState>(filters);
   const copy = getCopy(locale);
   const activeCount = useMemo(() => getActiveRealEstateFilterCount(filters), [filters]);
@@ -147,6 +148,33 @@ export function RealEstateFilterSheet({
       setDraftFilters(filters);
     }
   }, [filters, open]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const handleViewportChange = () => {
+      setIsMobileViewport(mediaQuery.matches);
+    };
+
+    handleViewportChange();
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleViewportChange);
+
+      return () => {
+        mediaQuery.removeEventListener('change', handleViewportChange);
+      };
+    }
+
+    mediaQuery.addListener(handleViewportChange);
+
+    return () => {
+      mediaQuery.removeListener(handleViewportChange);
+    };
+  }, []);
 
   const updateDraft = <Key extends keyof RealEstateFilterState>(
     key: Key,
@@ -189,6 +217,7 @@ export function RealEstateFilterSheet({
     { value: '3', label: '3' },
     { value: '4+', label: '4+' },
   ];
+  const sheetSide = isMobileViewport ? 'bottom' : 'right';
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -212,10 +241,15 @@ export function RealEstateFilterSheet({
       </SheetTrigger>
 
       <SheetContent
-        side="right"
-        className="w-full overflow-y-auto border-l-border/60 bg-background/95 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:max-w-xl"
+        side={sheetSide}
+        className={cn(
+          'flex overflow-hidden bg-background/98 p-0',
+          isMobileViewport
+            ? 'h-[min(90dvh,860px)] flex-col rounded-t-[1.85rem] border-t border-border/60'
+            : 'h-full w-full flex-col border-l border-border/60 sm:max-w-xl'
+        )}
       >
-        <SheetHeader className="pr-12">
+        <SheetHeader className="shrink-0 px-5 pb-4 pt-6 pr-14 sm:px-6">
           <SheetTitle>{copy.title}</SheetTitle>
           <SheetDescription>{copy.description}</SheetDescription>
           <div className="pt-2">
@@ -225,152 +259,163 @@ export function RealEstateFilterSheet({
           </div>
         </SheetHeader>
 
-        <div className="grid gap-5 py-6">
-          <div className="soft-panel grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="real-estate-price-min">{copy.priceMin}</Label>
-              <Input
-                id="real-estate-price-min"
-                inputMode="numeric"
-                placeholder="0"
-                value={draftFilters.priceMin}
-                onChange={(event) => updateDraft('priceMin', event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="real-estate-price-max">{copy.priceMax}</Label>
-              <Input
-                id="real-estate-price-max"
-                inputMode="numeric"
-                placeholder="100000"
-                value={draftFilters.priceMax}
-                onChange={(event) => updateDraft('priceMax', event.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="soft-panel grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="real-estate-property-type">{copy.propertyType}</Label>
-              <Select
-                value={draftFilters.propertyType}
-                onValueChange={(value) => updateDraft('propertyType', value as RealEstateFilterState['propertyType'])}
-              >
-                <SelectTrigger id="real-estate-property-type">
-                  <SelectValue placeholder={copy.anyPropertyType} />
-                </SelectTrigger>
-                <SelectContent>
-                  {propertyTypeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="real-estate-listing-type">{copy.listingType}</Label>
-              <Select
-                value={draftFilters.listingType}
-                onValueChange={(value) => updateDraft('listingType', value as RealEstateFilterState['listingType'])}
-              >
-                <SelectTrigger id="real-estate-listing-type">
-                  <SelectValue placeholder={copy.anyListingType} />
-                </SelectTrigger>
-                <SelectContent>
-                  {listingTypeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="real-estate-rooms">{copy.rooms}</Label>
-              <Select
-                value={draftFilters.rooms}
-                onValueChange={(value) => updateDraft('rooms', value as RealEstateRoomsFilter)}
-              >
-                <SelectTrigger id="real-estate-rooms">
-                  <SelectValue placeholder={copy.anyRooms} />
-                </SelectTrigger>
-                <SelectContent>
-                  {roomOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="soft-panel grid gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="real-estate-location">{copy.location}</Label>
-              <Input
-                id="real-estate-location"
-                placeholder={copy.location}
-                value={draftFilters.location}
-                onChange={(event) => updateDraft('location', event.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="flex-1 overflow-y-auto px-5 pb-4 sm:px-6">
+          <div className="grid gap-5 py-1">
+            <div className="soft-panel grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="real-estate-city">{copy.city}</Label>
+                <Label htmlFor="real-estate-price-min">{copy.priceMin}</Label>
                 <Input
-                  id="real-estate-city"
-                  placeholder={copy.city}
-                  value={draftFilters.city}
-                  onChange={(event) => updateDraft('city', event.target.value)}
+                  id="real-estate-price-min"
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={draftFilters.priceMin}
+                  onChange={(event) => updateDraft('priceMin', event.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="real-estate-district">{copy.district}</Label>
+                <Label htmlFor="real-estate-price-max">{copy.priceMax}</Label>
                 <Input
-                  id="real-estate-district"
-                  placeholder={copy.district}
-                  value={draftFilters.district}
-                  onChange={(event) => updateDraft('district', event.target.value)}
+                  id="real-estate-price-max"
+                  inputMode="numeric"
+                  placeholder="100000"
+                  value={draftFilters.priceMax}
+                  onChange={(event) => updateDraft('priceMax', event.target.value)}
                 />
               </div>
             </div>
-          </div>
 
-          <div className="soft-panel grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="real-estate-area-min">{copy.areaMin}</Label>
-              <Input
-                id="real-estate-area-min"
-                inputMode="numeric"
-                placeholder="0"
-                value={draftFilters.areaMin}
-                onChange={(event) => updateDraft('areaMin', event.target.value)}
-              />
+            <div className="soft-panel grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="real-estate-property-type">{copy.propertyType}</Label>
+                <Select
+                  value={draftFilters.propertyType}
+                  onValueChange={(value) =>
+                    updateDraft('propertyType', value as RealEstateFilterState['propertyType'])
+                  }
+                >
+                  <SelectTrigger id="real-estate-property-type">
+                    <SelectValue placeholder={copy.anyPropertyType} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {propertyTypeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="real-estate-listing-type">{copy.listingType}</Label>
+                <Select
+                  value={draftFilters.listingType}
+                  onValueChange={(value) =>
+                    updateDraft('listingType', value as RealEstateFilterState['listingType'])
+                  }
+                >
+                  <SelectTrigger id="real-estate-listing-type">
+                    <SelectValue placeholder={copy.anyListingType} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {listingTypeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="real-estate-rooms">{copy.rooms}</Label>
+                <Select
+                  value={draftFilters.rooms}
+                  onValueChange={(value) => updateDraft('rooms', value as RealEstateRoomsFilter)}
+                >
+                  <SelectTrigger id="real-estate-rooms">
+                    <SelectValue placeholder={copy.anyRooms} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roomOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="real-estate-area-max">{copy.areaMax}</Label>
-              <Input
-                id="real-estate-area-max"
-                inputMode="numeric"
-                placeholder="500"
-                value={draftFilters.areaMax}
-                onChange={(event) => updateDraft('areaMax', event.target.value)}
-              />
+
+            <div className="soft-panel grid gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="real-estate-location">{copy.location}</Label>
+                <Input
+                  id="real-estate-location"
+                  placeholder={copy.location}
+                  value={draftFilters.location}
+                  onChange={(event) => updateDraft('location', event.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="real-estate-city">{copy.city}</Label>
+                  <Input
+                    id="real-estate-city"
+                    placeholder={copy.city}
+                    value={draftFilters.city}
+                    onChange={(event) => updateDraft('city', event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="real-estate-district">{copy.district}</Label>
+                  <Input
+                    id="real-estate-district"
+                    placeholder={copy.district}
+                    value={draftFilters.district}
+                    onChange={(event) => updateDraft('district', event.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="soft-panel grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="real-estate-area-min">{copy.areaMin}</Label>
+                <Input
+                  id="real-estate-area-min"
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={draftFilters.areaMin}
+                  onChange={(event) => updateDraft('areaMin', event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="real-estate-area-max">{copy.areaMax}</Label>
+                <Input
+                  id="real-estate-area-max"
+                  inputMode="numeric"
+                  placeholder="500"
+                  value={draftFilters.areaMax}
+                  onChange={(event) => updateDraft('areaMax', event.target.value)}
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        <SheetFooter className="sticky bottom-0 gap-3 border-t border-border/60 bg-background/95 pt-4">
-          <Button type="button" variant="ghost" className="h-11 rounded-[1.15rem]" onClick={handleClear}>
-            <RotateCcw className="h-4 w-4" />
-            {copy.clear}
-          </Button>
+        <SheetFooter className="shrink-0 gap-3 border-t border-border/60 bg-background px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-6 sm:pb-4">
           <Button type="button" className="h-11 rounded-[1.15rem]" onClick={handleApply}>
             {copy.apply}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-11 rounded-[1.15rem]"
+            onClick={handleClear}
+          >
+            <RotateCcw className="h-4 w-4" />
+            {copy.clear}
           </Button>
         </SheetFooter>
       </SheetContent>

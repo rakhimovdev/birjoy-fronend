@@ -39,6 +39,7 @@ interface AdCardProps {
   className?: string;
   isFavorite?: boolean;
   canDelete?: boolean;
+  showManageActions?: boolean;
   onDeleted?: (adId: string) => void;
   onUpdated?: (ad: Ad) => void;
   variant?: 'default' | 'real_estate_mobile' | 'real_estate_mobile_compact';
@@ -50,6 +51,7 @@ export function AdCard({
   className,
   isFavorite = false,
   canDelete = false,
+  showManageActions = true,
   onDeleted,
   onUpdated,
   variant = 'default',
@@ -144,7 +146,7 @@ export function AdCard({
   const hasLocation = localizedLocation.trim().length > 0;
   const hasMultipleImages = ad.images.length > 1;
   const isOwner = user?.id === ad.userId;
-  const canManageAd = canDelete || isAdmin || isOwner;
+  const canManageAd = showManageActions && (canDelete || isAdmin || isOwner);
   const shouldDeleteAsAdmin = canDelete || (isAdmin && !isOwner);
   const postedAtLabel = mounted
     ? formatDistanceToNow(new Date(ad.createdAt), {

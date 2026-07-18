@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { MarketplaceDrawer } from '@/components/layout/MarketplaceNavigation';
+import { RealEstateTopUsersSheet } from '@/components/layout/RealEstateTopUsersSheet';
 import { ThemeToggleButton } from '@/components/layout/ThemeToggleButton';
 import { VerticalBar } from '@/components/layout/VerticalBar';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -155,6 +156,9 @@ function NavbarContent() {
                 </Select>
               </div>
 
+              {activeMarketplaceVertical === 'real_estate' ? (
+                <RealEstateTopUsersSheet className="shrink-0" />
+              ) : null}
               <ThemeToggleButton className="shrink-0" />
 
               <InstallAppButton compact className="shrink-0 marketplace-glass-button" />

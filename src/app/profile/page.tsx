@@ -30,6 +30,7 @@ import {
   Headphones,
   Heart,
   Loader2,
+  LogOut,
   Mail,
   MapPin,
   Megaphone,
@@ -76,7 +77,7 @@ export default function ProfilePage() {
 }
 
 function ProfilePageContent() {
-  const { user, isFavorite, updateProfile } = useAuth();
+  const { user, isFavorite, signOut, updateProfile } = useAuth();
   const { toast } = useToast();
   const { locale, messages, setLocale } = useI18n();
   const { isAdmin } = useAdminSession();
@@ -579,6 +580,15 @@ function ProfilePageContent() {
     }
   };
 
+  const handleSignOut = () => {
+    signOut();
+    toast({
+      title: messages.auth.signOutSuccessTitle,
+      description: messages.auth.signOutSuccessDescription,
+    });
+    router.push('/');
+  };
+
   const handleLocaleChange = (value: string) => {
     if (isLanguage(value)) {
       setLocale(value as Language);
@@ -1061,6 +1071,27 @@ function ProfilePageContent() {
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold text-white">{settingsCopy.exportTitle}</p>
                           <p className="mt-1 text-sm leading-6 text-white/55">{settingsCopy.exportDescription}</p>
+                        </div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={cn(
+                        MOBILE_PROFILE_CARD,
+                        'block w-full p-4 text-left transition-colors hover:bg-white/8'
+                      )}
+                      onClick={handleSignOut}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-full bg-white/6 p-3 text-white">
+                          <LogOut className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-white">{messages.navbar.logOut}</p>
+                          <p className="mt-1 text-sm leading-6 text-white/55">
+                            {messages.auth.signOutSuccessDescription}
+                          </p>
                         </div>
                       </div>
                     </button>
