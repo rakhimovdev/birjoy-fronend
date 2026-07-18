@@ -63,6 +63,7 @@ import { useAdminSession } from '@/hooks/use-admin-session';
 import { getAdDisplayLocation } from '@/lib/listing-utils';
 
 const NEARBY_PROPERTIES_RADIUS_KM = 5;
+const MOBILE_DETAIL_SHELL_BACKGROUND = 'bg-[#050505] min-[769px]:bg-transparent';
 
 function hasCoordinates(ad: Ad): ad is Ad & { latitude: number; longitude: number } {
   return (
@@ -340,7 +341,7 @@ export function AdDetailsView({
 
   if (isLoading) {
     return (
-      <MarketplaceShell>
+      <MarketplaceShell contentClassName={MOBILE_DETAIL_SHELL_BACKGROUND}>
         <main className="marketplace-main">
           <AdDetailsSkeleton title={messages.adDetails.loading} />
         </main>
@@ -350,7 +351,7 @@ export function AdDetailsView({
 
   if (!ad) {
     return (
-      <MarketplaceShell>
+      <MarketplaceShell contentClassName={MOBILE_DETAIL_SHELL_BACKGROUND}>
         <main className="marketplace-main">
           {error ? (
             <MarketplaceErrorState
@@ -769,7 +770,7 @@ export function AdDetailsView({
   };
 
   return (
-    <MarketplaceShell>
+    <MarketplaceShell contentClassName={MOBILE_DETAIL_SHELL_BACKGROUND}>
       <main className="marketplace-main">
         <div className="hidden min-[769px]:block surface-card section-shell--compact rounded-[1.85rem]">
           <div className="section-header">

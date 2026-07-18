@@ -68,6 +68,7 @@ type PropertyTypeFilter = 'all' | Exclude<Ad['propertyType'], ''>;
 
 const MOBILE_PROFILE_BACKGROUND = 'bg-[#050505]';
 const MOBILE_PROFILE_CARD = 'rounded-[1.75rem] border border-white/8 bg-[#181818]';
+const MOBILE_PROFILE_SHELL_BACKGROUND = 'bg-[#050505] min-[769px]:bg-transparent';
 
 export default function ProfilePage() {
   return (
@@ -543,7 +544,7 @@ function ProfilePageContent() {
 
   if (!user) {
     return (
-      <MarketplaceShell>
+      <MarketplaceShell contentClassName={MOBILE_PROFILE_SHELL_BACKGROUND}>
         <ProtectedRoute>
           <div />
         </ProtectedRoute>
@@ -723,7 +724,7 @@ function ProfilePageContent() {
   };
 
   return (
-    <MarketplaceShell>
+    <MarketplaceShell contentClassName={MOBILE_PROFILE_SHELL_BACKGROUND}>
       <ProtectedRoute>
         <main className="marketplace-main">
           <section
