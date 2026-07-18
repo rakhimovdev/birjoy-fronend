@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Building2,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Heart,
   Info,
@@ -46,6 +48,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from '@/components/ui/carousel';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { getCategoryBySlug } from '@/lib/mock-data';
 import { getVerticalHref } from '@/lib/mock-data';
 import { Ad } from '@/lib/types';
@@ -104,6 +107,7 @@ export function AdDetailsView({
   const [nearbyAds, setNearbyAds] = useState<Ad[]>([]);
   const [selectedMapAdId, setSelectedMapAdId] = useState<string | undefined>(undefined);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isImageGalleryOpen, setIsImageGalleryOpen] = useState(false);
   const [mobileDetailCarouselApi, setMobileDetailCarouselApi] = useState<CarouselApi>();
   const [desktopDetailCarouselApi, setDesktopDetailCarouselApi] = useState<CarouselApi>();
   const [isLoading, setIsLoading] = useState(!initialAd);
@@ -297,6 +301,42 @@ export function AdDetailsView({
       desktopDetailCarouselApi.off('reInit', syncSelectedImage);
     };
   }, [desktopDetailCarouselApi]);
+
+  useEffect(() => {
+    const imageCount = ad?.images.length ?? 0;
+
+    if (!isImageGalleryOpen || imageCount <= 1) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        setSelectedImageIndex((currentIndex) => {
+          const nextIndex = (currentIndex - 1 + imageCount) % imageCount;
+          mobileDetailCarouselApi?.scrollTo(nextIndex);
+          desktopDetailCarouselApi?.scrollTo(nextIndex);
+          return nextIndex;
+        });
+      }
+
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        setSelectedImageIndex((currentIndex) => {
+          const nextIndex = (currentIndex + 1) % imageCount;
+          mobileDetailCarouselApi?.scrollTo(nextIndex);
+          desktopDetailCarouselApi?.scrollTo(nextIndex);
+          return nextIndex;
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [ad, desktopDetailCarouselApi, isImageGalleryOpen, mobileDetailCarouselApi]);
 
   if (isLoading) {
     return (
@@ -543,6 +583,34 @@ export function AdDetailsView({
     label: string;
     value: string;
   }>;
+  const galleryCopy =
+    locale === 'ru'
+      ? {
+          title: 'Просмотр фото',
+          open: 'Открыть все фото',
+          previous: 'Предыдущее фото',
+          next: 'Следующее фото',
+          counter: 'Фото',
+          thumbnails: 'Все фото',
+        }
+      : locale === 'en'
+        ? {
+            title: 'Photo viewer',
+            open: 'Open all photos',
+            previous: 'Previous photo',
+            next: 'Next photo',
+            counter: 'Photo',
+            thumbnails: 'All photos',
+          }
+        : {
+            title: 'Rasm ko‘rish',
+            open: 'Barcha rasmlarni ochish',
+            previous: 'Oldingi rasm',
+            next: 'Keyingi rasm',
+            counter: 'Rasm',
+            thumbnails: 'Barcha rasmlar',
+          };
+  const activeGalleryImage = ad.images[selectedImageIndex] || ad.images[0] || null;
 
   const scrollToImage = (index: number, target: 'mobile' | 'desktop') => {
     setSelectedImageIndex(index);
@@ -552,6 +620,30 @@ export function AdDetailsView({
     }
 
     desktopDetailCarouselApi?.scrollTo(index);
+  };
+
+  const syncAllImageViews = (index: number) => {
+    setSelectedImageIndex(index);
+    mobileDetailCarouselApi?.scrollTo(index);
+    desktopDetailCarouselApi?.scrollTo(index);
+  };
+
+  const openImageGallery = (index: number) => {
+    syncAllImageViews(index);
+    setIsImageGalleryOpen(true);
+  };
+
+  const stepGalleryImage = (direction: 'previous' | 'next') => {
+    if (ad.images.length <= 1) {
+      return;
+    }
+
+    const nextIndex =
+      direction === 'previous'
+        ? (selectedImageIndex - 1 + ad.images.length) % ad.images.length
+        : (selectedImageIndex + 1) % ad.images.length;
+
+    syncAllImageViews(nextIndex);
   };
 
   const handleDeleteAd = async () => {
@@ -759,17 +851,24 @@ export function AdDetailsView({
               <CarouselContent className="-ml-0">
                 {ad.images.map((image, index) => (
                   <CarouselItem key={`${ad.id}-detail-${index}`} className="pl-0">
-                    <div className="relative aspect-[4/3] overflow-hidden">
-                      <Image
-                        src={image}
-                        alt={`${localizedTitle} ${index + 1}`}
-                        fill
-                        className="object-cover"
-                        sizes="100vw"
-                        priority={index === 0}
-                        unoptimized={image.startsWith('data:') || image.startsWith('blob:')}
-                      />
-                    </div>
+                    <button
+                      type="button"
+                      className="block w-full cursor-zoom-in"
+                      onClick={() => openImageGallery(index)}
+                      aria-label={`${galleryCopy.open} ${index + 1}`}
+                    >
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        <Image
+                          src={image}
+                          alt={`${localizedTitle} ${index + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="100vw"
+                          priority={index === 0}
+                          unoptimized={image.startsWith('data:') || image.startsWith('blob:')}
+                        />
+                      </div>
+                    </button>
                   </CarouselItem>
                 ))}
               </CarouselContent>
@@ -1046,17 +1145,24 @@ export function AdDetailsView({
                 <CarouselContent className="-ml-0">
                   {ad.images.map((image, index) => (
                     <CarouselItem key={`${ad.id}-desktop-detail-${index}`} className="pl-0">
-                      <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[16/10]">
-                        <Image
-                          src={image}
-                          alt={`${localizedTitle} ${index + 1}`}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 1024px) 92vw, 64vw"
-                          data-ai-hint="classified product detail"
-                          unoptimized={image.startsWith('data:') || image.startsWith('blob:')}
-                        />
-                      </div>
+                      <button
+                        type="button"
+                        className="block w-full cursor-zoom-in"
+                        onClick={() => openImageGallery(index)}
+                        aria-label={`${galleryCopy.open} ${index + 1}`}
+                      >
+                        <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[16/10]">
+                          <Image
+                            src={image}
+                            alt={`${localizedTitle} ${index + 1}`}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 1024px) 92vw, 64vw"
+                            data-ai-hint="classified product detail"
+                            unoptimized={image.startsWith('data:') || image.startsWith('blob:')}
+                          />
+                        </div>
+                      </button>
                     </CarouselItem>
                   ))}
                 </CarouselContent>
@@ -1370,6 +1476,107 @@ export function AdDetailsView({
               ))}
             </div>
           </section>
+        ) : null}
+
+        {ad.images.length > 0 ? (
+          <Dialog open={isImageGalleryOpen} onOpenChange={setIsImageGalleryOpen}>
+            <DialogContent
+              className="h-[100dvh] max-h-[100dvh] w-screen max-w-none border-none bg-black/96 p-0 text-white shadow-none sm:rounded-none [&>button]:right-4 [&>button]:top-4 [&>button]:z-50 [&>button]:h-11 [&>button]:w-11 [&>button]:rounded-full [&>button]:border [&>button]:border-white/15 [&>button]:bg-black/40 [&>button]:text-white [&>button]:opacity-100 [&>button]:ring-0 [&>button]:hover:bg-white/10 [&>button_svg]:h-5 [&>button_svg]:w-5"
+            >
+              <DialogTitle className="sr-only">{galleryCopy.title}</DialogTitle>
+
+              <div className="flex h-full flex-col">
+                <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-4 pr-16 sm:px-6">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-white/92">{galleryCopy.title}</p>
+                    <p className="text-xs text-white/55">
+                      {galleryCopy.counter} {selectedImageIndex + 1} / {ad.images.length}
+                    </p>
+                  </div>
+
+                  {ad.images.length > 1 ? (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-11 w-11 rounded-full border border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+                        onClick={() => stepGalleryImage('previous')}
+                        aria-label={galleryCopy.previous}
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-11 w-11 rounded-full border border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+                        onClick={() => stepGalleryImage('next')}
+                        aria-label={galleryCopy.next}
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="flex min-h-0 flex-1 flex-col">
+                  <div className="relative flex-1 px-3 py-3 sm:px-6 sm:py-5">
+                    <div className="relative h-full overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/40">
+                      {activeGalleryImage ? (
+                        <Image
+                          src={activeGalleryImage}
+                          alt={`${localizedTitle} ${selectedImageIndex + 1}`}
+                          fill
+                          className="object-contain"
+                          sizes="100vw"
+                          priority
+                          unoptimized={
+                            activeGalleryImage.startsWith('data:') ||
+                            activeGalleryImage.startsWith('blob:')
+                          }
+                        />
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {ad.images.length > 1 ? (
+                    <div className="border-t border-white/10 px-3 py-3 sm:px-6">
+                      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
+                        {galleryCopy.thumbnails}
+                      </p>
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {ad.images.map((image, index) => (
+                          <button
+                            key={`${image.slice(0, 32)}-gallery-${index}`}
+                            type="button"
+                            className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-[1rem] border transition-all sm:h-24 sm:w-24 ${
+                              index === selectedImageIndex
+                                ? 'border-amber-400 ring-2 ring-amber-300/30'
+                                : 'border-white/10 hover:border-white/30'
+                            }`}
+                            onClick={() => syncAllImageViews(index)}
+                            aria-label={`${galleryCopy.open} ${index + 1}`}
+                            aria-current={index === selectedImageIndex}
+                          >
+                            <Image
+                              src={image}
+                              alt={`${localizedTitle} ${index + 1}`}
+                              fill
+                              className="object-cover"
+                              sizes="96px"
+                              loading="lazy"
+                              unoptimized={image.startsWith('data:') || image.startsWith('blob:')}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         ) : null}
       </main>
     </MarketplaceShell>
