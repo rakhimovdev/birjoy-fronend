@@ -26,8 +26,6 @@ type UploadApiResponse = {
   upload?: Partial<ImageKitUploadSession>;
 };
 
-let cachedUploadSession: ImageKitUploadSession | null = null;
-
 function normalizeString(value: string | undefined) {
   return String(value || '').trim();
 }
@@ -40,18 +38,6 @@ function sanitizeFileName(value: string) {
   }
 
   return normalizedValue.replace(/[^a-zA-Z0-9._-]/g, '-');
-}
-
-function normalizeExpireTime(expire: number) {
-  return expire > 1_000_000_000_000 ? expire : expire * 1000;
-}
-
-function hasFreshUploadSession(session: ImageKitUploadSession | null) {
-  if (!session) {
-    return false;
-  }
-
-  return normalizeExpireTime(session.expire) - Date.now() > 30_000;
 }
 
 function extensionFromMimeType(mimeType: string) {
@@ -100,12 +86,6 @@ async function requestUploadApi(path: string, init?: RequestInit) {
 }
 
 async function createImageKitUploadSession(): Promise<ImageKitUploadSession> {
-  const existingSession = cachedUploadSession;
-
-  if (existingSession && hasFreshUploadSession(existingSession)) {
-    return existingSession;
-  }
-
   const data = await requestUploadApi('/uploads/imagekit/auth', {
     method: 'POST',
   });
@@ -130,8 +110,6 @@ async function createImageKitUploadSession(): Promise<ImageKitUploadSession> {
     expire: Number(upload.expire),
     signature: normalizeString(upload.signature),
   } satisfies ImageKitUploadSession;
-
-  cachedUploadSession = nextSession;
   return nextSession;
 }
 
@@ -224,10 +202,9 @@ function resolveBatchConcurrency(total: number) {
 
 export async function uploadAdImageToImageKit(
   source: ImageUploadSource,
-  index = 0,
-  uploadSession?: ImageKitUploadSession
+  index = 0
 ) {
-  const activeUploadSession = uploadSession ?? (await createImageKitUploadSession());
+  const activeUploadSession = await createImageKitUploadSession();
   const formData = new FormData();
 
   appendUploadFile(formData, source, index);
@@ -250,8 +227,6 @@ export async function uploadAdImagesToImageKit(sources: ImageUploadSource[]) {
   if (sources.length === 0) {
     return [];
   }
-
-  const uploadSession = await createImageKitUploadSession();
   const uploadedImagesByIndex: Array<UploadedAdImage | null> = new Array(sources.length).fill(
     null
   );
@@ -270,11 +245,7 @@ export async function uploadAdImagesToImageKit(sources: ImageUploadSource[]) {
       }
 
       try {
-        uploadedImagesByIndex[currentIndex] = await uploadAdImageToImageKit(
-          sources[currentIndex],
-          currentIndex,
-          uploadSession
-        );
+        uploadedImagesByIndex[currentIndex] = await uploadAdImageToImageKit(sources[currentIndex], currentIndex);
       } catch (error) {
         firstError = firstError ?? error;
         return;
