@@ -37,6 +37,7 @@ import {
   Menu,
   Package,
   Phone,
+  RefreshCcw,
   Share2,
   ShieldAlert,
   Trash2,
@@ -52,7 +53,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { getLocalizedText, isLanguage, languageMeta, languages, type Language } from '@/lib/i18n';
 import { useI18n } from '@/components/providers/LocaleProvider';
-import { fetchAds, getConditionLabel } from '@/lib/ads';
+import { fetchAds, getConditionLabel, invalidateAdsCache } from '@/lib/ads';
 import { deleteCurrentUserAccount } from '@/lib/auth';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { cn } from '@/lib/utils';
@@ -67,62 +68,6 @@ type PropertyTypeFilter = 'all' | Exclude<Ad['propertyType'], ''>;
 
 const MOBILE_PROFILE_BACKGROUND = 'bg-[#050505]';
 const MOBILE_PROFILE_CARD = 'rounded-[1.75rem] border border-white/8 bg-[#181818]';
-const PROFILE_AD_STATUSES: Ad['status'][] = ['active', 'pending', 'sold', 'flagged'];
-
-function normalizeComparableText(value?: string | null) {
-  return value?.trim().toLowerCase() || '';
-}
-
-function normalizeComparablePhone(value?: string | null) {
-  return value?.replace(/\D+/g, '') || '';
-}
-
-function dedupeAds(ads: Ad[]) {
-  const seenIds = new Set<string>();
-
-  return ads.filter((ad) => {
-    if (!ad.id || seenIds.has(ad.id)) {
-      return false;
-    }
-
-    seenIds.add(ad.id);
-    return true;
-  });
-}
-
-async function fetchAdsAcrossStatuses(
-  options: Omit<Parameters<typeof fetchAds>[0], 'status'>,
-  statuses: readonly Ad['status'][]
-) {
-  const results = await Promise.allSettled(
-    statuses.map((status) =>
-      fetchAds({
-        ...options,
-        status,
-      })
-    )
-  );
-
-  return results.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
-}
-
-function matchesProfileOwner(ad: Ad, user: NonNullable<ReturnType<typeof useAuth>['user']>) {
-  if (ad.userId === user.id) {
-    return true;
-  }
-
-  const comparableUserPhone = normalizeComparablePhone(user.phone);
-  const comparableAdPhone = normalizeComparablePhone(ad.sellerPhone);
-
-  if (comparableUserPhone && comparableAdPhone && comparableUserPhone === comparableAdPhone) {
-    return true;
-  }
-
-  const comparableUserName = normalizeComparableText(user.name);
-  const comparableAdName = normalizeComparableText(ad.userName);
-
-  return Boolean(comparableUserName && comparableAdName && comparableUserName === comparableAdName);
-}
 
 export default function ProfilePage() {
   return (
@@ -133,7 +78,7 @@ export default function ProfilePage() {
 }
 
 function ProfilePageContent() {
-  const { user, isFavorite, signOut, updateProfile } = useAuth();
+  const { user, isFavorite, isReady, signOut, updateProfile } = useAuth();
   const { toast } = useToast();
   const { locale, messages, setLocale } = useI18n();
   const { isAdmin } = useAdminSession();
@@ -155,6 +100,7 @@ function ProfilePageContent() {
   const [sortFilter, setSortFilter] = useState<AdSortFilter>('newest');
   const [verticalFilter, setVerticalFilter] = useState<VerticalFilter>('all');
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<PropertyTypeFilter>('all');
+  const [adsLoadNonce, setAdsLoadNonce] = useState(0);
   const [profileForm, setProfileForm] = useState({
     name: '',
     phone: '',
@@ -413,16 +359,26 @@ function ProfilePageContent() {
     }),
     [locale]
   );
+  const retryAdsLabel = locale === 'ru' ? 'Повторить' : locale === 'en' ? 'Retry' : 'Qayta urinish';
 
   useEffect(() => {
     setActiveDesktopTab(defaultTab);
     setActiveMobileTab((currentTab) => (currentTab === 'services' ? currentTab : defaultTab));
   }, [defaultTab]);
 
+  const handleRetryAds = () => {
+    invalidateAdsCache();
+    setAdsLoadNonce((currentValue) => currentValue + 1);
+  };
+
   useEffect(() => {
     const abortController = new AbortController();
 
     async function loadAds() {
+      if (!isReady) {
+        return;
+      }
+
       if (!user?.id) {
         setMyAds([]);
         setFavoriteAds([]);
@@ -433,16 +389,13 @@ function ProfilePageContent() {
 
       try {
         setIsLoadingAds(true);
-        const [myListingsByStatus, favoriteListings] = await Promise.all([
-          fetchAdsAcrossStatuses(
-            {
-              userId: user.id,
-              fields: 'full',
-              limit: 100,
-              signal: abortController.signal,
-            },
-            PROFILE_AD_STATUSES
-          ),
+        const [myListings, favoriteListings] = await Promise.all([
+          fetchAds({
+            userId: user.id,
+            fields: 'full',
+            limit: 100,
+            signal: abortController.signal,
+          }),
           user.favorites.length
             ? fetchAds({
                 ids: user.favorites,
@@ -456,27 +409,6 @@ function ProfilePageContent() {
 
         if (abortController.signal.aborted) {
           return;
-        }
-
-        let myListings = dedupeAds(myListingsByStatus);
-
-        if (myListings.length === 0) {
-          const fallbackListingsByStatus = await fetchAdsAcrossStatuses(
-            {
-              fields: 'full',
-              limit: 100,
-              signal: abortController.signal,
-            },
-            PROFILE_AD_STATUSES
-          );
-
-          if (abortController.signal.aborted) {
-            return;
-          }
-
-          myListings = dedupeAds(fallbackListingsByStatus).filter((ad) =>
-            matchesProfileOwner(ad, user)
-          );
         }
 
         setMyAds(myListings);
@@ -502,7 +434,34 @@ function ProfilePageContent() {
     return () => {
       abortController.abort();
     };
-  }, [favoriteIdsKey, user]);
+  }, [adsLoadNonce, favoriteIdsKey, isReady, user]);
+
+  useEffect(() => {
+    if (!isReady || !user?.id) {
+      return;
+    }
+
+    const refreshAds = () => {
+      invalidateAdsCache();
+      setAdsLoadNonce((currentValue) => currentValue + 1);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshAds();
+      }
+    };
+
+    window.addEventListener('focus', refreshAds);
+    window.addEventListener('pageshow', refreshAds);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', refreshAds);
+      window.removeEventListener('pageshow', refreshAds);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isReady, user?.id]);
 
   useEffect(() => {
     if (!user || !isEditProfileOpen) {
@@ -968,6 +927,15 @@ function ProfilePageContent() {
                         <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full py-16 text-center')}>
                           <Package className="mx-auto mb-4 h-12 w-12 text-white/40" />
                           <p className="mx-auto max-w-sm text-sm text-white/65">{adsError}</p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="mt-6 min-h-12 rounded-full border-white/15 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white"
+                            onClick={handleRetryAds}
+                          >
+                            <RefreshCcw className="h-4 w-4" />
+                            {retryAdsLabel}
+                          </Button>
                         </div>
                       ) : filteredMyAds.length > 0 ? (
                         filteredMyAds.map((ad) => (
@@ -1031,6 +999,15 @@ function ProfilePageContent() {
                       <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full py-16 text-center')}>
                         <Heart className="mx-auto mb-4 h-12 w-12 text-white/40" />
                         <p className="mx-auto max-w-sm text-sm text-white/65">{adsError}</p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="mt-6 min-h-12 rounded-full border-white/15 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white"
+                          onClick={handleRetryAds}
+                        >
+                          <RefreshCcw className="h-4 w-4" />
+                          {retryAdsLabel}
+                        </Button>
                       </div>
                     ) : favoriteAds.length > 0 ? (
                       favoriteAds.map((ad) => (
@@ -1426,6 +1403,10 @@ function ProfilePageContent() {
                         <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
                           <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                           <p className="mx-auto max-w-xl text-muted-foreground">{adsError}</p>
+                          <Button type="button" variant="outline" className="mt-6" onClick={handleRetryAds}>
+                            <RefreshCcw className="h-4 w-4" />
+                            {retryAdsLabel}
+                          </Button>
                         </div>
                       ) : myAds.length > 0 ? (
                         myAds.map((ad) => (
@@ -1462,6 +1443,10 @@ function ProfilePageContent() {
                         <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
                           <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                           <p className="mx-auto max-w-xl text-muted-foreground">{adsError}</p>
+                          <Button type="button" variant="outline" className="mt-6" onClick={handleRetryAds}>
+                            <RefreshCcw className="h-4 w-4" />
+                            {retryAdsLabel}
+                          </Button>
                         </div>
                       ) : favoriteAds.length > 0 ? (
                         favoriteAds.map((ad) => (
