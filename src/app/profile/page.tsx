@@ -66,9 +66,14 @@ type AdSortFilter = 'newest' | 'oldest' | 'price-high' | 'price-low';
 type VerticalFilter = 'all' | Ad['vertical'];
 type PropertyTypeFilter = 'all' | Exclude<Ad['propertyType'], ''>;
 
-const MOBILE_PROFILE_BACKGROUND = 'bg-[#050505]';
-const MOBILE_PROFILE_CARD = 'rounded-[1.75rem] border border-white/8 bg-[#181818]';
-const MOBILE_PROFILE_SHELL_BACKGROUND = 'bg-[#050505] min-[769px]:bg-transparent';
+const MOBILE_PROFILE_CARD = 'surface-card rounded-[1.75rem] border-none shadow-none';
+const MOBILE_PROFILE_ICON_BUTTON =
+  'touch-target flex h-12 w-12 items-center justify-center rounded-full border border-border/70 bg-card/78 text-foreground transition-colors hover:bg-primary/8';
+const MOBILE_PROFILE_SELECT_TRIGGER =
+  'h-14 rounded-[1.3rem] border-border/70 bg-card/78 px-4 text-left text-sm font-semibold text-foreground shadow-none';
+const MOBILE_PROFILE_OUTLINE_BUTTON =
+  'min-h-12 rounded-full border-border/60 bg-background/60 px-6 text-foreground hover:bg-primary/8 hover:text-foreground';
+const MOBILE_PROFILE_SHELL_BACKGROUND = '';
 
 export default function ProfilePage() {
   return (
@@ -728,10 +733,7 @@ function ProfilePageContent() {
       <ProtectedRoute>
         <main className="marketplace-main">
           <section
-            className={cn(
-              'phone-nav-only min-[769px]:hidden mx-[calc(var(--page-gutter)*-1)] px-[var(--page-gutter)] pb-28 pt-3 text-white',
-              MOBILE_PROFILE_BACKGROUND
-            )}
+            className="phone-nav-only min-[769px]:hidden mx-[calc(var(--page-gutter)*-1)] px-[var(--page-gutter)] pb-28 pt-3 text-foreground"
           >
             <div className="space-y-6">
               <header className="space-y-3">
@@ -740,13 +742,15 @@ function ProfilePageContent() {
                     <p className="truncate text-[1.5rem] font-black leading-none tracking-[-0.04em] sm:text-[1.7rem]">
                       {profileHandle}
                     </p>
-                    <p className="mt-3 max-w-[17rem] text-sm text-white/55">{messages.profile.memberSince}</p>
+                    <p className="mt-3 max-w-[17rem] text-sm text-muted-foreground">
+                      {messages.profile.memberSince}
+                    </p>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="touch-target flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors hover:bg-white/10"
+                      className={MOBILE_PROFILE_ICON_BUTTON}
                       aria-label={mobileCopy.shareAria}
                       onClick={() => void handleShareProfile()}
                     >
@@ -754,7 +758,7 @@ function ProfilePageContent() {
                     </button>
                     <button
                       type="button"
-                      className="touch-target flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors hover:bg-white/10"
+                      className={MOBILE_PROFILE_ICON_BUTTON}
                       aria-label={mobileCopy.editAria}
                       onClick={() => setIsEditProfileOpen(true)}
                     >
@@ -762,7 +766,7 @@ function ProfilePageContent() {
                     </button>
                     <button
                       type="button"
-                      className="touch-target flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors hover:bg-white/10"
+                      className={MOBILE_PROFILE_ICON_BUTTON}
                       aria-label={mobileCopy.menuAria}
                       onClick={() => setActiveMobileTab('services')}
                     >
@@ -771,14 +775,14 @@ function ProfilePageContent() {
                   </div>
                 </div>
 
-                <p className="text-sm text-white/45">{mobileCopy.tabHint}</p>
+                <p className="text-sm text-muted-foreground">{mobileCopy.tabHint}</p>
               </header>
 
               <section className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <Avatar className="h-24 w-24 shrink-0 border-2 border-white/20 bg-white/10">
+                  <Avatar className="h-24 w-24 shrink-0 border-2 border-primary/15 bg-background/60">
                     <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className="bg-white/10 text-xl font-bold text-white">
+                    <AvatarFallback className="bg-primary/10 text-xl font-bold text-foreground">
                       {user.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
@@ -786,7 +790,7 @@ function ProfilePageContent() {
                     <h1 className="break-words text-[1.35rem] font-extrabold leading-tight tracking-[-0.03em]">
                       {user.name}
                     </h1>
-                    {userLocation ? <p className="text-sm text-white/55">{userLocation}</p> : null}
+                    {userLocation ? <p className="text-sm text-muted-foreground">{userLocation}</p> : null}
                   </div>
                 </div>
 
@@ -800,9 +804,9 @@ function ProfilePageContent() {
                           <span className="text-[2rem] font-black tracking-[-0.05em]">
                             {isLoadingAds ? '...' : statsFormatter.format(item.value)}
                           </span>
-                          <Icon className="mt-1 h-5 w-5 text-white/45" />
+                          <Icon className="mt-1 h-5 w-5 text-muted-foreground" />
                         </div>
-                        <p className="mt-3 text-[1.05rem] text-white/88">{item.label}</p>
+                        <p className="mt-3 text-[1.05rem] text-muted-foreground">{item.label}</p>
                       </div>
                     );
                   })}
@@ -810,13 +814,13 @@ function ProfilePageContent() {
               </section>
 
               <section className={cn(MOBILE_PROFILE_CARD, 'overflow-hidden p-4')}>
-                <div className="rounded-[1.45rem] bg-white/7 px-4 py-5 text-center text-[1.35rem] font-extrabold">
+                <div className="rounded-[1.45rem] bg-background/60 px-4 py-5 text-center text-[1.35rem] font-extrabold">
                   {mobileCopy.balance}: 0 so&apos;m
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <button
                     type="button"
-                    className="flex min-h-14 items-center justify-center rounded-full bg-black px-4 text-base font-semibold text-white transition-transform hover:scale-[0.99]"
+                    className="flex min-h-14 items-center justify-center rounded-full bg-primary px-4 text-base font-semibold text-primary-foreground transition-transform hover:scale-[0.99] hover:bg-primary/90"
                     onClick={() => handleBalanceAction('top-up')}
                   >
                     {mobileCopy.topUp}
@@ -832,7 +836,7 @@ function ProfilePageContent() {
               </section>
 
               <section className="space-y-4">
-                <div className="grid grid-cols-3 gap-4 border-b border-white/10">
+                <div className="grid grid-cols-3 gap-4 border-b border-border/60">
                   {[
                     { value: 'ads', label: mobileCopy.adsTab, icon: Building2 },
                     { value: 'services', label: mobileCopy.servicesTab, icon: WalletCards },
@@ -847,7 +851,7 @@ function ProfilePageContent() {
                         type="button"
                         className={cn(
                           'flex flex-col items-center gap-2 border-b-2 px-1 pb-3 pt-1 text-center transition-colors',
-                          isActive ? 'border-white text-white' : 'border-transparent text-white/48'
+                          isActive ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground'
                         )}
                         onClick={() => setActiveMobileTab(tab.value as MobileProfileTab)}
                       >
@@ -862,7 +866,7 @@ function ProfilePageContent() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-3">
                       <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as AdStatusFilter)}>
-                        <SelectTrigger className="h-14 rounded-[1.3rem] border-white/10 bg-[#232323] px-4 text-left text-sm font-semibold text-white shadow-none">
+                        <SelectTrigger className={MOBILE_PROFILE_SELECT_TRIGGER}>
                           <SelectValue placeholder={mobileCopy.status} />
                         </SelectTrigger>
                         <SelectContent>
@@ -875,7 +879,7 @@ function ProfilePageContent() {
                       </Select>
 
                       <Select value={sortFilter} onValueChange={(value) => setSortFilter(value as AdSortFilter)}>
-                        <SelectTrigger className="h-14 rounded-[1.3rem] border-white/10 bg-[#232323] px-4 text-left text-sm font-semibold text-white shadow-none">
+                        <SelectTrigger className={MOBILE_PROFILE_SELECT_TRIGGER}>
                           <SelectValue placeholder={mobileCopy.sort} />
                         </SelectTrigger>
                         <SelectContent>
@@ -887,7 +891,7 @@ function ProfilePageContent() {
                       </Select>
 
                       <Select value={verticalFilter} onValueChange={(value) => setVerticalFilter(value as VerticalFilter)}>
-                        <SelectTrigger className="h-14 rounded-[1.3rem] border-white/10 bg-[#232323] px-4 text-left text-sm font-semibold text-white shadow-none">
+                        <SelectTrigger className={MOBILE_PROFILE_SELECT_TRIGGER}>
                           <SelectValue placeholder={mobileCopy.vertical} />
                         </SelectTrigger>
                         <SelectContent>
@@ -904,7 +908,7 @@ function ProfilePageContent() {
                         value={propertyTypeFilter}
                         onValueChange={(value) => setPropertyTypeFilter(value as PropertyTypeFilter)}
                       >
-                        <SelectTrigger className="h-14 rounded-[1.3rem] border-white/10 bg-[#232323] px-4 text-left text-sm font-semibold text-white shadow-none">
+                        <SelectTrigger className={MOBILE_PROFILE_SELECT_TRIGGER}>
                           <SelectValue placeholder={mobileCopy.propertyType} />
                         </SelectTrigger>
                         <SelectContent>
@@ -921,17 +925,17 @@ function ProfilePageContent() {
                     <div className="property-listing-grid">
                       {isLoadingAds ? (
                         <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full py-16 text-center')}>
-                          <Package className="mx-auto mb-4 h-12 w-12 text-white/40" />
+                          <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                           <h3 className="text-lg font-semibold">{messages.profile.loadingListings}</h3>
                         </div>
                       ) : adsError ? (
                         <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full py-16 text-center')}>
-                          <Package className="mx-auto mb-4 h-12 w-12 text-white/40" />
-                          <p className="mx-auto max-w-sm text-sm text-white/65">{adsError}</p>
+                          <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                          <p className="mx-auto max-w-sm text-sm text-muted-foreground">{adsError}</p>
                           <Button
                             type="button"
                             variant="outline"
-                            className="mt-6 min-h-12 rounded-full border-white/15 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white"
+                            className={cn('mt-6', MOBILE_PROFILE_OUTLINE_BUTTON)}
                             onClick={handleRetryAds}
                           >
                             <RefreshCcw className="h-4 w-4" />
@@ -964,7 +968,7 @@ function ProfilePageContent() {
                           <h3 className="text-[1.65rem] font-bold leading-tight">
                             {myAds.length > 0 ? mobileCopy.filtersEmptyTitle : messages.profile.noAdsYet}
                           </h3>
-                          <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-white/60">
+                          <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
                             {myAds.length > 0 ? mobileCopy.filtersEmptyDescription : messages.profile.noAdsDescription}
                           </p>
                           <div className="mt-6 flex justify-center">
@@ -972,7 +976,7 @@ function ProfilePageContent() {
                               <Button
                                 type="button"
                                 variant="outline"
-                                className="min-h-12 rounded-full border-white/15 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white"
+                                className={MOBILE_PROFILE_OUTLINE_BUTTON}
                                 onClick={resetMobileFilters}
                               >
                                 {mobileCopy.clearFilters}
@@ -993,17 +997,17 @@ function ProfilePageContent() {
                   <div className="property-listing-grid">
                     {isLoadingAds ? (
                       <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full py-16 text-center')}>
-                        <Heart className="mx-auto mb-4 h-12 w-12 text-white/40" />
+                        <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                         <h3 className="text-lg font-semibold">{messages.profile.loadingListings}</h3>
                       </div>
                     ) : adsError ? (
                       <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full py-16 text-center')}>
-                        <Heart className="mx-auto mb-4 h-12 w-12 text-white/40" />
-                        <p className="mx-auto max-w-sm text-sm text-white/65">{adsError}</p>
+                        <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                        <p className="mx-auto max-w-sm text-sm text-muted-foreground">{adsError}</p>
                         <Button
                           type="button"
                           variant="outline"
-                          className="mt-6 min-h-12 rounded-full border-white/15 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white"
+                          className={cn('mt-6', MOBILE_PROFILE_OUTLINE_BUTTON)}
                           onClick={handleRetryAds}
                         >
                           <RefreshCcw className="h-4 w-4" />
@@ -1023,18 +1027,18 @@ function ProfilePageContent() {
                       ))
                     ) : (
                       <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full px-5 py-10 text-center')}>
-                        <div className="relative mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-white/5 text-[#ffd84e]">
+                        <div className="relative mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-[#ffd84e]">
                           <Heart className="h-10 w-10" />
                         </div>
                         <h3 className="text-[1.65rem] font-bold leading-tight">{messages.profile.emptyFavorites}</h3>
-                        <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-white/60">
+                        <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
                           {messages.profile.emptyFavoritesDescription}
                         </p>
                         <div className="mt-6 flex justify-center">
                           <Button
                             asChild
                             variant="outline"
-                            className="min-h-12 rounded-full border-white/15 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white"
+                            className={MOBILE_PROFILE_OUTLINE_BUTTON}
                           >
                             <Link href="/">{messages.profile.exploreMarket}</Link>
                           </Button>
@@ -1048,29 +1052,29 @@ function ProfilePageContent() {
                   <div className="space-y-4">
                     <div className={cn(MOBILE_PROFILE_CARD, 'p-4')}>
                       <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-white/6 p-3 text-white">
+                        <div className="rounded-full bg-primary/10 p-3 text-primary">
                           <Mail className="h-4 w-4" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-white">{mobileCopy.contacts}</p>
-                          <p className="mt-1 text-sm text-white/55">{mobileCopy.contactsDescription}</p>
+                          <p className="text-sm font-semibold text-foreground">{mobileCopy.contacts}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{mobileCopy.contactsDescription}</p>
                         </div>
                       </div>
 
-                      <div className="mt-4 space-y-3 rounded-[1.35rem] bg-white/4 p-4 text-sm text-white/72">
+                      <div className="mt-4 space-y-3 rounded-[1.35rem] border border-border/60 bg-background/55 p-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2 break-all">
-                          <Mail className="h-4 w-4 shrink-0 text-white/48" />
+                          <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
                           <span>{user.email}</span>
                         </div>
                         {user.phone ? (
                           <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 shrink-0 text-white/48" />
+                            <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
                             <span>{user.phone}</span>
                           </div>
                         ) : null}
                         {userLocation ? (
                           <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 shrink-0 text-white/48" />
+                            <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
                             <span>{userLocation}</span>
                           </div>
                         ) : null}
@@ -1079,17 +1083,17 @@ function ProfilePageContent() {
 
                     <div className={cn(MOBILE_PROFILE_CARD, 'p-4')}>
                       <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-white/6 p-3 text-white">
+                        <div className="rounded-full bg-primary/10 p-3 text-primary">
                           <Globe2 className="h-4 w-4" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-white">{settingsCopy.languageTitle}</p>
-                          <p className="mt-1 text-sm text-white/55">{settingsCopy.languageDescription}</p>
+                          <p className="text-sm font-semibold text-foreground">{settingsCopy.languageTitle}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{settingsCopy.languageDescription}</p>
                         </div>
                       </div>
 
                       <Select value={locale} onValueChange={handleLocaleChange}>
-                        <SelectTrigger className="mt-4 h-12 rounded-[1.1rem] border-white/10 bg-white/5 text-white shadow-none">
+                        <SelectTrigger className="mt-4 h-12 rounded-[1.1rem] border-border/70 bg-card/78 text-foreground shadow-none">
                           <SelectValue placeholder={messages.navbar.language} />
                         </SelectTrigger>
                         <SelectContent>
@@ -1104,31 +1108,31 @@ function ProfilePageContent() {
 
                     <a
                       href="tel:+998332580404"
-                      className={cn(MOBILE_PROFILE_CARD, 'block p-4 transition-colors hover:bg-white/8')}
+                      className={cn(MOBILE_PROFILE_CARD, 'block p-4 transition-colors hover:bg-primary/5')}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-white/6 p-3 text-white">
+                        <div className="rounded-full bg-primary/10 p-3 text-primary">
                           <Headphones className="h-4 w-4" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-white">{settingsCopy.supportTitle}</p>
-                          <p className="mt-1 text-sm leading-6 text-white/55">{settingsCopy.supportDescription}</p>
+                          <p className="text-sm font-semibold text-foreground">{settingsCopy.supportTitle}</p>
+                          <p className="mt-1 text-sm leading-6 text-muted-foreground">{settingsCopy.supportDescription}</p>
                         </div>
                       </div>
                     </a>
 
                     <button
                       type="button"
-                      className={cn(MOBILE_PROFILE_CARD, 'block w-full p-4 text-left transition-colors hover:bg-white/8')}
+                      className={cn(MOBILE_PROFILE_CARD, 'block w-full p-4 text-left transition-colors hover:bg-primary/5')}
                       onClick={handleDownloadData}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-white/6 p-3 text-white">
+                        <div className="rounded-full bg-primary/10 p-3 text-primary">
                           <Download className="h-4 w-4" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-white">{settingsCopy.exportTitle}</p>
-                          <p className="mt-1 text-sm leading-6 text-white/55">{settingsCopy.exportDescription}</p>
+                          <p className="text-sm font-semibold text-foreground">{settingsCopy.exportTitle}</p>
+                          <p className="mt-1 text-sm leading-6 text-muted-foreground">{settingsCopy.exportDescription}</p>
                         </div>
                       </div>
                     </button>
@@ -1137,17 +1141,17 @@ function ProfilePageContent() {
                       type="button"
                       className={cn(
                         MOBILE_PROFILE_CARD,
-                        'block w-full p-4 text-left transition-colors hover:bg-white/8'
+                        'block w-full p-4 text-left transition-colors hover:bg-primary/5'
                       )}
                       onClick={handleSignOut}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-white/6 p-3 text-white">
+                        <div className="rounded-full bg-primary/10 p-3 text-primary">
                           <LogOut className="h-4 w-4" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-white">{messages.navbar.logOut}</p>
-                          <p className="mt-1 text-sm leading-6 text-white/55">
+                          <p className="text-sm font-semibold text-foreground">{messages.navbar.logOut}</p>
+                          <p className="mt-1 text-sm leading-6 text-muted-foreground">
                             {messages.auth.signOutSuccessDescription}
                           </p>
                         </div>
@@ -1160,8 +1164,8 @@ function ProfilePageContent() {
                           <ShieldAlert className="h-4 w-4" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-white">{settingsCopy.dangerTitle}</p>
-                          <p className="mt-1 text-sm leading-6 text-white/60">{settingsCopy.dangerDescription}</p>
+                          <p className="text-sm font-semibold text-foreground">{settingsCopy.dangerTitle}</p>
+                          <p className="mt-1 text-sm leading-6 text-muted-foreground">{settingsCopy.dangerDescription}</p>
                         </div>
                       </div>
 

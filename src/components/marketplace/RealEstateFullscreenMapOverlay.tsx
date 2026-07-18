@@ -142,15 +142,20 @@ export function RealEstateFullscreenMapOverlay({
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:p-4 sm:pt-[calc(env(safe-area-inset-top)+1rem)]">
-        <div className="pointer-events-auto mx-auto flex max-w-6xl flex-col gap-3 rounded-[1.85rem] border border-white/25 bg-background/74 p-3 shadow-[0_24px_50px_rgba(7,28,85,0.24)] backdrop-blur-xl sm:flex-row sm:items-start sm:justify-between sm:p-4">
+        <div className="pointer-events-auto mx-auto flex max-w-6xl flex-col gap-3 rounded-[1.85rem] border border-white/10 bg-slate-900 p-3 text-white shadow-[0_24px_60px_rgba(2,6,23,0.5)] sm:flex-row sm:items-start sm:justify-between sm:p-4">
           <div className="flex items-center gap-2">
-            <Button type="button" variant="ghost" className="h-11 rounded-[1.15rem] px-4" onClick={onClose}>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-11 rounded-[1.15rem] border border-white/10 bg-white/8 px-4 text-white hover:bg-white/12 hover:text-white"
+              onClick={onClose}
+            >
               <ArrowLeft className="h-4 w-4" />
               {getBackLabel(locale)}
             </Button>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-foreground sm:text-base">{title}</p>
-              <p className="text-xs text-muted-foreground sm:text-sm">{getSubtitle(locale, activeFilterCount)}</p>
+              <p className="truncate text-sm font-semibold text-white sm:text-base">{title}</p>
+              <p className="text-xs text-slate-300 sm:text-sm">{getSubtitle(locale, activeFilterCount)}</p>
             </div>
           </div>
 
@@ -159,7 +164,7 @@ export function RealEstateFullscreenMapOverlay({
             filters={filters}
             onApply={onApplyFilters}
             onClear={onClearFilters}
-            buttonClassName="w-full sm:w-auto"
+            buttonClassName="h-11 w-full rounded-[1.15rem] border-white/10 bg-white/8 text-white hover:bg-white/12 hover:text-white sm:w-auto"
           />
         </div>
       </div>
@@ -170,7 +175,7 @@ export function RealEstateFullscreenMapOverlay({
             {locationFeedback ? (
               <p
                 className={cn(
-                  'pointer-events-auto inline-flex items-center gap-2 rounded-[1.1rem] border border-destructive/20 bg-background/92 px-3 py-2 text-xs text-destructive shadow-[0_12px_28px_rgba(7,28,85,0.12)] backdrop-blur-xl'
+                  'pointer-events-auto inline-flex items-center gap-2 rounded-[1.1rem] border border-red-400/25 bg-slate-900 px-3 py-2 text-xs text-red-200 shadow-[0_12px_28px_rgba(2,6,23,0.42)]'
                 )}
                 aria-live="polite"
               >
@@ -183,7 +188,7 @@ export function RealEstateFullscreenMapOverlay({
               type="button"
               variant="outline"
               size="icon"
-              className="pointer-events-auto h-14 w-14 rounded-full border-white/60 bg-background/92 shadow-[0_18px_34px_rgba(7,28,85,0.18)] backdrop-blur-xl"
+              className="pointer-events-auto h-14 w-14 rounded-full border-white/10 bg-slate-900 text-white shadow-[0_18px_34px_rgba(2,6,23,0.44)] hover:bg-slate-800 hover:text-white"
               onClick={onLocateUser}
               disabled={isLocatingUser}
               aria-label={isLocatingUser ? locatingUserLabel : locateUserLabel}

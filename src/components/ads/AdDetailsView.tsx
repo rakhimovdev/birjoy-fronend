@@ -63,7 +63,7 @@ import { useAdminSession } from '@/hooks/use-admin-session';
 import { getAdDisplayLocation } from '@/lib/listing-utils';
 
 const NEARBY_PROPERTIES_RADIUS_KM = 5;
-const MOBILE_DETAIL_SHELL_BACKGROUND = 'bg-[#050505] min-[769px]:bg-transparent';
+const MOBILE_DETAIL_SHELL_BACKGROUND = '';
 
 function hasCoordinates(ad: Ad): ad is Ad & { latitude: number; longitude: number } {
   return (
@@ -837,7 +837,7 @@ export function AdDetailsView({
           </div>
         </div>
 
-        <section className="phone-nav-only mx-[calc(var(--page-gutter)*-1)] flex-col overflow-hidden bg-[#050505] text-white">
+        <section className="phone-nav-only mx-[calc(var(--page-gutter)*-1)] flex-col overflow-hidden text-foreground">
           <div className="relative">
             <Carousel
               setApi={(api) => {
@@ -990,12 +990,15 @@ export function AdDetailsView({
             ) : null}
           </div>
 
-          <div id="mobile-detail-info" className="space-y-5 px-5 pb-6 pt-4">
+          <div
+            id="mobile-detail-info"
+            className="surface-card relative -mt-6 space-y-5 rounded-t-[1.9rem] px-5 pb-6 pt-5 shadow-[0_-18px_36px_rgba(7,28,85,0.12)]"
+          >
             <div className="flex flex-wrap gap-2">
               {mobileMetaPills.map((pill) => (
                 <span
                   key={pill}
-                  className="rounded-full border border-white/10 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white/92 backdrop-blur"
+                  className="rounded-full border border-border/70 bg-background/78 px-3.5 py-2 text-xs font-semibold text-foreground shadow-sm backdrop-blur"
                 >
                   {pill}
                 </span>
@@ -1003,22 +1006,22 @@ export function AdDetailsView({
             </div>
 
             <div className="space-y-3">
-              <h1 className="text-[2rem] font-semibold leading-[1.02] tracking-[-0.03em] text-white">
+              <h1 className="text-[2rem] font-semibold leading-[1.02] tracking-[-0.03em] text-foreground">
                 {localizedTitle}
               </h1>
-              <p className="text-[2.2rem] font-black leading-none tracking-[-0.04em] text-white">
+              <p className="text-[2.2rem] font-black leading-none tracking-[-0.04em] text-foreground">
                 {formattedPrice}
               </p>
-              <p className="whitespace-pre-line text-[0.98rem] leading-7 text-white/74">
+              <p className="whitespace-pre-line text-[0.98rem] leading-7 text-muted-foreground">
                 {localizedDescription}
               </p>
             </div>
 
-            <div className="space-y-3 border-t border-white/10 pt-5">
+            <div className="space-y-3 border-t border-border/60 pt-5">
               {mobileOverviewItems.map((item) => (
                 <div key={item.label} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
-                  <span className="text-base font-semibold text-white">{item.label}</span>
-                  <span className="text-base font-semibold text-white/92">{item.value}</span>
+                  <span className="text-base font-semibold text-muted-foreground">{item.label}</span>
+                  <span className="text-base font-semibold text-foreground">{item.value}</span>
                 </div>
               ))}
             </div>
