@@ -264,6 +264,22 @@ export function getStoredSessionUser() {
   );
 }
 
+export function getSearchableUsers() {
+  const storedUsers = readStoredUsers().map(sanitizeUser);
+  const sessionUser = getStoredSessionUser();
+  const userMap = new Map<string, UserProfile>();
+
+  storedUsers.forEach((user) => {
+    userMap.set(user.id, user);
+  });
+
+  if (sessionUser) {
+    userMap.set(sessionUser.id, sessionUser);
+  }
+
+  return [...userMap.values()];
+}
+
 function writeStoredSessionUser(user: UserProfile | null) {
   if (!isBrowser()) {
     return;
