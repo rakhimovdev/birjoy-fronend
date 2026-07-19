@@ -143,9 +143,10 @@ export function MarketplaceSearchPage() {
   const [isLoadingResults, setIsLoadingResults] = useState(false);
   const [resultsError, setResultsError] = useState<string | null>(null);
   const [loadRequestNonce, setLoadRequestNonce] = useState(0);
-  const deferredQuery = useDeferredValue(searchQuery.trim());
+  const normalizedSearchQuery = searchQuery.trim();
+  const deferredQuery = useDeferredValue(normalizedSearchQuery);
   const currentQueryParam = searchParams.get('q')?.trim() ?? '';
-  const hasQuery = deferredQuery.length > 0;
+  const hasQuery = normalizedSearchQuery.length > 0;
   const copy = getSearchPageCopy(locale);
   const countFormatter = useMemo(
     () => new Intl.NumberFormat(languageMeta[locale].numberLocale),
@@ -153,18 +154,20 @@ export function MarketplaceSearchPage() {
   );
 
   useEffect(() => {
-    setSearchQuery(searchParams.get('q') ?? '');
-  }, [searchParams]);
+    if (currentQueryParam !== normalizedSearchQuery) {
+      setSearchQuery(currentQueryParam);
+    }
+  }, [currentQueryParam]);
 
   useEffect(() => {
-    if (deferredQuery === currentQueryParam) {
+    if (normalizedSearchQuery === currentQueryParam) {
       return;
     }
 
     const params = new URLSearchParams(searchParams.toString());
 
-    if (deferredQuery) {
-      params.set('q', deferredQuery);
+    if (normalizedSearchQuery) {
+      params.set('q', normalizedSearchQuery);
     } else {
       params.delete('q');
     }
@@ -173,7 +176,7 @@ export function MarketplaceSearchPage() {
 
     const nextUrl = params.toString() ? `/search?${params.toString()}` : '/search';
     router.replace(nextUrl, { scroll: false });
-  }, [currentQueryParam, deferredQuery, router, searchParams]);
+  }, [currentQueryParam, normalizedSearchQuery, router, searchParams]);
 
   useEffect(() => {
     if (!hasQuery) {
