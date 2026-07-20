@@ -20,6 +20,7 @@ import {
   Tag,
   Trash2,
   User,
+  X,
   type LucideIcon,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -48,7 +49,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from '@/components/ui/carousel';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { getCategoryBySlug } from '@/lib/mock-data';
 import { getVerticalHref } from '@/lib/mock-data';
 import { Ad } from '@/lib/types';
@@ -1485,12 +1486,12 @@ export function AdDetailsView({
         {ad.images.length > 0 ? (
           <Dialog open={isImageGalleryOpen} onOpenChange={setIsImageGalleryOpen}>
             <DialogContent
-              className="h-[100dvh] max-h-[100dvh] w-screen max-w-none border-none bg-black/96 p-0 text-white shadow-none sm:rounded-none [&>button]:right-4 [&>button]:top-4 [&>button]:z-50 [&>button]:h-11 [&>button]:w-11 [&>button]:rounded-full [&>button]:border [&>button]:border-white/15 [&>button]:bg-black/40 [&>button]:text-white [&>button]:opacity-100 [&>button]:ring-0 [&>button]:hover:bg-white/10 [&>button_svg]:h-5 [&>button_svg]:w-5"
+              className="h-[100dvh] max-h-[100dvh] w-screen max-w-none border-none bg-black/96 p-0 text-white shadow-none sm:rounded-none [&>button]:hidden"
             >
               <DialogTitle className="sr-only">{galleryCopy.title}</DialogTitle>
 
               <div className="flex h-full flex-col">
-                <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-4 pr-16 sm:px-6">
+                <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-4 sm:px-6">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-white/92">{galleryCopy.title}</p>
                     <p className="text-xs text-white/55">
@@ -1498,30 +1499,44 @@ export function AdDetailsView({
                     </p>
                   </div>
 
-                  {ad.images.length > 1 ? (
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    {ad.images.length > 1 ? (
+                      <>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-11 w-11 rounded-full border border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+                          onClick={() => stepGalleryImage('previous')}
+                          aria-label={galleryCopy.previous}
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-11 w-11 rounded-full border border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+                          onClick={() => stepGalleryImage('next')}
+                          aria-label={galleryCopy.next}
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </Button>
+                      </>
+                    ) : null}
+
+                    <DialogClose asChild>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         className="h-11 w-11 rounded-full border border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
-                        onClick={() => stepGalleryImage('previous')}
-                        aria-label={galleryCopy.previous}
+                        aria-label="Close image viewer"
                       >
-                        <ChevronLeft className="h-5 w-5" />
+                        <X className="h-5 w-5" />
                       </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-11 w-11 rounded-full border border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
-                        onClick={() => stepGalleryImage('next')}
-                        aria-label={galleryCopy.next}
-                      >
-                        <ChevronRight className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  ) : null}
+                    </DialogClose>
+                  </div>
                 </div>
 
                 <div className="flex min-h-0 flex-1 flex-col">

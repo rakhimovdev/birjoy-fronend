@@ -1065,7 +1065,7 @@ export function AdEditorForm({
                           />
                           <button
                             type="button"
-                            className="touch-target absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white transition-colors hover:bg-black/75"
+                            className="touch-target absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/60 text-white shadow-[0_10px_24px_rgba(0,0,0,0.22)] transition-colors hover:bg-black/75"
                             onClick={() => removeImage(index)}
                             aria-label={messages.createAd.removePhoto}
                           >
