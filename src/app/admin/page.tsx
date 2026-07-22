@@ -39,17 +39,21 @@ import {
   deleteAdminAd,
   fallbackAdminProfile,
   fetchAdminOrders,
+  fetchAdminUsers,
   getStoredAdminProfile,
   getStoredAdminToken,
   loginAdmin,
   signOutAdmin,
+  updateAdminUserPostingPermissions,
   updateAdminOrderStatus,
 } from '@/lib/admin';
 import { fetchAds, getConditionLabel } from '@/lib/ads';
 import { getCategoryBySlug } from '@/lib/mock-data';
 import { getLocalizedText, languageMeta, type Language } from '@/lib/i18n';
 import { useI18n } from '@/components/providers/LocaleProvider';
-import type { Ad, AdminProfile, OrderRequest, OrderRequestStatus } from '@/lib/types';
+import type { Ad, AdminProfile, OrderRequest, OrderRequestStatus, PostingPermissions, UserProfile } from '@/lib/types';
+
+type PostingPermissionKey = keyof PostingPermissions;
 
 const adminPageTranslations = {
   uz: {
@@ -103,8 +107,26 @@ const adminPageTranslations = {
     adsTableTitle: 'Eʼlonlar boshqaruvi',
     adsTableDescription:
       'Admin barcha eʼlonlarni ko‘rib chiqishi va kerak bo‘lsa o‘chirishi mumkin.',
+    usersTableTitle: 'Foydalanuvchi ruxsatlari',
+    usersTableDescription:
+      'Market va taomlar bo‘limiga kim eʼlon bera olishini shu yerda boshqaring.',
+    emptyUsersTitle: 'Hozircha foydalanuvchilar yo‘q',
+    emptyUsersDescription: 'Ro‘yxatdan o‘tgan foydalanuvchilar shu jadvalda ko‘rinadi.',
     emptyAdsTitle: 'Hozircha eʼlonlar yo‘q',
     emptyAdsDescription: 'Yangi eʼlonlar joylanganda shu jadvalda paydo bo‘ladi.',
+    userColumn: 'Foydalanuvchi',
+    contactColumn: 'Aloqa',
+    marketPermissionColumn: 'Market',
+    foodPermissionColumn: 'Taomlar',
+    joinedColumn: 'Qo‘shilgan',
+    approvedPermission: 'Ruxsat bor',
+    pendingPermission: 'Kutilmoqda',
+    grantPermission: 'Ruxsat berish',
+    revokePermission: 'Bekor qilish',
+    permissionUpdatedTitle: 'Ruxsat yangilandi',
+    permissionUpdatedDescription: 'Foydalanuvchi posting ruxsati saqlandi.',
+    permissionUpdateFailedTitle: 'Ruxsat yangilanmadi',
+    permissionUpdateFailedDescription: 'Qaytadan urinib ko‘ring.',
     categoryColumn: 'Kategoriya',
     conditionColumn: 'Holati',
     actionColumn: 'Amal',
@@ -176,8 +198,26 @@ const adminPageTranslations = {
     adsTableTitle: 'Управление объявлениями',
     adsTableDescription:
       'Администратор может просматривать все объявления и при необходимости удалять их.',
+    usersTableTitle: 'Разрешения пользователей',
+    usersTableDescription:
+      'Управляйте тем, кто может публиковать объявления в разделах Market и Еда.',
+    emptyUsersTitle: 'Пользователей пока нет',
+    emptyUsersDescription: 'Зарегистрированные пользователи будут показаны в этой таблице.',
     emptyAdsTitle: 'Пока нет объявлений',
     emptyAdsDescription: 'Когда появятся новые объявления, они будут показаны в этой таблице.',
+    userColumn: 'Пользователь',
+    contactColumn: 'Контакт',
+    marketPermissionColumn: 'Market',
+    foodPermissionColumn: 'Еда',
+    joinedColumn: 'Дата регистрации',
+    approvedPermission: 'Разрешено',
+    pendingPermission: 'Ожидает',
+    grantPermission: 'Разрешить',
+    revokePermission: 'Отменить',
+    permissionUpdatedTitle: 'Разрешение обновлено',
+    permissionUpdatedDescription: 'Права на публикацию сохранены.',
+    permissionUpdateFailedTitle: 'Не удалось обновить разрешение',
+    permissionUpdateFailedDescription: 'Попробуйте еще раз.',
     categoryColumn: 'Категория',
     conditionColumn: 'Состояние',
     actionColumn: 'Действие',
@@ -249,8 +289,26 @@ const adminPageTranslations = {
     adsTableTitle: 'Listing management',
     adsTableDescription:
       'The admin can review every listing and remove any of them when needed.',
+    usersTableTitle: 'User permissions',
+    usersTableDescription:
+      'Control who can post listings in the Market and Food sections.',
+    emptyUsersTitle: 'No users yet',
+    emptyUsersDescription: 'Registered users will appear in this table.',
     emptyAdsTitle: 'No listings yet',
     emptyAdsDescription: 'New listings will appear in this table when they are posted.',
+    userColumn: 'User',
+    contactColumn: 'Contact',
+    marketPermissionColumn: 'Market',
+    foodPermissionColumn: 'Food',
+    joinedColumn: 'Joined',
+    approvedPermission: 'Approved',
+    pendingPermission: 'Pending',
+    grantPermission: 'Grant',
+    revokePermission: 'Revoke',
+    permissionUpdatedTitle: 'Permission updated',
+    permissionUpdatedDescription: 'The posting permission was saved.',
+    permissionUpdateFailedTitle: 'Permission was not updated',
+    permissionUpdateFailedDescription: 'Please try again.',
     categoryColumn: 'Category',
     conditionColumn: 'Condition',
     actionColumn: 'Action',
@@ -315,6 +373,12 @@ function getStatusBadgeClassName(status: OrderRequestStatus) {
   return 'bg-blue-50 text-blue-700';
 }
 
+function getPermissionBadgeClassName(isApproved: boolean) {
+  return isApproved
+    ? 'bg-emerald-50 text-emerald-700'
+    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-200';
+}
+
 export default function AdminPage() {
   const { toast } = useToast();
   const { locale } = useI18n();
@@ -323,12 +387,14 @@ export default function AdminPage() {
   const [admin, setAdmin] = useState<AdminProfile | null>(null);
   const [ads, setAds] = useState<Ad[]>([]);
   const [orders, setOrders] = useState<OrderRequest[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adPendingDeletion, setAdPendingDeletion] = useState<Ad | null>(null);
   const [deletingAdId, setDeletingAdId] = useState('');
   const [updatingOrderId, setUpdatingOrderId] = useState('');
+  const [updatingPermissionTarget, setUpdatingPermissionTarget] = useState('');
   const [formData, setFormData] = useState({
     login: '',
     password: '',
@@ -338,21 +404,24 @@ export default function AdminPage() {
     setIsRefreshing(true);
 
     try {
-      const [nextOrders, nextAds] = await Promise.all([
+      const [nextOrders, nextAds, nextUsers] = await Promise.all([
         fetchAdminOrders(),
         fetchAds({
           fields: 'card',
           limit: 100,
         }),
+        fetchAdminUsers(),
       ]);
       setOrders(nextOrders);
       setAds(nextAds);
+      setUsers(nextUsers);
       setAdmin(currentAdmin || getStoredAdminProfile() || fallbackAdminProfile);
     } catch (error) {
       signOutAdmin();
       setAdmin(null);
       setAds([]);
       setOrders([]);
+      setUsers([]);
       toast({
         title: copy.loadFailedTitle,
         description: error instanceof Error ? error.message : copy.loadFailedDescription,
@@ -415,6 +484,7 @@ export default function AdminPage() {
     setAdmin(null);
     setAds([]);
     setOrders([]);
+    setUsers([]);
     toast({
       title: copy.signOutTitle,
       description: copy.signOutDescription,
@@ -463,6 +533,38 @@ export default function AdminPage() {
       });
     } finally {
       setDeletingAdId('');
+    }
+  };
+
+  const handlePermissionUpdate = async (
+    userId: string,
+    permission: PostingPermissionKey,
+    nextValue: boolean
+  ) => {
+    setUpdatingPermissionTarget(`${userId}:${permission}`);
+
+    try {
+      const updatedUser = await updateAdminUserPostingPermissions(userId, {
+        [permission]: nextValue,
+      });
+
+      setUsers((previous) =>
+        previous.map((user) => (user.id === userId ? updatedUser : user))
+      );
+
+      toast({
+        title: copy.permissionUpdatedTitle,
+        description: copy.permissionUpdatedDescription,
+      });
+    } catch (error) {
+      toast({
+        title: copy.permissionUpdateFailedTitle,
+        description:
+          error instanceof Error ? error.message : copy.permissionUpdateFailedDescription,
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdatingPermissionTarget('');
     }
   };
 
@@ -635,6 +737,120 @@ export default function AdminPage() {
                           </TableCell>
                         </TableRow>
                       ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-sm">
+              <CardHeader>
+                <CardTitle>{copy.usersTableTitle}</CardTitle>
+                <CardDescription>{copy.usersTableDescription}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {users.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed px-6 py-16 text-center">
+                    <p className="text-lg font-semibold">{copy.emptyUsersTitle}</p>
+                    <p className="mt-2 text-muted-foreground">{copy.emptyUsersDescription}</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{copy.userColumn}</TableHead>
+                        <TableHead>{copy.contactColumn}</TableHead>
+                        <TableHead>{copy.marketPermissionColumn}</TableHead>
+                        <TableHead>{copy.foodPermissionColumn}</TableHead>
+                        <TableHead>{copy.joinedColumn}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users.map((user) => {
+                        const locationLabel = user.location ? getLocalizedText(user.location, locale) : '—';
+                        const marketTarget = `${user.id}:market`;
+                        const foodTarget = `${user.id}:food`;
+
+                        return (
+                          <TableRow key={user.id}>
+                            <TableCell className="min-w-[220px]">
+                              <p className="font-semibold text-foreground">{user.name || '—'}</p>
+                              <p className="text-sm text-muted-foreground">{user.email || '—'}</p>
+                            </TableCell>
+                            <TableCell className="min-w-[220px]">
+                              <p className="text-sm text-foreground">{user.phone || '—'}</p>
+                              <p className="text-sm text-muted-foreground">{locationLabel}</p>
+                            </TableCell>
+                            <TableCell className="min-w-[190px]">
+                              <div className="space-y-3">
+                                <span
+                                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getPermissionBadgeClassName(user.postingPermissions.market)}`}
+                                >
+                                  {user.postingPermissions.market
+                                    ? copy.approvedPermission
+                                    : copy.pendingPermission}
+                                </span>
+                                <Button
+                                  variant={user.postingPermissions.market ? 'outline' : 'default'}
+                                  size="sm"
+                                  className="w-full min-[481px]:w-auto"
+                                  disabled={updatingPermissionTarget === marketTarget}
+                                  onClick={() =>
+                                    void handlePermissionUpdate(
+                                      user.id,
+                                      'market',
+                                      !user.postingPermissions.market
+                                    )
+                                  }
+                                >
+                                  {updatingPermissionTarget === marketTarget ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : user.postingPermissions.market ? (
+                                    copy.revokePermission
+                                  ) : (
+                                    copy.grantPermission
+                                  )}
+                                </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell className="min-w-[190px]">
+                              <div className="space-y-3">
+                                <span
+                                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getPermissionBadgeClassName(user.postingPermissions.food)}`}
+                                >
+                                  {user.postingPermissions.food
+                                    ? copy.approvedPermission
+                                    : copy.pendingPermission}
+                                </span>
+                                <Button
+                                  variant={user.postingPermissions.food ? 'outline' : 'default'}
+                                  size="sm"
+                                  className="w-full min-[481px]:w-auto"
+                                  disabled={updatingPermissionTarget === foodTarget}
+                                  onClick={() =>
+                                    void handlePermissionUpdate(
+                                      user.id,
+                                      'food',
+                                      !user.postingPermissions.food
+                                    )
+                                  }
+                                >
+                                  {updatingPermissionTarget === foodTarget ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : user.postingPermissions.food ? (
+                                    copy.revokePermission
+                                  ) : (
+                                    copy.grantPermission
+                                  )}
+                                </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell className="min-w-[160px] text-sm text-muted-foreground">
+                              {formatDate(user.createdAt || user.updatedAt || new Date().toISOString(), locale)}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 )}

@@ -4,6 +4,10 @@ export type AdVertical = 'market' | 'real_estate' | 'food' | 'auto';
 export type RealEstatePropertyType = 'apartment' | 'house' | 'land' | 'commercial';
 export type RealEstateListingType = 'sale' | 'rent';
 export type UserAccountType = 'regular' | 'realtor';
+export type PostingPermissions = {
+  market: boolean;
+  food: boolean;
+};
 
 export type Category = {
   id: string;
@@ -59,6 +63,7 @@ export type UserProfile = {
   phone?: string;
   location?: LocalizedText;
   favorites: string[]; // Ad IDs
+  postingPermissions: PostingPermissions;
 };
 
 export type OrderRequestStatus = 'new' | 'contacted' | 'completed';

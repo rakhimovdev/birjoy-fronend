@@ -15,7 +15,13 @@ function CreateAdPageContent() {
       ? requestedVertical
       : 'market';
 
-  return <AdEditorForm mode="create" initialVertical={initialVertical} />;
+  return (
+    <AdEditorForm
+      mode="create"
+      initialVertical={initialVertical}
+      preferAccessibleVertical={!requestedVertical}
+    />
+  );
 }
 
 export default function CreateAdPage() {

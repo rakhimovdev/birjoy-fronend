@@ -363,7 +363,7 @@ export function RealEstateMarketplacePage() {
           />
         ) : (
           <>
-            <section className="phone-nav-only mx-[calc(var(--page-gutter)*-1)] flex-col gap-6 bg-transparent px-[var(--page-gutter)] pb-6 pt-2 text-foreground">
+            <section className="phone-nav-only mx-[calc(var(--page-gutter)*-1)] flex-col gap-4 bg-transparent px-[var(--page-gutter)] pb-6 pt-1 text-foreground">
               <div className="grid grid-cols-2 gap-3">
                 <div className="min-w-0">
                   <RealEstateFilterSheet
@@ -391,7 +391,7 @@ export function RealEstateMarketplacePage() {
 
               {mobileFeaturedAds.length > 0 ? (
                 <div className="space-y-3">
-                  <h2 className="text-[1.95rem] font-semibold tracking-[-0.03em] text-foreground">
+                  <h2 className="text-[1.15rem] font-semibold tracking-[-0.03em] text-foreground">
                     {viewCopy.vipTitle}
                   </h2>
                   <div className="scroll-row">
@@ -402,7 +402,7 @@ export function RealEstateMarketplacePage() {
                           isFavorite={isFavorite(ad.id)}
                           canDelete={isAdmin}
                           showManageActions={false}
-                          variant="real_estate_mobile_compact"
+                          variant="mobile_compact"
                           featuredLabel="VIP"
                           onDeleted={(adId) => {
                             setAds((previous) => previous.filter((item) => item.id !== adId));
@@ -415,12 +415,12 @@ export function RealEstateMarketplacePage() {
               ) : null}
 
               <div className="space-y-3">
-                <h2 className="text-[2rem] font-semibold leading-tight tracking-[-0.04em] text-foreground">
+                <h2 className="text-[1.28rem] font-semibold leading-tight tracking-[-0.03em] text-foreground">
                   {viewCopy.resultsPrefix} {mobileResultsCount} {viewCopy.resultsSuffix}
                 </h2>
 
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <ArrowUpDown className="h-4 w-4" />
+                <div className="flex items-center gap-2 text-[0.78rem] text-muted-foreground">
+                  <ArrowUpDown className="h-3.5 w-3.5" />
                   <span>
                     {viewCopy.sortLabel}: <span className="font-medium text-foreground">{viewCopy.sortValue}</span>
                   </span>
@@ -436,7 +436,7 @@ export function RealEstateMarketplacePage() {
                       isFavorite={isFavorite(ad.id)}
                       canDelete={isAdmin}
                       showManageActions={false}
-                      variant="real_estate_mobile"
+                      variant="mobile"
                       onDeleted={(adId) => {
                         setAds((previous) => previous.filter((item) => item.id !== adId));
                       }}

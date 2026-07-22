@@ -42,7 +42,7 @@ interface AdCardProps {
   showManageActions?: boolean;
   onDeleted?: (adId: string) => void;
   onUpdated?: (ad: Ad) => void;
-  variant?: 'default' | 'real_estate_mobile' | 'real_estate_mobile_compact';
+  variant?: 'default' | 'mobile' | 'mobile_compact' | 'real_estate_mobile' | 'real_estate_mobile_compact';
   featuredLabel?: string;
 }
 
@@ -74,6 +74,7 @@ export function AdCard({
     ? getLocalizedText(category.name, locale)
     : messages.adCard.categoryFallback;
   const localizedCondition = getConditionLabel(ad.condition, locale);
+  const mobileSecondaryLabel = ad.vertical === 'real_estate' ? '' : localizedCategory;
   const realEstateMeta =
     ad.vertical === 'real_estate'
       ? [ad.rooms ? `${ad.rooms}R` : '', ad.area ? `${ad.area} m²` : ''].filter(Boolean).join(' · ')
@@ -225,12 +226,12 @@ export function AdCard({
   };
 
   if (variant !== 'default') {
-    const isCompactVariant = variant === 'real_estate_mobile_compact';
+    const isCompactVariant = variant === 'mobile_compact' || variant === 'real_estate_mobile_compact';
 
     return (
       <article
         className={cn(
-          'group relative overflow-hidden rounded-[1.7rem] border border-border/55 bg-card/92 shadow-[0_18px_42px_rgba(7,28,85,0.14)] dark:shadow-[0_18px_42px_rgba(0,0,0,0.32)]',
+          'group relative overflow-hidden rounded-[1.6rem] border border-border/55 bg-card/92 shadow-[0_18px_42px_rgba(7,28,85,0.14)] dark:shadow-[0_18px_42px_rgba(0,0,0,0.32)]',
           className
         )}
       >
@@ -254,13 +255,18 @@ export function AdCard({
 
                 return (
                   <CarouselItem key={`${ad.id}-${index}`} className="pl-0">
-                    <div className="relative aspect-[4/5] overflow-hidden">
+                    <div
+                      className={cn(
+                        'relative overflow-hidden',
+                        isCompactVariant ? 'aspect-[92/100]' : 'aspect-[94/100]'
+                      )}
+                    >
                       <Image
                         src={image}
                         alt={`${localizedTitle} ${index + 1}`}
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes={isCompactVariant ? '188px' : '(max-width: 768px) 50vw, 33vw'}
+                        sizes={isCompactVariant ? '184px' : '(max-width: 768px) 50vw, 33vw'}
                         loading="lazy"
                         data-ai-hint="classified ad product"
                         draggable={false}
@@ -292,7 +298,7 @@ export function AdCard({
               <p
                 className={cn(
                   'font-black leading-none tracking-[-0.03em] text-white',
-                  isCompactVariant ? 'text-[1.05rem]' : 'text-[1.15rem]'
+                  isCompactVariant ? 'text-[1rem]' : 'text-[1.08rem]'
                 )}
               >
                 {formattedPrice}
@@ -300,38 +306,48 @@ export function AdCard({
               <h3
                 className={cn(
                   'line-clamp-2 font-semibold text-white',
-                  isCompactVariant ? 'text-[0.98rem] leading-5' : 'text-[1.02rem] leading-[1.35]'
+                  isCompactVariant ? 'text-[0.9rem] leading-[1.28]' : 'text-[0.94rem] leading-[1.32]'
                 )}
               >
                 {localizedTitle}
               </h3>
             </div>
 
-            <div className="mt-2 space-y-1.5 text-[0.78rem] text-white/82">
-              {hasLocation ? (
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 shrink-0 text-white/92" />
-                  <span className="truncate">{localizedLocation}</span>
-                </div>
-              ) : null}
-
-              {ad.vertical === 'real_estate' && (ad.rooms || ad.area) ? (
-                <div className="flex flex-wrap items-center gap-3">
-                  {ad.rooms ? (
-                    <span className="inline-flex items-center gap-1.5">
-                      <BedDouble className="h-3.5 w-3.5 text-white/92" />
-                      {ad.rooms}
-                    </span>
-                  ) : null}
-                  {ad.area ? (
-                    <span className="inline-flex items-center gap-1.5">
-                      <Ruler className="h-3.5 w-3.5 text-white/92" />
-                      {ad.area} m²
-                    </span>
-                  ) : null}
-                </div>
+            <div className="mt-2.5 flex items-center gap-2 text-[0.72rem] text-white/84">
+              <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-white/92" />
+                <span className="truncate">{hasLocation ? localizedLocation : localizedCategory}</span>
+              </div>
+              {mobileSecondaryLabel ? (
+                <span className="rounded-full bg-white/12 px-2 py-1 font-medium text-white/92 backdrop-blur-sm">
+                  {mobileSecondaryLabel}
+                </span>
               ) : null}
             </div>
+
+            {ad.vertical === 'real_estate' && (ad.rooms || ad.area) ? (
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-[0.72rem] text-white/84">
+                {ad.rooms ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <BedDouble className="h-3.5 w-3.5 text-white/92" />
+                    {ad.rooms}
+                  </span>
+                ) : null}
+                {ad.area ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Ruler className="h-3.5 w-3.5 text-white/92" />
+                    {ad.area} m²
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+
+            {ad.vertical !== 'real_estate' ? (
+              <div className="mt-2 flex items-center gap-1.5 text-[0.7rem] text-white/72">
+                <Clock className="h-3.5 w-3.5 shrink-0 text-white/88" />
+                <span className="truncate">{postedAtLabel}</span>
+              </div>
+            ) : null}
           </div>
         </Link>
 

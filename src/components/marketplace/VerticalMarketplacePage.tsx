@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowUpDown } from 'lucide-react';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { AdCard } from '@/components/ads/AdCard';
 import {
@@ -80,12 +80,40 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
 
   const filteredAds = ads;
   const hasFilters = Boolean(query || activeCategory);
+  const mobileResultsCount = useMemo(
+    () =>
+      new Intl.NumberFormat(locale === 'ru' ? 'ru-RU' : locale === 'en' ? 'en-US' : 'uz-UZ').format(
+        filteredAds.length
+      ),
+    [filteredAds.length, locale]
+  );
+  const mobileCopy =
+    locale === 'ru'
+      ? {
+          resultsPrefix: 'Мы нашли',
+          resultsSuffix: 'объявлений',
+          sortLabel: 'Сортировка',
+          sortValue: 'По умолчанию',
+        }
+      : locale === 'en'
+        ? {
+            resultsPrefix: 'We found',
+            resultsSuffix: 'listings',
+            sortLabel: 'Sort',
+            sortValue: 'Default order',
+          }
+        : {
+            resultsPrefix: 'Biz',
+            resultsSuffix: 'ta eʼlon topdik',
+            sortLabel: 'Saralash',
+            sortValue: 'Asli bo‘yicha',
+          };
 
   return (
     <MarketplaceShell>
       <main className="marketplace-main">
         {hasFilters ? (
-          <section className="surface-card section-shell rounded-[1.85rem]">
+          <section className="hidden min-[769px]:block surface-card section-shell rounded-[1.85rem]">
             <div className="section-header">
               <div className="section-header__copy">
                 <p className="section-kicker">{messages.home.resultsTitle}</p>
@@ -138,33 +166,83 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
             }}
           />
         ) : (
-          <section id="all-listings" className="surface-card section-shell rounded-[1.85rem]">
-            <div className="section-header">
-              <div className="section-header__copy">
-                <p className="section-kicker">{messages.home.browseAllListings}</p>
-                <h2 className="section-title">{messages.home.browseAllListings}</h2>
+          <>
+            <section className="phone-nav-only mx-[calc(var(--page-gutter)*-1)] flex-col gap-4 bg-transparent px-[var(--page-gutter)] pb-6 pt-1 text-foreground">
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 space-y-2">
+                    <h2 className="text-[1.28rem] font-semibold leading-tight tracking-[-0.03em] text-foreground">
+                      {mobileCopy.resultsPrefix} {mobileResultsCount} {mobileCopy.resultsSuffix}
+                    </h2>
+                    <div className="flex items-center gap-2 text-[0.78rem] text-muted-foreground">
+                      <ArrowUpDown className="h-3.5 w-3.5" />
+                      <span>
+                        {mobileCopy.sortLabel}:{' '}
+                        <span className="font-medium text-foreground">{mobileCopy.sortValue}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {hasFilters ? (
+                    <Button asChild variant="outline" size="sm" className="h-9 rounded-full px-3 text-xs">
+                      <Link href={basePath}>{messages.home.clearFilters}</Link>
+                    </Button>
+                  ) : null}
+                </div>
+
+                {query || activeCategoryLabel ? (
+                  <div className="flex flex-wrap gap-2">
+                    {query ? <Badge variant="secondary">{query}</Badge> : null}
+                    {activeCategoryLabel ? <Badge variant="outline">{activeCategoryLabel}</Badge> : null}
+                  </div>
+                ) : null}
               </div>
-              <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
-                <Link href={`/ads/create?vertical=${vertical}`}>
-                  {messages.home.startSelling}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-            <div className="listing-grid">
-              {filteredAds.map((ad) => (
-                <AdCard
-                  key={ad.id}
-                  ad={ad}
-                  isFavorite={isFavorite(ad.id)}
-                  canDelete={isAdmin}
-                  onDeleted={(adId) => {
-                    setAds((previous) => previous.filter((item) => item.id !== adId));
-                  }}
-                />
-              ))}
-            </div>
-          </section>
+
+              <section className="grid grid-cols-2 gap-3">
+                {filteredAds.map((ad) => (
+                  <AdCard
+                    key={ad.id}
+                    ad={ad}
+                    isFavorite={isFavorite(ad.id)}
+                    canDelete={isAdmin}
+                    showManageActions={false}
+                    variant="mobile"
+                    onDeleted={(adId) => {
+                      setAds((previous) => previous.filter((item) => item.id !== adId));
+                    }}
+                  />
+                ))}
+              </section>
+            </section>
+
+            <section id="all-listings" className="hidden min-[769px]:grid surface-card section-shell rounded-[1.85rem]">
+              <div className="section-header">
+                <div className="section-header__copy">
+                  <p className="section-kicker">{messages.home.browseAllListings}</p>
+                  <h2 className="section-title">{messages.home.browseAllListings}</h2>
+                </div>
+                <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
+                  <Link href={`/ads/create?vertical=${vertical}`}>
+                    {messages.home.startSelling}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+              <div className="listing-grid">
+                {filteredAds.map((ad) => (
+                  <AdCard
+                    key={ad.id}
+                    ad={ad}
+                    isFavorite={isFavorite(ad.id)}
+                    canDelete={isAdmin}
+                    onDeleted={(adId) => {
+                      setAds((previous) => previous.filter((item) => item.id !== adId));
+                    }}
+                  />
+                ))}
+              </div>
+            </section>
+          </>
         )}
       </main>
     </MarketplaceShell>

@@ -29,7 +29,7 @@ import {
   uploadAdImagesToImageKit,
   type UploadedAdImage,
 } from '@/lib/imagekit-upload';
-import { syncStoredUser } from '@/lib/auth';
+import { restoreAuthSession, syncStoredUser } from '@/lib/auth';
 import { chooseNativeImages, takeNativePhoto } from '@/lib/native-media';
 import { isNativeApp } from '@/lib/native-app';
 import {
@@ -39,7 +39,7 @@ import {
   getVerticalById,
   getVerticalHref,
 } from '@/lib/mock-data';
-import type { Ad, AdVertical, RealEstateListingType } from '@/lib/types';
+import type { Ad, AdVertical, RealEstateListingType, UserProfile } from '@/lib/types';
 import type { Location, ResolvedLocation } from '@/lib/map-types';
 
 type FormState = {
@@ -138,14 +138,34 @@ function buildLocationMetaFromAd(ad: Ad): LocationMetaState {
   };
 }
 
+function requiresAdminPostingApproval(vertical: AdVertical) {
+  return vertical === 'market' || vertical === 'food';
+}
+
+function hasPostingPermission(user: UserProfile | null, vertical: AdVertical) {
+  if (!requiresAdminPostingApproval(vertical)) {
+    return true;
+  }
+
+  if (!user) {
+    return false;
+  }
+
+  return vertical === 'market'
+    ? Boolean(user.postingPermissions?.market)
+    : Boolean(user.postingPermissions?.food);
+}
+
 export function AdEditorForm({
   mode,
   initialAd,
   initialVertical = 'market',
+  preferAccessibleVertical = false,
 }: {
   mode: 'create' | 'edit';
   initialAd?: Ad | null;
   initialVertical?: AdVertical;
+  preferAccessibleVertical?: boolean;
 }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
@@ -177,6 +197,17 @@ export function AdEditorForm({
   const isRealEstate = formData.vertical === 'real_estate';
   const currentVerticalConfig = getVerticalById(formData.vertical);
   const isEditMode = mode === 'edit';
+  const isTransitioningIntoApprovalGatedVertical =
+    !isEditMode
+      ? requiresAdminPostingApproval(formData.vertical)
+      : Boolean(initialAd) &&
+        formData.vertical !== initialAd?.vertical &&
+        requiresAdminPostingApproval(formData.vertical);
+  const hasSelectedVerticalPostingAccess = hasPostingPermission(user, formData.vertical);
+  const isPostingBlocked = isTransitioningIntoApprovalGatedVertical && !hasSelectedVerticalPostingAccess;
+  const currentVerticalLabel = currentVerticalConfig
+    ? getLocalizedText(currentVerticalConfig.name, locale)
+    : formData.vertical;
 
   const editorCopy =
     locale === 'ru'
@@ -290,7 +321,23 @@ export function AdEditorForm({
             createAction: 'E’lonni chop etish',
             updateSuccessTitle: 'E’lon yangilandi',
             updateSuccessDescription: 'O‘zgarishlar muvaffaqiyatli saqlandi.',
-            submitRouteLabel: 'E’lonni ochish',
+          submitRouteLabel: 'E’lonni ochish',
+        };
+
+  const postingAccessCopy =
+    locale === 'ru'
+      ? {
+          title: 'Нужно одобрение администратора',
+          description: `Публикация в разделе "${currentVerticalLabel}" доступна только пользователям, которых одобрил администратор.`,
+        }
+      : locale === 'en'
+        ? {
+            title: 'Admin approval required',
+            description: `Posting in "${currentVerticalLabel}" is available only to users approved by an admin.`,
+          }
+        : {
+            title: 'Admin ruxsati kerak',
+            description: `"${currentVerticalLabel}" bo‘limiga e’lon joylash faqat admin ruxsat bergan foydalanuvchilar uchun ochiq.`,
           };
 
   const nativeMediaCopy = {
@@ -307,6 +354,10 @@ export function AdEditorForm({
       gallery: 'Gallery',
     },
   } as const;
+
+  useEffect(() => {
+    void restoreAuthSession();
+  }, []);
 
   useEffect(() => {
     if (!initialAd) {
@@ -334,6 +385,26 @@ export function AdEditorForm({
       contactPhone: previous.contactPhone || user.phone || '',
     }));
   }, [locale, user]);
+
+  useEffect(() => {
+    if (isEditMode || !preferAccessibleVertical || !user) {
+      return;
+    }
+
+    if (!requiresAdminPostingApproval(formData.vertical) || hasPostingPermission(user, formData.vertical)) {
+      return;
+    }
+
+    const fallbackVertical: AdVertical = 'real_estate';
+    const nextCategories = getCategoriesForVertical(fallbackVertical);
+
+    setFormData((previous) => ({
+      ...previous,
+      vertical: fallbackVertical,
+      category: nextCategories[0]?.slug || previous.category,
+      listingType: 'sale',
+    }));
+  }, [formData.vertical, isEditMode, preferAccessibleVertical, user]);
 
   useEffect(() => {
     const nextCategories = getCategoriesForVertical(formData.vertical);
@@ -589,6 +660,15 @@ export function AdEditorForm({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
+    if (isPostingBlocked) {
+      toast({
+        title: postingAccessCopy.title,
+        description: postingAccessCopy.description,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (isRealEstate && !selectedMapPoint) {
       toast({
         title: editorCopy.mapTitle,
@@ -713,6 +793,14 @@ export function AdEditorForm({
                   reason: moderationResult.reason,
                 })}
               </AlertDescription>
+            </Alert>
+          ) : null}
+
+          {isPostingBlocked ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>{postingAccessCopy.title}</AlertTitle>
+              <AlertDescription>{postingAccessCopy.description}</AlertDescription>
             </Alert>
           ) : null}
 
@@ -1108,7 +1196,7 @@ export function AdEditorForm({
                   <Button
                     type="submit"
                     className="h-12 w-full gap-2 rounded-2xl text-lg font-bold"
-                    disabled={loading || isUploadingImages}
+                    disabled={loading || isUploadingImages || isPostingBlocked}
                   >
                     {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-5 w-5" />}
                     {editorAction}

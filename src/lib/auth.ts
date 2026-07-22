@@ -2,7 +2,7 @@
 
 import { backendApiBaseUrl } from '@/lib/api';
 import type { LocalizedText } from '@/lib/i18n';
-import type { UserAccountType, UserProfile } from '@/lib/types';
+import type { PostingPermissions, UserAccountType, UserProfile } from '@/lib/types';
 
 export const authUsersStorageKey = 'marketnest-auth-users';
 export const authSessionStorageKey = 'marketnest-auth-session';
@@ -30,6 +30,7 @@ type RemoteAuthUser = {
   phone?: string;
   location?: string | LocalizedText;
   favorites?: string[];
+  postingPermissions?: Partial<PostingPermissions>;
 };
 
 type RemoteAuthResponse = {
@@ -159,6 +160,20 @@ function toLocalizedText(value: string): LocalizedText {
   };
 }
 
+function normalizePostingPermissions(value: unknown): PostingPermissions {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {
+      market: false,
+      food: false,
+    };
+  }
+
+  return {
+    market: Boolean((value as Partial<PostingPermissions>).market),
+    food: Boolean((value as Partial<PostingPermissions>).food),
+  };
+}
+
 function normalizeAccountType(value: unknown): UserAccountType | undefined {
   return value === 'regular' || value === 'realtor' ? value : undefined;
 }
@@ -173,7 +188,7 @@ function createUserId() {
 
 function sanitizeUser(user: StoredAuthUser): UserProfile {
   const { password, ...safeUser } = user;
-  return safeUser;
+  return normalizeStoredUserRecord(safeUser);
 }
 
 function normalizeRemoteUser(user: RemoteAuthUser): UserProfile {
@@ -198,6 +213,41 @@ function normalizeRemoteUser(user: RemoteAuthUser): UserProfile {
     phone: user.phone?.trim() || undefined,
     location: normalizedLocation,
     favorites: Array.isArray(user.favorites) ? user.favorites : [],
+    postingPermissions: normalizePostingPermissions(user.postingPermissions),
+  };
+}
+
+function normalizeStoredUserRecord(user: Partial<UserProfile> & { location?: string | LocalizedText }): UserProfile {
+  const normalizedLocation =
+    typeof user.location === 'string'
+      ? user.location.trim()
+        ? toLocalizedText(user.location.trim())
+        : undefined
+      : user.location;
+
+  return {
+    id: user.id || createUserId(),
+    name: user.name?.trim() || '',
+    email: typeof user.email === 'string' ? normalizeEmail(user.email) : '',
+    avatar: user.avatar?.trim() || undefined,
+    googleId: user.googleId?.trim() || undefined,
+    yandexId: user.yandexId?.trim() || undefined,
+    role: 'user',
+    accountType: normalizeAccountType(user.accountType),
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    phone: user.phone?.trim() || undefined,
+    location: normalizedLocation,
+    favorites: Array.isArray(user.favorites) ? user.favorites : [],
+    postingPermissions: normalizePostingPermissions(user.postingPermissions),
+  };
+}
+
+function normalizeStoredAuthUserRecord(user: Partial<StoredAuthUser>): StoredAuthUser {
+  return {
+    ...normalizeStoredUserRecord(user),
+    createdAt: user.createdAt || new Date().toISOString(),
+    password: typeof user.password === 'string' ? user.password : '',
   };
 }
 
@@ -221,7 +271,7 @@ function readStoredUsers() {
   return parseJson<StoredAuthUser[]>(
     window.localStorage.getItem(authUsersStorageKey),
     []
-  );
+  ).map((user) => normalizeStoredAuthUserRecord(user));
 }
 
 function writeStoredUsers(users: StoredAuthUser[]) {
@@ -258,10 +308,12 @@ export function getStoredSessionUser() {
     return null as UserProfile | null;
   }
 
-  return parseJson<UserProfile | null>(
+  const storedUser = parseJson<UserProfile | null>(
     window.localStorage.getItem(authSessionStorageKey),
     null
   );
+
+  return storedUser ? normalizeStoredUserRecord(storedUser) : null;
 }
 
 export function getSearchableUsers() {
@@ -342,6 +394,7 @@ function signUpUserLocally(input: SignUpInput): AuthResult {
       ? toLocalizedText(input.location.trim())
       : undefined,
     favorites: [],
+    postingPermissions: normalizePostingPermissions(undefined),
     createdAt: new Date().toISOString(),
   };
 

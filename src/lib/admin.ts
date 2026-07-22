@@ -2,7 +2,14 @@
 
 import { backendApiBaseUrl } from '@/lib/api';
 import { invalidateAdsCache } from '@/lib/ads';
-import type { AdminProfile, OrderRequest, OrderRequestStatus } from '@/lib/types';
+import type { LocalizedText } from '@/lib/i18n';
+import type {
+  AdminProfile,
+  OrderRequest,
+  OrderRequestStatus,
+  PostingPermissions,
+  UserProfile,
+} from '@/lib/types';
 
 export const adminTokenStorageKey = 'birjoy-admin-token';
 export const adminProfileStorageKey = 'birjoy-admin-profile';
@@ -15,6 +22,10 @@ export const fallbackAdminProfile: AdminProfile = {
 
 type RemoteAdmin = Partial<AdminProfile>;
 type RemoteOrder = Partial<OrderRequest>;
+type RemoteAdminUser = Partial<UserProfile> & {
+  location?: string | LocalizedText;
+  postingPermissions?: Partial<PostingPermissions>;
+};
 
 type AdminApiResponse = {
   code?: string;
@@ -23,6 +34,8 @@ type AdminApiResponse = {
   admin?: RemoteAdmin;
   orders?: RemoteOrder[];
   order?: RemoteOrder;
+  users?: RemoteAdminUser[];
+  user?: RemoteAdminUser;
 };
 
 type AdminApiError = Error & {
@@ -46,6 +59,54 @@ function normalizeAdmin(admin: RemoteAdmin | undefined): AdminProfile {
     login: admin?.login?.trim() || fallbackAdminProfile.login,
     name: admin?.name?.trim() || fallbackAdminProfile.name,
     role: 'admin',
+  };
+}
+
+function toLocalizedText(value: string): LocalizedText {
+  return {
+    uz: value,
+    ru: value,
+    en: value,
+  };
+}
+
+function normalizePostingPermissions(value: unknown): PostingPermissions {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {
+      market: false,
+      food: false,
+    };
+  }
+
+  return {
+    market: Boolean((value as Partial<PostingPermissions>).market),
+    food: Boolean((value as Partial<PostingPermissions>).food),
+  };
+}
+
+function normalizeAdminUser(user: RemoteAdminUser): UserProfile {
+  const normalizedLocation =
+    typeof user.location === 'string'
+      ? user.location.trim()
+        ? toLocalizedText(user.location.trim())
+        : undefined
+      : user.location;
+
+  return {
+    id: user.id || '',
+    name: user.name?.trim() || '',
+    email: user.email?.trim() || '',
+    avatar: user.avatar?.trim() || undefined,
+    googleId: user.googleId?.trim() || undefined,
+    yandexId: user.yandexId?.trim() || undefined,
+    role: 'user',
+    accountType: user.accountType,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    phone: user.phone?.trim() || undefined,
+    location: normalizedLocation,
+    favorites: Array.isArray(user.favorites) ? user.favorites : [],
+    postingPermissions: normalizePostingPermissions(user.postingPermissions),
   };
 }
 
@@ -189,6 +250,11 @@ export async function fetchAdminOrders() {
   return Array.isArray(data.orders) ? data.orders.map(normalizeOrder) : [];
 }
 
+export async function fetchAdminUsers() {
+  const data = await requestAdminApi('/admin/users', undefined, { requiresAuth: true });
+  return Array.isArray(data.users) ? data.users.map(normalizeAdminUser) : [];
+}
+
 export async function updateAdminOrderStatus(orderId: string, status: OrderRequestStatus) {
   const data = await requestAdminApi(
     `/admin/orders/${orderId}/status`,
@@ -216,4 +282,26 @@ export async function deleteAdminAd(adId: string) {
   );
 
   invalidateAdsCache();
+}
+
+export async function updateAdminUserPostingPermissions(
+  userId: string,
+  postingPermissions: Partial<PostingPermissions>
+) {
+  const data = await requestAdminApi(
+    `/admin/users/${userId}/posting-permissions`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({
+        postingPermissions,
+      }),
+    },
+    { requiresAuth: true }
+  );
+
+  if (!data.user) {
+    throw new Error('Yangilangan foydalanuvchi maʼlumoti qaytmadi.');
+  }
+
+  return normalizeAdminUser(data.user);
 }
