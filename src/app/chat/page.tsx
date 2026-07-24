@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
-import { Clock3, Loader2, MessageCircleMore, Phone, Search, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Clock3, Loader2, MessageCircleMore, Phone, Search, ShieldCheck } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
 import { createChatConversation, fetchChatConversationById, fetchChatConversations, sendChatMessage } from '@/lib/chat';
 import { languageMeta } from '@/lib/i18n';
@@ -46,6 +47,7 @@ function getChatCopy(locale: 'uz' | 'ru' | 'en') {
       newConversation: 'Новый чат',
       you: 'Вы',
       retry: 'Повторить',
+      backToChats: 'Назад к чатам',
     };
   }
 
@@ -76,6 +78,7 @@ function getChatCopy(locale: 'uz' | 'ru' | 'en') {
       newConversation: 'New chat',
       you: 'You',
       retry: 'Try again',
+      backToChats: 'Back to chats',
     };
   }
 
@@ -105,6 +108,7 @@ function getChatCopy(locale: 'uz' | 'ru' | 'en') {
     newConversation: 'Yangi chat',
     you: 'Siz',
     retry: 'Qayta urinish',
+    backToChats: 'Chatlarga qaytish',
   };
 }
 
@@ -189,12 +193,14 @@ function ChatPageContent() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isMobile = useIsMobile();
   const copy = getChatCopy(locale);
   const conversationParam = searchParams.get('conversation')?.trim() || '';
   const adIdParam = searchParams.get('adId')?.trim() || '';
   const [conversations, setConversations] = useState<ChatConversationSummary[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [selectedConversation, setSelectedConversation] = useState<ChatConversation | null>(null);
+  const [isMobileThreadOpen, setIsMobileThreadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [draftMessage, setDraftMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -232,6 +238,7 @@ function ChatPageContent() {
         if (createdConversation) {
           setSelectedConversation(createdConversation);
           setSelectedConversationId(createdConversation.id);
+          setIsMobileThreadOpen(true);
           router.replace(`/chat?conversation=${encodeURIComponent(createdConversation.id)}`, {
             scroll: false,
           });
@@ -260,6 +267,17 @@ function ChatPageContent() {
   }, [adIdParam, copy.noConversations, reloadKey, router, user?.id]);
 
   useEffect(() => {
+    if (!isMobile) {
+      setIsMobileThreadOpen(false);
+      return;
+    }
+
+    if (conversationParam || adIdParam) {
+      setIsMobileThreadOpen(true);
+    }
+  }, [adIdParam, conversationParam, isMobile]);
+
+  useEffect(() => {
     setSelectedConversationId((current) => {
       if (conversationParam) {
         return conversationParam;
@@ -269,9 +287,13 @@ function ChatPageContent() {
         return current;
       }
 
+      if (isMobile) {
+        return null;
+      }
+
       return conversations[0]?.id ?? null;
     });
-  }, [conversationParam, conversations]);
+  }, [conversationParam, conversations, isMobile]);
 
   useEffect(() => {
     if (!selectedConversationId) {
@@ -340,12 +362,24 @@ function ChatPageContent() {
     ? selectedConversation
     : null;
   const conversationView = currentConversation || selectedSummary;
+  const showMobileThread = isMobile && isMobileThreadOpen;
+  const showConversationList = !showMobileThread;
+  const showConversationPane = !isMobile || showMobileThread;
 
   const handleSelectConversation = (conversationId: string) => {
     setDraftMessage('');
     setSelectedConversation(null);
     setSelectedConversationId(conversationId);
+    setIsMobileThreadOpen(true);
     router.replace(`/chat?conversation=${encodeURIComponent(conversationId)}`, {
+      scroll: false,
+    });
+  };
+
+  const handleBackToChats = () => {
+    setDraftMessage('');
+    setIsMobileThreadOpen(false);
+    router.replace('/chat', {
       scroll: false,
     });
   };
@@ -382,20 +416,23 @@ function ChatPageContent() {
     <MarketplaceShell>
       <ProtectedRoute>
         <main className="marketplace-main">
-          <section className="surface-card rounded-[1.75rem] px-5 py-6 sm:px-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.26em] text-primary/70">
-                  {messages.navbar.chat}
-                </p>
-                <h1 className="page-title mt-3 font-bold text-primary">{copy.title}</h1>
+          {showConversationList ? (
+            <section className="surface-card rounded-[1.75rem] px-5 py-6 sm:px-6">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.26em] text-primary/70">
+                    {messages.navbar.chat}
+                  </p>
+                  <h1 className="page-title mt-3 font-bold text-primary">{copy.title}</h1>
+                </div>
+                <p className="body-lead max-w-2xl text-muted-foreground">{copy.description}</p>
               </div>
-              <p className="body-lead max-w-2xl text-muted-foreground">{copy.description}</p>
-            </div>
-          </section>
+            </section>
+          ) : null}
 
           <section className="chat-layout">
-            <div className="surface-card rounded-[1.75rem] p-4 sm:p-5">
+            {showConversationList ? (
+              <div className="surface-card rounded-[1.75rem] p-4 sm:p-5">
               <div className="mb-4 flex items-center gap-3 rounded-2xl border border-border/70 bg-background/70 px-4 py-3">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
@@ -486,12 +523,28 @@ function ChatPageContent() {
                   </div>
                 </div>
               )}
-            </div>
+              </div>
+            ) : null}
 
-            <div className="surface-card rounded-[1.75rem] p-4 sm:p-5">
+            {showConversationPane ? (
+              <div className="surface-card rounded-[1.75rem] p-4 sm:p-5">
               {conversationView ? (
                 <div className="page-stack">
                   <div className="flex flex-col gap-4 rounded-[1.5rem] border border-border/70 bg-background/66 p-4 min-[481px]:flex-row min-[481px]:items-center min-[481px]:justify-between">
+                    {isMobile ? (
+                      <div className="flex items-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="-ml-2 h-10 rounded-full px-3 text-foreground hover:bg-primary/5"
+                          onClick={handleBackToChats}
+                        >
+                          <ArrowLeft className="mr-2 h-4 w-4" />
+                          {copy.backToChats}
+                        </Button>
+                      </div>
+                    ) : null}
                     <div className="flex items-center gap-3">
                       <Avatar className="h-14 w-14 border border-primary/10">
                         <AvatarImage
@@ -618,7 +671,8 @@ function ChatPageContent() {
                   </div>
                 </div>
               )}
-            </div>
+              </div>
+            ) : null}
           </section>
         </main>
       </ProtectedRoute>
