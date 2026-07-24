@@ -7,12 +7,14 @@ import type { Location, ResolvedLocation } from '@/lib/map-types';
 export type YandexLocationPickerCopy = {
   mapTitle: string;
   mapDescription: string;
-  address: string;
-  addressPlaceholder: string;
+  regionLabel: string;
+  regionPlaceholder: string;
+  districtLabel: string;
+  districtPlaceholder: string;
+  streetAddressLabel: string;
+  streetAddressPlaceholder: string;
   searchAddress: string;
   searchAddressPending: string;
-  locationHint: string;
-  locationHintPlaceholder: string;
   mapRequiredHint: string;
   selectedPoint: string;
   notSelected: string;
@@ -37,13 +39,17 @@ const YandexLocationPickerClient = dynamic(() => import('./YandexLocationPickerC
 
 export function YandexLocationPicker(props: {
   value: Location | null;
+  region: string;
+  district: string;
+  regions: string[];
+  districts: string[];
   address: string;
-  locationHint: string;
   locale: Language;
   copy: YandexLocationPickerCopy;
   onChange: (point: Location) => void;
+  onRegionChange: (value: string) => void;
+  onDistrictChange: (value: string) => void;
   onAddressChange: (value: string) => void;
-  onLocationHintChange: (value: string) => void;
   onResolvedLocationChange: (value: ResolvedLocation) => void;
 }) {
   return <YandexLocationPickerClient {...props} />;

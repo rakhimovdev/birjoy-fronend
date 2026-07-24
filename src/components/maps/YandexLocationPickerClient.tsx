@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { requestCurrentDeviceLocation } from '@/lib/device-location';
+import { buildFullAddress, stripLocationPrefix } from '@/lib/uzbekistan-regions';
 import { useYandexMaps, hasYandexMapsApiKey } from '@/lib/yandex-maps-loader';
 import {
   createUserLocationMarkerHtml,
@@ -25,23 +27,31 @@ type GeolocationState = 'idle' | 'loading' | 'denied' | 'unsupported' | 'error';
 
 export default function YandexLocationPickerClient({
   value,
+  region,
+  district,
+  regions,
+  districts,
   address,
-  locationHint,
   locale,
   copy,
   onChange,
+  onRegionChange,
+  onDistrictChange,
   onAddressChange,
-  onLocationHintChange,
   onResolvedLocationChange,
 }: {
   value: Location | null;
+  region: string;
+  district: string;
+  regions: string[];
+  districts: string[];
   address: string;
-  locationHint: string;
   locale: Language;
   copy: YandexLocationPickerCopy;
   onChange: (point: Location) => void;
+  onRegionChange: (value: string) => void;
+  onDistrictChange: (value: string) => void;
   onAddressChange: (value: string) => void;
-  onLocationHintChange: (value: string) => void;
   onResolvedLocationChange: (value: ResolvedLocation) => void;
 }) {
   const { theme } = useTheme();
@@ -60,23 +70,34 @@ export default function YandexLocationPickerClient({
   const mapClickHandlerRef = useRef<((event: YMapsEvent) => void) | null>(null);
   const lastResolvedAddressRef = useRef('');
   const reverseGeocodeRef = useRef<((point: Location) => Promise<void>) | null>(null);
-  const deferredAddress = useDeferredValue(address.trim());
+  const searchQuery = buildFullAddress({
+    region,
+    district,
+    addressLine: address,
+  }).trim();
+  const deferredAddress = useDeferredValue(searchQuery);
   const { api, error, isLoaded } = useYandexMaps(loaderNonce);
   const center = value || YANDEX_MAPS_DEFAULT_CENTER;
 
   const applyResolvedLocation = useCallback(
     (resolved: ResolvedLocation) => {
+      const nextAddressLine = stripLocationPrefix(
+        resolved.formattedAddress || resolved.address,
+        region,
+        district
+      );
+
       setSearchError(null);
       setSearchResults([]);
       setSearchResultsOpen(false);
-      lastResolvedAddressRef.current = (resolved.formattedAddress || resolved.address).trim();
+      lastResolvedAddressRef.current = buildFullAddress({
+        region,
+        district,
+        addressLine: nextAddressLine,
+      }).trim();
       onChange(resolved.location);
       onResolvedLocationChange(resolved);
-      onAddressChange(resolved.formattedAddress || resolved.address);
-
-      if (resolved.locationHint) {
-        onLocationHintChange(resolved.locationHint);
-      }
+      onAddressChange(nextAddressLine || resolved.formattedAddress || resolved.address);
 
       const map = mapRef.current;
 
@@ -86,7 +107,7 @@ export default function YandexLocationPickerClient({
         });
       }
     },
-    [onAddressChange, onChange, onLocationHintChange, onResolvedLocationChange]
+    [district, onAddressChange, onChange, onResolvedLocationChange, region]
   );
 
   const handleReverseGeocode = useCallback(
@@ -107,21 +128,21 @@ export default function YandexLocationPickerClient({
   );
 
   const handleAddressSearch = useCallback(async () => {
-    if (!api || !isLoaded || !address.trim()) {
+    if (!api || !isLoaded || !searchQuery) {
       return;
     }
 
     setIsSearchingAddress(true);
 
     try {
-      const resolved = await geocodeAddressByQuery(api, address.trim());
+      const resolved = await geocodeAddressByQuery(api, searchQuery);
       applyResolvedLocation(resolved);
     } catch (loadError) {
       setSearchError(loadError instanceof Error ? loadError.message : copy.mapError);
     } finally {
       setIsSearchingAddress(false);
     }
-  }, [address, api, applyResolvedLocation, copy.mapError, isLoaded]);
+  }, [api, applyResolvedLocation, copy.mapError, isLoaded, searchQuery]);
 
   const handleCurrentLocation = useCallback(() => {
     setSearchError(null);
@@ -352,16 +373,56 @@ export default function YandexLocationPickerClient({
     <div className="space-y-4">
       <div className="grid gap-4 min-[481px]:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor={`address-${locale}`}>{copy.address}</Label>
+          <Label htmlFor={`region-${locale}`}>{copy.regionLabel}</Label>
+          <Select value={region} onValueChange={onRegionChange}>
+            <SelectTrigger id={`region-${locale}`}>
+              <SelectValue placeholder={copy.regionPlaceholder} />
+            </SelectTrigger>
+            <SelectContent>
+              {regions.map((regionOption) => (
+                <SelectItem key={regionOption} value={regionOption}>
+                  {regionOption}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`district-${locale}`}>{copy.districtLabel}</Label>
+          <Select value={district} onValueChange={onDistrictChange} disabled={!region}>
+            <SelectTrigger id={`district-${locale}`}>
+              <SelectValue placeholder={copy.districtPlaceholder} />
+            </SelectTrigger>
+            <SelectContent>
+              {districts.map((districtOption) => (
+                <SelectItem key={districtOption} value={districtOption}>
+                  {districtOption}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2 min-[481px]:col-span-2">
+          <Label htmlFor={`address-${locale}`}>{copy.streetAddressLabel}</Label>
           <div className="flex flex-col gap-2 min-[640px]:flex-row">
             <div className="relative flex-1">
               <Input
                 id={`address-${locale}`}
-                placeholder={copy.addressPlaceholder}
+                placeholder={copy.streetAddressPlaceholder}
                 value={address}
                 onChange={(event) => {
-                  onAddressChange(event.target.value);
-                  if (lastResolvedAddressRef.current === event.target.value.trim()) {
+                  const nextAddressValue = event.target.value;
+                  onAddressChange(nextAddressValue);
+                  if (
+                    lastResolvedAddressRef.current ===
+                    buildFullAddress({
+                      region,
+                      district,
+                      addressLine: nextAddressValue,
+                    }).trim()
+                  ) {
                     lastResolvedAddressRef.current = '';
                   }
                   setSearchError(null);
@@ -412,7 +473,7 @@ export default function YandexLocationPickerClient({
               variant="outline"
               className="min-h-11 shrink-0 gap-2 rounded-2xl"
               onClick={() => void handleAddressSearch()}
-              disabled={isSearchingAddress || !address.trim() || !isLoaded}
+              disabled={isSearchingAddress || !searchQuery || !isLoaded}
             >
               {isSearchingAddress ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -432,16 +493,6 @@ export default function YandexLocationPickerClient({
                   : 'Manzillar qidirilmoqda...'}
             </p>
           ) : null}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor={`location-hint-${locale}`}>{copy.locationHint}</Label>
-          <Input
-            id={`location-hint-${locale}`}
-            placeholder={copy.locationHintPlaceholder}
-            value={locationHint}
-            onChange={(event) => onLocationHintChange(event.target.value)}
-          />
         </div>
       </div>
 

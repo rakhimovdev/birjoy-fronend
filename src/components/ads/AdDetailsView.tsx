@@ -511,7 +511,6 @@ export function AdDetailsView({
     locale === 'ru'
       ? {
           callAction: 'Позвонить',
-          infoAction: 'Детали',
           sellerLabel: 'Кто разместил',
           areaLabel: 'Площадь, м²',
           floorLabel: 'Этаж',
@@ -521,7 +520,6 @@ export function AdDetailsView({
       : locale === 'en'
         ? {
             callAction: 'Call',
-            infoAction: 'Details',
             sellerLabel: 'Listed by',
             areaLabel: 'Area, m²',
             floorLabel: 'Floor',
@@ -530,7 +528,6 @@ export function AdDetailsView({
           }
         : {
             callAction: 'Qo‘ng‘iroq',
-            infoAction: 'Batafsil',
             sellerLabel: 'Kim joylashtirdi',
             areaLabel: 'Maydon, m²',
             floorLabel: 'Qavat',
@@ -908,64 +905,6 @@ export function AdDetailsView({
               >
                 <Heart className={`h-5 w-5 ${isCurrentAdFavorite ? 'fill-current text-white' : ''}`} />
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full border border-white/10 bg-transparent text-white hover:bg-white/10 hover:text-white"
-                onClick={() => {
-                  document.getElementById('mobile-detail-info')?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start',
-                  });
-                }}
-                aria-label={mobileDetailCopy.infoAction}
-              >
-                <Info className="h-5 w-5" />
-              </Button>
-              {canDeleteListing ? (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="touch-target h-12 w-12 rounded-full border border-white/10 bg-transparent text-white hover:bg-white/10 hover:text-white sm:h-10 sm:w-10"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                      }}
-                      disabled={isDeleting}
-                      aria-label={manageCopy.action}
-                    >
-                      {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-5 w-5" />}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>{manageCopy.title}</AlertDialogTitle>
-                      <AlertDialogDescription>{manageCopy.description}</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>{manageCopy.cancel}</AlertDialogCancel>
-                      <AlertDialogAction
-                        className="bg-primary text-primary-foreground hover:bg-primary/90"
-                        onClick={() => void handleMarkAsSold()}
-                        disabled={isDeleting}
-                      >
-                        {manageCopy.soldAction}
-                      </AlertDialogAction>
-                      <AlertDialogAction
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        onClick={() => void handleDeleteAd()}
-                        disabled={isDeleting}
-                      >
-                        {manageCopy.deleteAction}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              ) : null}
             </div>
 
             <div className="absolute bottom-14 left-4 flex items-center gap-2 rounded-full border border-white/10 bg-black/45 px-3 py-2 backdrop-blur-md">

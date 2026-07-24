@@ -41,6 +41,15 @@ import {
 } from '@/lib/mock-data';
 import type { Ad, AdVertical, RealEstateListingType, UserProfile } from '@/lib/types';
 import type { Location, ResolvedLocation } from '@/lib/map-types';
+import {
+  UZBEKISTAN_REGION_OPTIONS,
+  buildFullAddress,
+  buildLocationLabel,
+  findDistrictByText,
+  findRegionByText,
+  getDistrictsForRegion,
+  stripLocationPrefix,
+} from '@/lib/uzbekistan-regions';
 
 type FormState = {
   title: string;
@@ -51,6 +60,8 @@ type FormState = {
   description: string;
   location: string;
   address: string;
+  region: string;
+  district: string;
   contactPhone: string;
   listingType: RealEstateListingType | '';
   rooms: string;
@@ -65,6 +76,8 @@ type LocationMetaState = {
   country: string;
 };
 
+const DEFAULT_COUNTRY = 'O‘zbekiston';
+
 function buildInitialFormState(initialVertical: AdVertical = 'market'): FormState {
   const defaultCategory = getCategoriesForVertical(initialVertical)[0]?.slug || '';
 
@@ -77,6 +90,8 @@ function buildInitialFormState(initialVertical: AdVertical = 'market'): FormStat
     description: '',
     location: '',
     address: '',
+    region: '',
+    district: '',
     contactPhone: '',
     listingType: initialVertical === 'real_estate' ? 'sale' : '',
     rooms: '',
@@ -86,6 +101,13 @@ function buildInitialFormState(initialVertical: AdVertical = 'market'): FormStat
 }
 
 function buildFormStateFromAd(ad: Ad): FormState {
+  const savedLocation = getLocalizedText(ad.location, 'uz');
+  const savedAddress = getLocalizedText(ad.formattedAddress, 'uz') || getLocalizedText(ad.address, 'uz');
+  const region = getLocalizedText(ad.city, 'uz') || findRegionByText([savedAddress, savedLocation].join(', '));
+  const district =
+    getLocalizedText(ad.district, 'uz') ||
+    (region ? findDistrictByText(region, [savedAddress, savedLocation].join(', ')) : '');
+
   return {
     title: getLocalizedText(ad.title, 'uz'),
     vertical: ad.vertical,
@@ -93,8 +115,10 @@ function buildFormStateFromAd(ad: Ad): FormState {
     condition: ad.condition,
     price: String(ad.price),
     description: getLocalizedText(ad.description, 'uz'),
-    location: getLocalizedText(ad.location, 'uz'),
-    address: getLocalizedText(ad.formattedAddress, 'uz') || getLocalizedText(ad.address, 'uz'),
+    location: savedLocation || buildLocationLabel({ region, district }),
+    address: stripLocationPrefix(savedAddress, region, district),
+    region,
+    district,
     contactPhone: ad.sellerPhone,
     listingType: ad.vertical === 'real_estate' ? ad.listingType || 'sale' : '',
     rooms: ad.rooms !== null ? String(ad.rooms) : '',
@@ -125,7 +149,7 @@ function buildInitialLocationMeta(): LocationMetaState {
     formattedAddress: '',
     city: '',
     district: '',
-    country: '',
+    country: DEFAULT_COUNTRY,
   };
 }
 
@@ -134,7 +158,7 @@ function buildLocationMetaFromAd(ad: Ad): LocationMetaState {
     formattedAddress: getLocalizedText(ad.formattedAddress, 'uz'),
     city: getLocalizedText(ad.city, 'uz'),
     district: getLocalizedText(ad.district, 'uz'),
-    country: getLocalizedText(ad.country, 'uz'),
+    country: getLocalizedText(ad.country, 'uz') || DEFAULT_COUNTRY,
   };
 }
 
@@ -195,6 +219,12 @@ export function AdEditorForm({
   const categories = getCategoriesForVertical(formData.vertical);
   const selectedCategoryConfig = categories.find((category) => category.slug === formData.category);
   const isRealEstate = formData.vertical === 'real_estate';
+  const regionOptions = UZBEKISTAN_REGION_OPTIONS.map((option) => option.name);
+  const selectedDistrictOptions = getDistrictsForRegion(formData.region);
+  const selectedLocationLabel = buildLocationLabel({
+    region: formData.region,
+    district: formData.district,
+  });
   const currentVerticalConfig = getVerticalById(formData.vertical);
   const isEditMode = mode === 'edit';
   const isTransitioningIntoApprovalGatedVertical =
@@ -218,12 +248,15 @@ export function AdEditorForm({
           selectVertical: 'Выберите вертикаль',
           mapTitle: 'Точка на карте',
           mapDescription: 'Ищите адрес или нажмите по карте, затем перетащите метку для точности.',
-          address: 'Точный адрес',
-          addressPlaceholder: 'Например, Ташкент, улица Шахрисабз, 12',
+          regionLabel: 'Область',
+          regionPlaceholder: 'Выберите область',
+          districtLabel: 'Район',
+          districtPlaceholder: 'Выберите район',
+          streetAddressLabel: 'Улица и дом',
+          streetAddressPlaceholder: 'Например, улица Шахрисабз, 12',
           searchAddress: 'Найти на карте',
           searchAddressPending: 'Поиск...',
-          locationHint: 'Район / ориентир',
-          locationHintPlaceholder: 'Например, рядом с метро Айбек',
+          locationSelectRequired: 'Сначала выберите область и район.',
           listingType: 'Тип сделки',
           selectListingType: 'Выберите тип сделки',
           sale: 'Продажа',
@@ -256,12 +289,15 @@ export function AdEditorForm({
             selectVertical: 'Select a vertical',
             mapTitle: 'Map location',
             mapDescription: 'Search an address or tap the map, then drag the marker to refine the location.',
-            address: 'Full address',
-            addressPlaceholder: 'For example, 12 Shahrisabz Street, Tashkent',
+            regionLabel: 'Region',
+            regionPlaceholder: 'Select a region',
+            districtLabel: 'District',
+            districtPlaceholder: 'Select a district',
+            streetAddressLabel: 'Street and house',
+            streetAddressPlaceholder: 'For example, 12 Shahrisabz Street',
             searchAddress: 'Find on map',
             searchAddressPending: 'Searching...',
-            locationHint: 'Area / landmark',
-            locationHintPlaceholder: 'For example, near Oybek metro',
+            locationSelectRequired: 'Please select a region and district first.',
             listingType: 'Deal type',
             selectListingType: 'Select deal type',
             sale: 'Sale',
@@ -293,12 +329,15 @@ export function AdEditorForm({
             selectVertical: 'Vertikalni tanlang',
             mapTitle: 'Xaritadagi nuqta',
             mapDescription: 'Manzilni qidiring yoki xaritaga bosib marker qo‘ying, keyin uni aniq joyga suring.',
-            address: 'Aniq manzil',
-            addressPlaceholder: 'Masalan, Toshkent, Shahrisabz ko‘chasi, 12',
+            regionLabel: 'Viloyat',
+            regionPlaceholder: 'Viloyatni tanlang',
+            districtLabel: 'Tuman',
+            districtPlaceholder: 'Tumanni tanlang',
+            streetAddressLabel: 'Ko‘cha va uy',
+            streetAddressPlaceholder: 'Masalan, Shahrisabz ko‘chasi, 12',
             searchAddress: 'Xaritadan topish',
             searchAddressPending: 'Qidirilmoqda...',
-            locationHint: 'Hudud / orientir',
-            locationHintPlaceholder: 'Masalan, Oybek metro yaqinida',
+            locationSelectRequired: 'Avval viloyat va tumanni tanlang.',
             listingType: 'Bitim turi',
             selectListingType: 'Bitim turini tanlang',
             sale: 'Sotuv',
@@ -321,8 +360,8 @@ export function AdEditorForm({
             createAction: 'E’lonni chop etish',
             updateSuccessTitle: 'E’lon yangilandi',
             updateSuccessDescription: 'O‘zgarishlar muvaffaqiyatli saqlandi.',
-          submitRouteLabel: 'E’lonni ochish',
-        };
+            submitRouteLabel: 'E’lonni ochish',
+          };
 
   const postingAccessCopy =
     locale === 'ru'
@@ -381,7 +420,10 @@ export function AdEditorForm({
 
     setFormData((previous) => ({
       ...previous,
-      location: previous.location || (user.location ? getLocalizedText(user.location, locale) : ''),
+      location:
+        previous.vertical === 'real_estate'
+          ? previous.location
+          : previous.location || (user.location ? getLocalizedText(user.location, locale) : ''),
       contactPhone: previous.contactPhone || user.phone || '',
     }));
   }, [locale, user]);
@@ -417,29 +459,75 @@ export function AdEditorForm({
     }
   }, [formData.category, formData.vertical]);
 
+  const syncRealEstateLocationMeta = (region: string, district: string, addressLine: string) => {
+    setLocationMeta((previous) => ({
+      ...previous,
+      formattedAddress: buildFullAddress({
+        region,
+        district,
+        addressLine,
+      }),
+      city: region,
+      district,
+      country: DEFAULT_COUNTRY,
+    }));
+  };
+
   const handleResolvedLocation = (resolved: ResolvedLocation) => {
+    const resolvedText = [
+      resolved.city,
+      resolved.district,
+      resolved.formattedAddress,
+      resolved.address,
+    ]
+      .filter(Boolean)
+      .join(', ');
+    const nextRegion = formData.region || findRegionByText(resolvedText);
+    const nextDistrict =
+      formData.district || (nextRegion ? findDistrictByText(nextRegion, resolvedText) : '');
+    const nextAddressLine = stripLocationPrefix(
+      resolved.formattedAddress || resolved.address,
+      nextRegion,
+      nextDistrict
+    );
+
     setFormData((previous) => ({
       ...previous,
-      address: resolved.formattedAddress || resolved.address || previous.address,
-      location: resolved.locationHint || previous.location,
+      region: nextRegion || previous.region,
+      district: nextDistrict || previous.district,
+      location:
+        buildLocationLabel({
+          region: nextRegion || previous.region,
+          district: nextDistrict || previous.district,
+        }) || previous.location,
+      address: nextAddressLine || previous.address,
     }));
     setLocationMeta({
-      formattedAddress: resolved.formattedAddress || resolved.address,
-      city: resolved.city,
-      district: resolved.district,
-      country: resolved.country,
+      formattedAddress:
+        resolved.formattedAddress ||
+        resolved.address ||
+        buildFullAddress({
+          region: nextRegion || formData.region,
+          district: nextDistrict || formData.district,
+          addressLine: nextAddressLine || formData.address,
+        }),
+      city: nextRegion || resolved.city || formData.region,
+      district: nextDistrict || resolved.district || formData.district,
+      country: resolved.country || DEFAULT_COUNTRY,
     });
   };
 
   const yandexLocationPickerCopy: YandexLocationPickerCopy = {
     mapTitle: editorCopy.mapTitle,
     mapDescription: editorCopy.mapDescription,
-    address: editorCopy.address,
-    addressPlaceholder: editorCopy.addressPlaceholder,
+    regionLabel: editorCopy.regionLabel,
+    regionPlaceholder: editorCopy.regionPlaceholder,
+    districtLabel: editorCopy.districtLabel,
+    districtPlaceholder: editorCopy.districtPlaceholder,
+    streetAddressLabel: editorCopy.streetAddressLabel,
+    streetAddressPlaceholder: editorCopy.streetAddressPlaceholder,
     searchAddress: editorCopy.searchAddress,
     searchAddressPending: editorCopy.searchAddressPending,
-    locationHint: editorCopy.locationHint,
-    locationHintPlaceholder: editorCopy.locationHintPlaceholder,
     mapRequiredHint: editorCopy.mapRequiredHint,
     selectedPoint: editorCopy.selectedPoint,
     notSelected: editorCopy.notSelected,
@@ -669,6 +757,15 @@ export function AdEditorForm({
       return;
     }
 
+    if (isRealEstate && (!formData.region.trim() || !formData.district.trim())) {
+      toast({
+        title: messages.createAd.location,
+        description: editorCopy.locationSelectRequired,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (isRealEstate && !selectedMapPoint) {
       toast({
         title: editorCopy.mapTitle,
@@ -696,6 +793,16 @@ export function AdEditorForm({
         return;
       }
 
+      const realEstateLocation = buildLocationLabel({
+        region: formData.region,
+        district: formData.district,
+      }).trim();
+      const realEstateAddress = buildFullAddress({
+        region: formData.region,
+        district: formData.district,
+        addressLine: formData.address,
+      }).trim();
+
       const payload: CreateAdInput = {
         title: formData.title.trim(),
         vertical: formData.vertical,
@@ -703,14 +810,14 @@ export function AdEditorForm({
         condition: formData.condition as 'new' | 'like-new' | 'used' | 'needs-repair',
         price: Number(formData.price),
         description: formData.description.trim(),
-        location: (isRealEstate ? formData.location || formData.address : formData.location).trim(),
-        address: isRealEstate ? formData.address.trim() : '',
+        location: (isRealEstate ? realEstateLocation || realEstateAddress : formData.location).trim(),
+        address: isRealEstate ? realEstateAddress : '',
         formattedAddress: isRealEstate
-          ? (locationMeta.formattedAddress || formData.address).trim()
+          ? (locationMeta.formattedAddress || realEstateAddress).trim()
           : '',
-        city: isRealEstate ? locationMeta.city.trim() : '',
-        district: isRealEstate ? locationMeta.district.trim() : '',
-        country: isRealEstate ? locationMeta.country.trim() : '',
+        city: isRealEstate ? (formData.region.trim() || locationMeta.city.trim()) : '',
+        district: isRealEstate ? (formData.district.trim() || locationMeta.district.trim()) : '',
+        country: isRealEstate ? (locationMeta.country.trim() || DEFAULT_COUNTRY) : '',
         latitude: isRealEstate ? selectedMapPoint?.lat ?? null : null,
         longitude: isRealEstate ? selectedMapPoint?.lng ?? null : null,
         propertyType:
@@ -1021,24 +1128,39 @@ export function AdEditorForm({
 
                         <YandexLocationPicker
                           value={selectedMapPoint}
+                          region={formData.region}
+                          district={formData.district}
+                          regions={regionOptions}
+                          districts={selectedDistrictOptions}
                           address={formData.address}
-                          locationHint={formData.location}
                           locale={locale}
                           copy={yandexLocationPickerCopy}
                           onChange={setSelectedMapPoint}
-                          onAddressChange={(value) => {
-                            setFormData((previous) => ({ ...previous, address: value }));
-                            setLocationMeta((previous) => ({
+                          onRegionChange={(value) => {
+                            setFormData((previous) => ({
                               ...previous,
-                              formattedAddress: value,
+                              region: value,
+                              district: '',
+                              location: buildLocationLabel({
+                                region: value,
+                              }),
                             }));
+                            syncRealEstateLocationMeta(value, '', formData.address);
                           }}
-                          onLocationHintChange={(value) => {
-                            setFormData((previous) => ({ ...previous, location: value }));
-                            setLocationMeta((previous) => ({
+                          onDistrictChange={(value) => {
+                            setFormData((previous) => ({
                               ...previous,
                               district: value,
+                              location: buildLocationLabel({
+                                region: previous.region,
+                                district: value,
+                              }),
                             }));
+                            syncRealEstateLocationMeta(formData.region, value, formData.address);
+                          }}
+                          onAddressChange={(value) => {
+                            setFormData((previous) => ({ ...previous, address: value }));
+                            syncRealEstateLocationMeta(formData.region, formData.district, value);
                           }}
                           onResolvedLocationChange={handleResolvedLocation}
                         />
@@ -1186,9 +1308,8 @@ export function AdEditorForm({
                       <span>{messages.createAd.location}</span>
                       <span className="max-w-[11rem] truncate text-right font-semibold text-foreground">
                         {isRealEstate
-                          ? selectedMapPoint
-                            ? `${selectedMapPoint.lat}, ${selectedMapPoint.lng}`
-                            : editorCopy.notSelected
+                          ? selectedLocationLabel ||
+                            (selectedMapPoint ? `${selectedMapPoint.lat}, ${selectedMapPoint.lng}` : editorCopy.notSelected)
                           : formData.location || messages.createAd.locationPlaceholder}
                       </span>
                     </div>
