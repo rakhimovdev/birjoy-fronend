@@ -83,6 +83,11 @@ function NavbarContent() {
   const activeMarketplaceVertical = getActiveMarketplaceVertical(pathname, currentScope);
   const searchPageParams = new URLSearchParams();
 
+  // Profile sahifalarida Navbar ko'rsatilmaydi
+  if (pathname.startsWith('/profile')) {
+    return null;
+  }
+
   if (currentQuery) {
     searchPageParams.set('q', currentQuery);
   }

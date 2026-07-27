@@ -366,7 +366,7 @@ export function RealEstateFilterSheet({
               </div>
             </div>
 
-            <div className={cn(sheetPanelClassName, 'grid gap-4')}>
+            {/* <div className={cn(sheetPanelClassName, 'grid gap-4')}>
               <div className="space-y-2">
                 <Label htmlFor="real-estate-location" className="text-white">
                   {copy.location}
@@ -405,7 +405,7 @@ export function RealEstateFilterSheet({
                   />
                 </div>
               </div>
-            </div>
+            </div> */}
 
             <div className={cn(sheetPanelClassName, 'grid grid-cols-1 gap-4 sm:grid-cols-2')}>
               <div className="space-y-2">
