@@ -227,11 +227,11 @@ export function AdCard({
 
   if (variant !== 'default') {
     const isCompactVariant = variant === 'mobile_compact' || variant === 'real_estate_mobile_compact';
-    const mobileOverlayPaddingClass = isCompactVariant ? 'px-3 pb-2.5 pt-3' : 'px-3.5 pb-2.75 pt-3.5';
-    const mobilePriceClass = isCompactVariant ? 'text-[0.96rem]' : 'text-[1.02rem]';
-    const mobileTitleClass = isCompactVariant ? 'text-[0.84rem] leading-[1.22]' : 'text-[0.89rem] leading-[1.24]';
-    const mobileMetaClass = isCompactVariant ? 'text-[0.68rem]' : 'text-[0.7rem]';
-    const mobileBadgeClass = isCompactVariant ? 'px-1.5 py-0.5 text-[0.64rem]' : 'px-1.5 py-0.5 text-[0.66rem]';
+    const mobileOverlayPaddingClass = isCompactVariant ? 'px-2.5 pb-2 pt-2.5' : 'px-3 pb-2.25 pt-2.75';
+    const mobilePriceClass = isCompactVariant ? 'text-[0.88rem]' : 'text-[0.94rem]';
+    const mobileTitleClass = isCompactVariant ? 'text-[0.76rem] leading-[1.16]' : 'text-[0.82rem] leading-[1.18]';
+    const mobileMetaClass = isCompactVariant ? 'text-[0.62rem]' : 'text-[0.65rem]';
+    const mobileBadgeClass = isCompactVariant ? 'px-1.25 py-0.5 text-[0.58rem]' : 'px-1.25 py-0.5 text-[0.6rem]';
 
     return (
       <article
@@ -298,11 +298,11 @@ export function AdCard({
             </div>
           ) : null}
 
-          <div className={cn('absolute inset-x-0 bottom-0 z-10', mobileOverlayPaddingClass)}>
-            <div className="space-y-1">
+          <div className={cn('absolute inset-x-0 bottom-0 z-10 text-white', mobileOverlayPaddingClass)}>
+            <div className="space-y-0.5">
               <p
                 className={cn(
-                  'font-black leading-none tracking-[-0.03em] text-white',
+                  'font-black leading-none tracking-[-0.03em] !text-white',
                   mobilePriceClass
                 )}
               >
@@ -310,7 +310,7 @@ export function AdCard({
               </p>
               <h3
                 className={cn(
-                  'line-clamp-2 font-semibold text-white',
+                  'line-clamp-2 font-semibold !text-white',
                   mobileTitleClass
                 )}
               >
@@ -318,29 +318,29 @@ export function AdCard({
               </h3>
             </div>
 
-            <div className={cn('mt-1.5 flex items-center gap-1.5 text-white/84', mobileMetaClass)}>
-              <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 shrink-0 text-white/92" />
-                <span className="truncate">{hasLocation ? localizedLocation : localizedCategory}</span>
+            <div className={cn('mt-1 flex items-center gap-1 text-white/84', mobileMetaClass)}>
+              <div className="flex min-w-0 flex-1 items-center gap-1">
+                <MapPin className="h-3 w-3 shrink-0 !text-white/92" />
+                <span className="truncate !text-white/84">{hasLocation ? localizedLocation : localizedCategory}</span>
               </div>
               {mobileSecondaryLabel ? (
-                <span className={cn('rounded-full bg-white/12 font-medium text-white/92 backdrop-blur-sm', mobileBadgeClass)}>
+                <span className={cn('rounded-full bg-white/12 font-medium !text-white/92 backdrop-blur-sm', mobileBadgeClass)}>
                   {mobileSecondaryLabel}
                 </span>
               ) : null}
             </div>
 
             {ad.vertical === 'real_estate' && (ad.rooms || ad.area) ? (
-              <div className={cn('mt-1.5 flex flex-wrap items-center gap-2.5 text-white/84', mobileMetaClass)}>
+              <div className={cn('mt-1 flex flex-wrap items-center gap-2 text-white/84', mobileMetaClass)}>
                 {ad.rooms ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <BedDouble className="h-3.5 w-3.5 text-white/92" />
+                  <span className="inline-flex items-center gap-1 !text-white/84">
+                    <BedDouble className="h-3 w-3 shrink-0 !text-white/92" />
                     {ad.rooms}
                   </span>
                 ) : null}
                 {ad.area ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <Ruler className="h-3.5 w-3.5 text-white/92" />
+                  <span className="inline-flex items-center gap-1 !text-white/84">
+                    <Ruler className="h-3 w-3 shrink-0 !text-white/92" />
                     {ad.area} m²
                   </span>
                 ) : null}
@@ -348,9 +348,9 @@ export function AdCard({
             ) : null}
 
             {ad.vertical !== 'real_estate' ? (
-              <div className={cn('mt-1.5 flex items-center gap-1.5 text-white/72', isCompactVariant ? 'text-[0.66rem]' : 'text-[0.68rem]')}>
-                <Clock className="h-3.5 w-3.5 shrink-0 text-white/88" />
-                <span className="truncate">{postedAtLabel}</span>
+              <div className={cn('mt-1 flex items-center gap-1 !text-white/72', isCompactVariant ? 'text-[0.6rem]' : 'text-[0.62rem]')}>
+                <Clock className="h-3 w-3 shrink-0 !text-white/88" />
+                <span className="truncate !text-white/72">{postedAtLabel}</span>
               </div>
             ) : null}
           </div>
