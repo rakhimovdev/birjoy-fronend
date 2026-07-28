@@ -1479,7 +1479,6 @@ function ProfilePageContent() {
               </Tabs>
             </div>
           </div>
-        </div>
       </main>
 
       <Sheet open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
@@ -1542,6 +1541,6 @@ function ProfilePageContent() {
         </SheetContent>
       </Sheet>
     </ProtectedRoute>
-    </MarketplaceShell >
+    </MarketplaceShell>
   );
 }
