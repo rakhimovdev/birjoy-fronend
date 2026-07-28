@@ -468,7 +468,7 @@ export default function YandexLocationPickerClient({
               ) : null}
             </div>
 
-            <Button
+            {/* <Button
               type="button"
               variant="outline"
               className="min-h-11 shrink-0 gap-2 rounded-2xl"
@@ -481,7 +481,7 @@ export default function YandexLocationPickerClient({
                 <Search className="h-4 w-4" />
               )}
               {isSearchingAddress ? copy.searchAddressPending : copy.searchAddress}
-            </Button>
+            </Button> */}
           </div>
 
           {isFetchingSuggestions ? (
@@ -496,7 +496,7 @@ export default function YandexLocationPickerClient({
         </div>
       </div>
 
-      <div className="soft-panel flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* <div className="soft-panel flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           <MapPinned className="mt-0.5 h-4 w-4 text-primary" />
           <div>
@@ -518,7 +518,7 @@ export default function YandexLocationPickerClient({
           )}
           {geolocationState === 'loading' ? copy.myLocationPending : copy.myLocation}
         </Button>
-      </div>
+      </div> */}
 
       {!hasYandexMapsApiKey() ? (
         <div className="map-shell">

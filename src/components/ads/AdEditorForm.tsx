@@ -608,6 +608,20 @@ export function AdEditorForm({
     }
   };
 
+  const resolveImageUploadErrorMessage = (error: unknown) => {
+    if (!(error instanceof Error)) {
+      return messages.createAd.imageReadError;
+    }
+
+    const normalizedMessage = error.message.trim().toLowerCase();
+
+    if (!normalizedMessage || normalizedMessage === 'load failed' || normalizedMessage === 'failed to fetch') {
+      return messages.createAd.imageReadError;
+    }
+
+    return error.message;
+  };
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
 
@@ -642,7 +656,7 @@ export function AdEditorForm({
     } catch (error) {
       toast({
         title: messages.createAd.imageUploadErrorTitle,
-        description: error instanceof Error ? error.message : messages.createAd.imageReadError,
+        description: resolveImageUploadErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -671,7 +685,7 @@ export function AdEditorForm({
     } catch (error) {
       toast({
         title: messages.createAd.imageUploadErrorTitle,
-        description: error instanceof Error ? error.message : messages.createAd.imageReadError,
+        description: resolveImageUploadErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -704,7 +718,7 @@ export function AdEditorForm({
     } catch (error) {
       toast({
         title: messages.createAd.imageUploadErrorTitle,
-        description: error instanceof Error ? error.message : messages.createAd.imageReadError,
+        description: resolveImageUploadErrorMessage(error),
         variant: 'destructive',
       });
     } finally {

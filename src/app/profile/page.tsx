@@ -149,212 +149,212 @@ function ProfilePageContent() {
   const settingsCopy =
     locale === 'ru'
       ? {
-          description: 'Управляйте языком интерфейса, поддержкой и безопасностью аккаунта в одном месте.',
-          languageTitle: 'Язык приложения',
-          languageDescription: 'Измените язык интерфейса для всего маркетплейса и профиля.',
-          supportTitle: 'Связаться с поддержкой',
-          supportDescription: 'Позвоните, если нужна помощь с аккаунтом, заказами или публикацией объявлений.',
-          exportTitle: 'Скачать мои данные',
-          exportDescription: 'Сохраните свои объявления в JSON для личного архива.',
-          dangerTitle: 'Опасная зона',
-          dangerDescription: 'Удаление аккаунта навсегда удалит профиль, объявления и связанные заявки.',
-        }
+        description: 'Управляйте языком интерфейса, поддержкой и безопасностью аккаунта в одном месте.',
+        languageTitle: 'Язык приложения',
+        languageDescription: 'Измените язык интерфейса для всего маркетплейса и профиля.',
+        supportTitle: 'Связаться с поддержкой',
+        supportDescription: 'Позвоните, если нужна помощь с аккаунтом, заказами или публикацией объявлений.',
+        exportTitle: 'Скачать мои данные',
+        exportDescription: 'Сохраните свои объявления в JSON для личного архива.',
+        dangerTitle: 'Опасная зона',
+        dangerDescription: 'Удаление аккаунта навсегда удалит профиль, объявления и связанные заявки.',
+      }
       : locale === 'en'
         ? {
-            description: 'Manage app language, support, and account safety from one place.',
-            languageTitle: 'App language',
-            languageDescription: 'Change the interface language across the marketplace and your profile.',
-            supportTitle: 'Contact support',
-            supportDescription: 'Call for help with your account, orders, or publishing listings.',
-            exportTitle: 'Download my data',
-            exportDescription: 'Save your listings as JSON for your own records.',
-            dangerTitle: 'Danger zone',
-            dangerDescription: 'Deleting your account permanently removes your profile, listings, and linked requests.',
-          }
+          description: 'Manage app language, support, and account safety from one place.',
+          languageTitle: 'App language',
+          languageDescription: 'Change the interface language across the marketplace and your profile.',
+          supportTitle: 'Contact support',
+          supportDescription: 'Call for help with your account, orders, or publishing listings.',
+          exportTitle: 'Download my data',
+          exportDescription: 'Save your listings as JSON for your own records.',
+          dangerTitle: 'Danger zone',
+          dangerDescription: 'Deleting your account permanently removes your profile, listings, and linked requests.',
+        }
         : {
-            description: 'Til, support va akkaunt xavfsizligi bilan bog‘liq amallarni bir joydan boshqaring.',
-            languageTitle: 'Ilova tili',
-            languageDescription: 'Marketplace va profilingizdagi interfeys tilini shu yerdan almashtiring.',
-            supportTitle: 'Qo‘llab-quvvatlash bilan bog‘lanish',
-            supportDescription: 'Akkaunt, buyurtma yoki eʼlon joylash bo‘yicha yordam kerak bo‘lsa qo‘ng‘iroq qiling.',
-            exportTitle: "Ma'lumotlarimni yuklab olish",
-            exportDescription: "Eʼlonlaringizni JSON ko‘rinishida shaxsiy arxiv uchun saqlab oling.",
-            dangerTitle: 'Xavfli bo‘lim',
-            dangerDescription: 'Akkauntni o‘chirish profilingizni, eʼlonlaringizni va bog‘liq so‘rovlarni butunlay olib tashlaydi.',
-          };
+          description: 'Til, support va akkaunt xavfsizligi bilan bog‘liq amallarni bir joydan boshqaring.',
+          languageTitle: 'Ilova tili',
+          languageDescription: 'Marketplace va profilingizdagi interfeys tilini shu yerdan almashtiring.',
+          supportTitle: 'Qo‘llab-quvvatlash bilan bog‘lanish',
+          supportDescription: 'Akkaunt, buyurtma yoki eʼlon joylash bo‘yicha yordam kerak bo‘lsa qo‘ng‘iroq qiling.',
+          exportTitle: "Ma'lumotlarimni yuklab olish",
+          exportDescription: "Eʼlonlaringizni JSON ko‘rinishida shaxsiy arxiv uchun saqlab oling.",
+          dangerTitle: 'Xavfli bo‘lim',
+          dangerDescription: 'Akkauntni o‘chirish profilingizni, eʼlonlaringizni va bog‘liq so‘rovlarni butunlay olib tashlaydi.',
+        };
 
   const editProfileCopy =
     locale === 'ru'
       ? {
-          title: 'Редактировать профиль',
-          description: 'Обновите имя, телефон и локацию, которые видят покупатели и продавцы.',
-          name: 'Имя',
-          phone: 'Телефон',
-          location: 'Локация',
-          save: 'Сохранить изменения',
-          cancel: 'Отмена',
-          successTitle: 'Профиль обновлён',
-          successDescription: 'Изменения сразу сохранены в вашем аккаунте.',
-          errorTitle: 'Не удалось обновить профиль',
-        }
+        title: 'Редактировать профиль',
+        description: 'Обновите имя, телефон и локацию, которые видят покупатели и продавцы.',
+        name: 'Имя',
+        phone: 'Телефон',
+        location: 'Локация',
+        save: 'Сохранить изменения',
+        cancel: 'Отмена',
+        successTitle: 'Профиль обновлён',
+        successDescription: 'Изменения сразу сохранены в вашем аккаунте.',
+        errorTitle: 'Не удалось обновить профиль',
+      }
       : locale === 'en'
         ? {
-            title: 'Edit profile',
-            description: 'Update the name, phone, and location shown across your marketplace account.',
-            name: 'Name',
-            phone: 'Phone',
-            location: 'Location',
-            save: 'Save changes',
-            cancel: 'Cancel',
-            successTitle: 'Profile updated',
-            successDescription: 'Your account details were saved successfully.',
-            errorTitle: 'Profile update failed',
-          }
+          title: 'Edit profile',
+          description: 'Update the name, phone, and location shown across your marketplace account.',
+          name: 'Name',
+          phone: 'Phone',
+          location: 'Location',
+          save: 'Save changes',
+          cancel: 'Cancel',
+          successTitle: 'Profile updated',
+          successDescription: 'Your account details were saved successfully.',
+          errorTitle: 'Profile update failed',
+        }
         : {
-            title: 'Profilni tahrirlash',
-            description: 'Marketplace akkauntingizda ko‘rinadigan ism, telefon va joylashuvni yangilang.',
-            name: 'Ism',
-            phone: 'Telefon',
-            location: 'Joylashuv',
-            save: 'O‘zgarishlarni saqlash',
-            cancel: 'Bekor qilish',
-            successTitle: 'Profil yangilandi',
-            successDescription: 'Akkauntingizdagi maʼlumotlar darhol saqlandi.',
-            errorTitle: 'Profilni yangilab bo‘lmadi',
-          };
+          title: 'Profilni tahrirlash',
+          description: 'Marketplace akkauntingizda ko‘rinadigan ism, telefon va joylashuvni yangilang.',
+          name: 'Ism',
+          phone: 'Telefon',
+          location: 'Joylashuv',
+          save: 'O‘zgarishlarni saqlash',
+          cancel: 'Bekor qilish',
+          successTitle: 'Profil yangilandi',
+          successDescription: 'Akkauntingizdagi maʼlumotlar darhol saqlandi.',
+          errorTitle: 'Profilni yangilab bo‘lmadi',
+        };
 
   const mobileCopy =
     locale === 'ru'
       ? {
-          listings: 'Объявления',
-          views: 'Просмотры',
-          calls: 'Звонки',
-          sales: 'Продажи',
-          balance: 'Баланс',
-          topUp: 'Пополнить',
-          package: 'Пакет',
-          adsTab: 'Мои объявления',
-          servicesTab: 'Управление',
-          favoritesTab: 'Избранное',
-          status: 'Статус',
-          sort: 'Сортировка',
-          vertical: 'Раздел',
-          propertyType: 'Тип жилья',
-          allStatuses: 'Все статусы',
-          activeStatus: 'Активные',
-          soldStatus: 'Проданные',
-          pendingStatus: 'На модерации',
-          flaggedStatus: 'Скрытые',
-          newest: 'Сначала новые',
-          oldest: 'Сначала старые',
-          expensive: 'Сначала дороже',
-          cheap: 'Сначала дешевле',
-          allVerticals: 'Все разделы',
-          allPropertyTypes: 'Все типы',
-          contacts: 'Контакты',
-          contactsDescription: 'Данные, которые видят покупатели и продавцы.',
-          filtersEmptyTitle: 'Под фильтр ничего не найдено',
-          filtersEmptyDescription: 'Сбросьте фильтры или выберите другие параметры.',
-          clearFilters: 'Сбросить фильтры',
-          shareSuccessTitle: 'Ссылка скопирована',
-          shareSuccessDescription: 'Профилем можно поделиться.',
-          shareErrorTitle: 'Не удалось поделиться профилем',
-          shareErrorDescription: 'Попробуйте ещё раз через пару секунд.',
-          soonTitle: 'Скоро будет',
-          topUpDescription: 'Пополнение баланса подключим в следующих обновлениях.',
-          packageDescription: 'Пакеты продвижения добавим в ближайших обновлениях.',
-          tabHint: 'Быстрое управление объявлениями, избранным и настройками.',
-          shareAria: 'Поделиться профилем',
-          editAria: 'Редактировать профиль',
-          menuAria: 'Открыть управление',
-        }
+        listings: 'Объявления',
+        views: 'Просмотры',
+        calls: 'Звонки',
+        sales: 'Продажи',
+        balance: 'Баланс',
+        topUp: 'Пополнить',
+        package: 'Пакет',
+        adsTab: 'Мои объявления',
+        servicesTab: 'Управление',
+        favoritesTab: 'Избранное',
+        status: 'Статус',
+        sort: 'Сортировка',
+        vertical: 'Раздел',
+        propertyType: 'Тип жилья',
+        allStatuses: 'Все статусы',
+        activeStatus: 'Активные',
+        soldStatus: 'Проданные',
+        pendingStatus: 'На модерации',
+        flaggedStatus: 'Скрытые',
+        newest: 'Сначала новые',
+        oldest: 'Сначала старые',
+        expensive: 'Сначала дороже',
+        cheap: 'Сначала дешевле',
+        allVerticals: 'Все разделы',
+        allPropertyTypes: 'Все типы',
+        contacts: 'Контакты',
+        contactsDescription: 'Данные, которые видят покупатели и продавцы.',
+        filtersEmptyTitle: 'Под фильтр ничего не найдено',
+        filtersEmptyDescription: 'Сбросьте фильтры или выберите другие параметры.',
+        clearFilters: 'Сбросить фильтры',
+        shareSuccessTitle: 'Ссылка скопирована',
+        shareSuccessDescription: 'Профилем можно поделиться.',
+        shareErrorTitle: 'Не удалось поделиться профилем',
+        shareErrorDescription: 'Попробуйте ещё раз через пару секунд.',
+        soonTitle: 'Скоро будет',
+        topUpDescription: 'Пополнение баланса подключим в следующих обновлениях.',
+        packageDescription: 'Пакеты продвижения добавим в ближайших обновлениях.',
+        tabHint: 'Быстрое управление объявлениями, избранным и настройками.',
+        shareAria: 'Поделиться профилем',
+        editAria: 'Редактировать профиль',
+        menuAria: 'Открыть управление',
+      }
       : locale === 'en'
         ? {
-            listings: 'Listings',
-            views: 'Views',
-            calls: 'Calls',
-            sales: 'Sales',
-            balance: 'Balance',
-            topUp: 'Top up',
-            package: 'Package',
-            adsTab: 'My listings',
-            servicesTab: 'Manage',
-            favoritesTab: 'Favorites',
-            status: 'Status',
-            sort: 'Sort',
-            vertical: 'Section',
-            propertyType: 'Property type',
-            allStatuses: 'All statuses',
-            activeStatus: 'Active',
-            soldStatus: 'Sold',
-            pendingStatus: 'Pending',
-            flaggedStatus: 'Hidden',
-            newest: 'Newest first',
-            oldest: 'Oldest first',
-            expensive: 'Highest price',
-            cheap: 'Lowest price',
-            allVerticals: 'All sections',
-            allPropertyTypes: 'All types',
-            contacts: 'Contacts',
-            contactsDescription: 'The details buyers and sellers can see.',
-            filtersEmptyTitle: 'No listings match these filters',
-            filtersEmptyDescription: 'Reset the filters or pick different values.',
-            clearFilters: 'Clear filters',
-            shareSuccessTitle: 'Profile link copied',
-            shareSuccessDescription: 'You can share it anywhere now.',
-            shareErrorTitle: 'Unable to share the profile',
-            shareErrorDescription: 'Please try again in a moment.',
-            soonTitle: 'Coming soon',
-            topUpDescription: 'Balance top-up will be available in a future update.',
-            packageDescription: 'Promotion packages will arrive in the next updates.',
-            tabHint: 'Quick access to your listings, favorites, and settings.',
-            shareAria: 'Share profile',
-            editAria: 'Edit profile',
-            menuAria: 'Open profile management',
-          }
+          listings: 'Listings',
+          views: 'Views',
+          calls: 'Calls',
+          sales: 'Sales',
+          balance: 'Balance',
+          topUp: 'Top up',
+          package: 'Package',
+          adsTab: 'My listings',
+          servicesTab: 'Manage',
+          favoritesTab: 'Favorites',
+          status: 'Status',
+          sort: 'Sort',
+          vertical: 'Section',
+          propertyType: 'Property type',
+          allStatuses: 'All statuses',
+          activeStatus: 'Active',
+          soldStatus: 'Sold',
+          pendingStatus: 'Pending',
+          flaggedStatus: 'Hidden',
+          newest: 'Newest first',
+          oldest: 'Oldest first',
+          expensive: 'Highest price',
+          cheap: 'Lowest price',
+          allVerticals: 'All sections',
+          allPropertyTypes: 'All types',
+          contacts: 'Contacts',
+          contactsDescription: 'The details buyers and sellers can see.',
+          filtersEmptyTitle: 'No listings match these filters',
+          filtersEmptyDescription: 'Reset the filters or pick different values.',
+          clearFilters: 'Clear filters',
+          shareSuccessTitle: 'Profile link copied',
+          shareSuccessDescription: 'You can share it anywhere now.',
+          shareErrorTitle: 'Unable to share the profile',
+          shareErrorDescription: 'Please try again in a moment.',
+          soonTitle: 'Coming soon',
+          topUpDescription: 'Balance top-up will be available in a future update.',
+          packageDescription: 'Promotion packages will arrive in the next updates.',
+          tabHint: 'Quick access to your listings, favorites, and settings.',
+          shareAria: 'Share profile',
+          editAria: 'Edit profile',
+          menuAria: 'Open profile management',
+        }
         : {
-            listings: 'Eʼlonlar',
-            views: 'Ko‘rishlar',
-            calls: 'Qo‘ng‘iroqlar',
-            sales: 'Sotuvlar',
-            balance: 'Balans',
-            topUp: 'To‘ldirish',
-            package: 'Paket',
-            adsTab: "Mening e'lonlarim",
-            servicesTab: 'Boshqaruv',
-            favoritesTab: 'Saqlanganlar',
-            status: 'Status',
-            sort: 'Saralash',
-            vertical: 'Bo‘lim',
-            propertyType: 'Mulk turi',
-            allStatuses: 'Barcha statuslar',
-            activeStatus: 'Faol',
-            soldStatus: 'Sotilgan',
-            pendingStatus: 'Moderatsiyada',
-            flaggedStatus: 'Yashirilgan',
-            newest: 'Yangi birinchi',
-            oldest: 'Eski birinchi',
-            expensive: 'Qimmat birinchi',
-            cheap: 'Arzon birinchi',
-            allVerticals: 'Barcha bo‘limlar',
-            allPropertyTypes: 'Barcha turlar',
-            contacts: 'Kontaktlar',
-            contactsDescription: 'Xaridor va sotuvchilar ko‘radigan maʼlumotlar.',
-            filtersEmptyTitle: 'Filtrga mos eʼlon topilmadi',
-            filtersEmptyDescription: 'Filtrlarni tozalab yoki boshqa qiymatlarni tanlang.',
-            clearFilters: 'Filtrlarni tozalash',
-            shareSuccessTitle: 'Profil havolasi nusxalandi',
-            shareSuccessDescription: 'Endi uni xohlagan joyga yuborishingiz mumkin.',
-            shareErrorTitle: 'Profilni ulashib bo‘lmadi',
-            shareErrorDescription: 'Bir necha soniyadan keyin yana urinib ko‘ring.',
-            soonTitle: 'Tez orada',
-            topUpDescription: 'Balansni to‘ldirish keyingi yangilanishlarda qo‘shiladi.',
-            packageDescription: 'Promoushen paketlari tez orada qo‘shiladi.',
-            tabHint: 'Eʼlonlar, saqlanganlar va sozlamalarga tez kirish.',
-            shareAria: 'Profilni ulashish',
-            editAria: 'Profilni tahrirlash',
-            menuAria: 'Profil boshqaruvini ochish',
-          };
+          listings: 'Eʼlonlar',
+          views: 'Ko‘rishlar',
+          calls: 'Qo‘ng‘iroqlar',
+          sales: 'Sotuvlar',
+          balance: 'Balans',
+          topUp: 'To‘ldirish',
+          package: 'Paket',
+          adsTab: "Mening e'lonlarim",
+          servicesTab: 'Boshqaruv',
+          favoritesTab: 'Saqlanganlar',
+          status: 'Status',
+          sort: 'Saralash',
+          vertical: 'Bo‘lim',
+          propertyType: 'Mulk turi',
+          allStatuses: 'Barcha statuslar',
+          activeStatus: 'Faol',
+          soldStatus: 'Sotilgan',
+          pendingStatus: 'Moderatsiyada',
+          flaggedStatus: 'Yashirilgan',
+          newest: 'Yangi birinchi',
+          oldest: 'Eski birinchi',
+          expensive: 'Qimmat birinchi',
+          cheap: 'Arzon birinchi',
+          allVerticals: 'Barcha bo‘limlar',
+          allPropertyTypes: 'Barcha turlar',
+          contacts: 'Kontaktlar',
+          contactsDescription: 'Xaridor va sotuvchilar ko‘radigan maʼlumotlar.',
+          filtersEmptyTitle: 'Filtrga mos eʼlon topilmadi',
+          filtersEmptyDescription: 'Filtrlarni tozalab yoki boshqa qiymatlarni tanlang.',
+          clearFilters: 'Filtrlarni tozalash',
+          shareSuccessTitle: 'Profil havolasi nusxalandi',
+          shareSuccessDescription: 'Endi uni xohlagan joyga yuborishingiz mumkin.',
+          shareErrorTitle: 'Profilni ulashib bo‘lmadi',
+          shareErrorDescription: 'Bir necha soniyadan keyin yana urinib ko‘ring.',
+          soonTitle: 'Tez orada',
+          topUpDescription: 'Balansni to‘ldirish keyingi yangilanishlarda qo‘shiladi.',
+          packageDescription: 'Promoushen paketlari tez orada qo‘shiladi.',
+          tabHint: 'Eʼlonlar, saqlanganlar va sozlamalarga tez kirish.',
+          shareAria: 'Profilni ulashish',
+          editAria: 'Profilni tahrirlash',
+          menuAria: 'Profil boshqaruvini ochish',
+        };
 
   const propertyTypeLabels = useMemo(
     () => ({
@@ -404,12 +404,12 @@ function ProfilePageContent() {
           }),
           user.favorites.length
             ? fetchAds({
-                ids: user.favorites,
-                fields: 'full',
-                status: 'active',
-                limit: Math.min(Math.max(user.favorites.length, 1), 100),
-                signal: abortController.signal,
-              })
+              ids: user.favorites,
+              fields: 'full',
+              status: 'active',
+              limit: Math.min(Math.max(user.favorites.length, 1), 100),
+              signal: abortController.signal,
+            })
             : Promise.resolve([]),
         ]);
 
@@ -1203,345 +1203,345 @@ function ProfilePageContent() {
             </div>
           </section>
 
-          <div className="hidden min-[769px]:block">
+          {/* <div className="hidden min-[769px]:block">
             <div className="surface-card section-shell rounded-[1.9rem]">
               <div className="section-header__copy">
                 <p className="section-kicker">{messages.navbar.profile}</p>
                 <h1 className="page-title font-bold text-primary">{messages.navbar.profile}</h1>
                 <p className="body-lead max-w-3xl text-muted-foreground">{messages.profile.memberSince}</p>
               </div>
+            </div> */}
+
+          <div className="page-grid profile-grid">
+            <div className="page-stack">
+              <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
+                <CardContent className="flex flex-col items-center p-5 pt-8 text-center sm:p-6 sm:pt-8">
+                  <Avatar className="mb-4 h-24 w-24 border-4 border-primary/10">
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <h2 className="text-xl font-bold">{user.name}</h2>
+                  <p className="mb-4 text-sm text-muted-foreground">{messages.profile.memberSince}</p>
+                  <Badge variant="secondary" className="mb-6">
+                    {messages.profile.verifiedSeller}
+                  </Badge>
+
+                  <div className="w-full space-y-3 px-2 text-left text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Mail className="h-4 w-4" />
+                      <span className="break-all">{user.email}</span>
+                    </div>
+                    {user.phone ? (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Phone className="h-4 w-4" />
+                        <span>{user.phone}</span>
+                      </div>
+                    ) : null}
+                    {userLocation ? (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span>{userLocation}</span>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <Button
+                    className="mt-8 min-h-12 w-full gap-2"
+                    variant="outline"
+                    onClick={() => setIsEditProfileOpen(true)}
+                  >
+                    <Edit className="h-4 w-4" />
+                    {messages.profile.editProfile}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
+                <CardHeader className="p-4">
+                  <CardTitle className="text-sm">{messages.profile.accountSettings}</CardTitle>
+                  <p className="text-sm text-muted-foreground">{settingsCopy.description}</p>
+                </CardHeader>
+                <CardContent className="space-y-4 p-4 pt-0">
+                  <div className="soft-panel space-y-3 rounded-[1.4rem]">
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-full bg-primary/10 p-2.5 text-primary">
+                        <Globe2 className="h-4 w-4" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-foreground">{settingsCopy.languageTitle}</p>
+                        <p className="text-sm text-muted-foreground">{settingsCopy.languageDescription}</p>
+                      </div>
+                    </div>
+                    <Select value={locale} onValueChange={handleLocaleChange}>
+                      <SelectTrigger className="h-11 rounded-[1rem] border-white/55 bg-background/80 shadow-none">
+                        <SelectValue placeholder={messages.navbar.language} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {languages.map((language) => (
+                          <SelectItem key={language} value={language}>
+                            {languageMeta[language].label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <a
+                    href="tel:+998332580404"
+                    className="soft-panel block rounded-[1.4rem] transition-colors hover:bg-primary/5"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-full bg-primary/10 p-2.5 text-primary">
+                        <Headphones className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground">{settingsCopy.supportTitle}</p>
+                        <p className="text-sm text-muted-foreground break-words">
+                          {settingsCopy.supportDescription}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3">
+                      <span className="inline-flex min-h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm">
+                        {messages.navbar.callSupport}
+                      </span>
+                    </div>
+                  </a>
+
+                  <button
+                    type="button"
+                    className="soft-panel block w-full rounded-[1.4rem] text-left transition-colors hover:bg-primary/5"
+                    onClick={handleDownloadData}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-full bg-primary/10 p-2.5 text-primary">
+                        <Download className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground">{settingsCopy.exportTitle}</p>
+                        <p className="text-sm text-muted-foreground break-words">
+                          {settingsCopy.exportDescription}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3">
+                      <span className="text-sm font-semibold text-primary">{messages.profile.downloadMyData}</span>
+                    </div>
+                  </button>
+
+                  <div className="rounded-[1.4rem] border border-destructive/18 bg-destructive/5 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-full bg-destructive/10 p-2.5 text-destructive">
+                        <ShieldAlert className="h-4 w-4" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-foreground">{settingsCopy.dangerTitle}</p>
+                        <p className="text-sm text-muted-foreground">{settingsCopy.dangerDescription}</p>
+                      </div>
+                    </div>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          className="mt-4 min-h-11 w-full justify-start gap-2 rounded-[1rem]"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          {messages.profile.deleteAccount}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{deleteAccountCopy[locale].title}</AlertDialogTitle>
+                          <AlertDialogDescription>{deleteAccountCopy[locale].description}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{deleteAccountCopy[locale].cancel}</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={isDeletingAccount}
+                            onClick={() => void handleDeleteAccount()}
+                          >
+                            {deleteAccountCopy[locale].confirm}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            <div className="page-grid profile-grid">
-              <div className="page-stack">
-                <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
-                  <CardContent className="flex flex-col items-center p-5 pt-8 text-center sm:p-6 sm:pt-8">
-                    <Avatar className="mb-4 h-24 w-24 border-4 border-primary/10">
-                      <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <h2 className="text-xl font-bold">{user.name}</h2>
-                    <p className="mb-4 text-sm text-muted-foreground">{messages.profile.memberSince}</p>
-                    <Badge variant="secondary" className="mb-6">
-                      {messages.profile.verifiedSeller}
-                    </Badge>
+            <div className="min-w-0">
+              <Tabs
+                value={activeDesktopTab}
+                onValueChange={(value) => setActiveDesktopTab(value as DesktopProfileTab)}
+                className="w-full"
+              >
+                <TabsList className="mb-6 grid h-auto w-full grid-cols-1 gap-2 rounded-[1.25rem] border border-border/70 bg-card/80 p-1.5 min-[481px]:grid-cols-2">
+                  <TabsTrigger
+                    value="ads"
+                    className="min-h-12 gap-2 rounded-[1rem] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  >
+                    <Package className="h-4 w-4" />
+                    {messages.profile.myAdsTab} ({myAds.length})
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="favorites"
+                    className="min-h-12 gap-2 rounded-[1rem] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  >
+                    <Heart className="h-4 w-4" />
+                    {messages.profile.favoritesTab} ({favoriteAds.length})
+                  </TabsTrigger>
+                </TabsList>
 
-                    <div className="w-full space-y-3 px-2 text-left text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Mail className="h-4 w-4" />
-                        <span className="break-all">{user.email}</span>
+                <TabsContent value="ads">
+                  <div className="listing-grid">
+                    {isLoadingAds ? (
+                      <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
+                        <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                        <h3 className="mb-1 text-lg font-semibold">{messages.profile.loadingListings}</h3>
                       </div>
-                      {user.phone ? (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Phone className="h-4 w-4" />
-                          <span>{user.phone}</span>
-                        </div>
-                      ) : null}
-                      {userLocation ? (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          <span>{userLocation}</span>
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <Button
-                      className="mt-8 min-h-12 w-full gap-2"
-                      variant="outline"
-                      onClick={() => setIsEditProfileOpen(true)}
-                    >
-                      <Edit className="h-4 w-4" />
-                      {messages.profile.editProfile}
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-sm">{messages.profile.accountSettings}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{settingsCopy.description}</p>
-                  </CardHeader>
-                  <CardContent className="space-y-4 p-4 pt-0">
-                    <div className="soft-panel space-y-3 rounded-[1.4rem]">
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-primary/10 p-2.5 text-primary">
-                          <Globe2 className="h-4 w-4" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-sm font-semibold text-foreground">{settingsCopy.languageTitle}</p>
-                          <p className="text-sm text-muted-foreground">{settingsCopy.languageDescription}</p>
-                        </div>
+                    ) : adsError ? (
+                      <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
+                        <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                        <p className="mx-auto max-w-xl text-muted-foreground">{adsError}</p>
+                        <Button type="button" variant="outline" className="mt-6" onClick={handleRetryAds}>
+                          <RefreshCcw className="h-4 w-4" />
+                          {retryAdsLabel}
+                        </Button>
                       </div>
-                      <Select value={locale} onValueChange={handleLocaleChange}>
-                        <SelectTrigger className="h-11 rounded-[1rem] border-white/55 bg-background/80 shadow-none">
-                          <SelectValue placeholder={messages.navbar.language} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {languages.map((language) => (
-                            <SelectItem key={language} value={language}>
-                              {languageMeta[language].label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <a
-                      href="tel:+998332580404"
-                      className="soft-panel block rounded-[1.4rem] transition-colors hover:bg-primary/5"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-primary/10 p-2.5 text-primary">
-                          <Headphones className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-foreground">{settingsCopy.supportTitle}</p>
-                          <p className="text-sm text-muted-foreground break-words">
-                            {settingsCopy.supportDescription}
-                          </p>
-                        </div>
+                    ) : myAds.length > 0 ? (
+                      myAds.map((ad) => (
+                        <AdCard
+                          key={ad.id}
+                          ad={ad}
+                          isFavorite={isFavorite(ad.id)}
+                          canDelete={isAdmin}
+                          onDeleted={handleAdDeleted}
+                          onUpdated={handleAdUpdated}
+                        />
+                      ))
+                    ) : (
+                      <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
+                        <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                        <h3 className="mb-1 text-lg font-semibold">{messages.profile.noAdsYet}</h3>
+                        <p className="mb-6 text-muted-foreground">{messages.profile.noAdsDescription}</p>
+                        <Button asChild>
+                          <Link href="/ads/create">{messages.profile.postFirstAd}</Link>
+                        </Button>
                       </div>
+                    )}
+                  </div>
+                </TabsContent>
 
-                      <div className="mt-3">
-                        <span className="inline-flex min-h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm">
-                          {messages.navbar.callSupport}
-                        </span>
+                <TabsContent value="favorites">
+                  <div className="listing-grid">
+                    {isLoadingAds ? (
+                      <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
+                        <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                        <h3 className="mb-1 text-lg font-semibold">{messages.profile.loadingListings}</h3>
                       </div>
-                    </a>
-
-                    <button
-                      type="button"
-                      className="soft-panel block w-full rounded-[1.4rem] text-left transition-colors hover:bg-primary/5"
-                      onClick={handleDownloadData}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-primary/10 p-2.5 text-primary">
-                          <Download className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-foreground">{settingsCopy.exportTitle}</p>
-                          <p className="text-sm text-muted-foreground break-words">
-                            {settingsCopy.exportDescription}
-                          </p>
-                        </div>
+                    ) : adsError ? (
+                      <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
+                        <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                        <p className="mx-auto max-w-xl text-muted-foreground">{adsError}</p>
+                        <Button type="button" variant="outline" className="mt-6" onClick={handleRetryAds}>
+                          <RefreshCcw className="h-4 w-4" />
+                          {retryAdsLabel}
+                        </Button>
                       </div>
-
-                      <div className="mt-3">
-                        <span className="text-sm font-semibold text-primary">{messages.profile.downloadMyData}</span>
+                    ) : favoriteAds.length > 0 ? (
+                      favoriteAds.map((ad) => (
+                        <AdCard
+                          key={ad.id}
+                          ad={ad}
+                          isFavorite={isFavorite(ad.id)}
+                          canDelete={isAdmin}
+                          onDeleted={handleAdDeleted}
+                          onUpdated={handleAdUpdated}
+                        />
+                      ))
+                    ) : (
+                      <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
+                        <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                        <h3 className="mb-1 text-lg font-semibold">{messages.profile.emptyFavorites}</h3>
+                        <p className="mb-6 text-muted-foreground">{messages.profile.emptyFavoritesDescription}</p>
+                        <Button asChild variant="outline">
+                          <Link href="/">{messages.profile.exploreMarket}</Link>
+                        </Button>
                       </div>
-                    </button>
-
-                    <div className="rounded-[1.4rem] border border-destructive/18 bg-destructive/5 p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-destructive/10 p-2.5 text-destructive">
-                          <ShieldAlert className="h-4 w-4" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-sm font-semibold text-foreground">{settingsCopy.dangerTitle}</p>
-                          <p className="text-sm text-muted-foreground">{settingsCopy.dangerDescription}</p>
-                        </div>
-                      </div>
-
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="destructive"
-                            className="mt-4 min-h-11 w-full justify-start gap-2 rounded-[1rem]"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            {messages.profile.deleteAccount}
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{deleteAccountCopy[locale].title}</AlertDialogTitle>
-                            <AlertDialogDescription>{deleteAccountCopy[locale].description}</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{deleteAccountCopy[locale].cancel}</AlertDialogCancel>
-                            <AlertDialogAction
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              disabled={isDeletingAccount}
-                              onClick={() => void handleDeleteAccount()}
-                            >
-                              {deleteAccountCopy[locale].confirm}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="min-w-0">
-                <Tabs
-                  value={activeDesktopTab}
-                  onValueChange={(value) => setActiveDesktopTab(value as DesktopProfileTab)}
-                  className="w-full"
-                >
-                  <TabsList className="mb-6 grid h-auto w-full grid-cols-1 gap-2 rounded-[1.25rem] border border-border/70 bg-card/80 p-1.5 min-[481px]:grid-cols-2">
-                    <TabsTrigger
-                      value="ads"
-                      className="min-h-12 gap-2 rounded-[1rem] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                    >
-                      <Package className="h-4 w-4" />
-                      {messages.profile.myAdsTab} ({myAds.length})
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="favorites"
-                      className="min-h-12 gap-2 rounded-[1rem] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                    >
-                      <Heart className="h-4 w-4" />
-                      {messages.profile.favoritesTab} ({favoriteAds.length})
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="ads">
-                    <div className="listing-grid">
-                      {isLoadingAds ? (
-                        <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
-                          <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                          <h3 className="mb-1 text-lg font-semibold">{messages.profile.loadingListings}</h3>
-                        </div>
-                      ) : adsError ? (
-                        <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
-                          <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                          <p className="mx-auto max-w-xl text-muted-foreground">{adsError}</p>
-                          <Button type="button" variant="outline" className="mt-6" onClick={handleRetryAds}>
-                            <RefreshCcw className="h-4 w-4" />
-                            {retryAdsLabel}
-                          </Button>
-                        </div>
-                      ) : myAds.length > 0 ? (
-                        myAds.map((ad) => (
-                          <AdCard
-                            key={ad.id}
-                            ad={ad}
-                            isFavorite={isFavorite(ad.id)}
-                            canDelete={isAdmin}
-                            onDeleted={handleAdDeleted}
-                            onUpdated={handleAdUpdated}
-                          />
-                        ))
-                      ) : (
-                        <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
-                          <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                          <h3 className="mb-1 text-lg font-semibold">{messages.profile.noAdsYet}</h3>
-                          <p className="mb-6 text-muted-foreground">{messages.profile.noAdsDescription}</p>
-                          <Button asChild>
-                            <Link href="/ads/create">{messages.profile.postFirstAd}</Link>
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="favorites">
-                    <div className="listing-grid">
-                      {isLoadingAds ? (
-                        <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
-                          <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                          <h3 className="mb-1 text-lg font-semibold">{messages.profile.loadingListings}</h3>
-                        </div>
-                      ) : adsError ? (
-                        <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
-                          <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                          <p className="mx-auto max-w-xl text-muted-foreground">{adsError}</p>
-                          <Button type="button" variant="outline" className="mt-6" onClick={handleRetryAds}>
-                            <RefreshCcw className="h-4 w-4" />
-                            {retryAdsLabel}
-                          </Button>
-                        </div>
-                      ) : favoriteAds.length > 0 ? (
-                        favoriteAds.map((ad) => (
-                          <AdCard
-                            key={ad.id}
-                            ad={ad}
-                            isFavorite={isFavorite(ad.id)}
-                            canDelete={isAdmin}
-                            onDeleted={handleAdDeleted}
-                            onUpdated={handleAdUpdated}
-                          />
-                        ))
-                      ) : (
-                        <div className="surface-card col-span-full rounded-[1.75rem] py-20 text-center">
-                          <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                          <h3 className="mb-1 text-lg font-semibold">{messages.profile.emptyFavorites}</h3>
-                          <p className="mb-6 text-muted-foreground">{messages.profile.emptyFavoritesDescription}</p>
-                          <Button asChild variant="outline">
-                            <Link href="/">{messages.profile.exploreMarket}</Link>
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
-        </main>
+        </div>
+      </main>
 
-        <Sheet open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
-          <SheetContent
-            side="bottom"
-            className="mx-auto w-full max-w-2xl rounded-t-[2rem] border border-border/70 px-4 pb-6 pt-10 sm:px-6"
-          >
-            <SheetHeader className="text-left">
-              <SheetTitle>{editProfileCopy.title}</SheetTitle>
-              <SheetDescription>{editProfileCopy.description}</SheetDescription>
-            </SheetHeader>
+      <Sheet open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
+        <SheetContent
+          side="bottom"
+          className="mx-auto w-full max-w-2xl rounded-t-[2rem] border border-border/70 px-4 pb-6 pt-10 sm:px-6"
+        >
+          <SheetHeader className="text-left">
+            <SheetTitle>{editProfileCopy.title}</SheetTitle>
+            <SheetDescription>{editProfileCopy.description}</SheetDescription>
+          </SheetHeader>
 
-            <form className="mt-6 space-y-4" onSubmit={(event) => void handleSaveProfile(event)}>
-              <div className="space-y-2">
-                <Label htmlFor="profile-name">{editProfileCopy.name}</Label>
-                <Input
-                  id="profile-name"
-                  value={profileForm.name}
-                  onChange={(event) => handleProfileFieldChange('name', event.target.value)}
-                  maxLength={80}
-                  required
-                />
-              </div>
+          <form className="mt-6 space-y-4" onSubmit={(event) => void handleSaveProfile(event)}>
+            <div className="space-y-2">
+              <Label htmlFor="profile-name">{editProfileCopy.name}</Label>
+              <Input
+                id="profile-name"
+                value={profileForm.name}
+                onChange={(event) => handleProfileFieldChange('name', event.target.value)}
+                maxLength={80}
+                required
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="profile-phone">{editProfileCopy.phone}</Label>
-                <Input
-                  id="profile-phone"
-                  value={profileForm.phone}
-                  onChange={(event) => handleProfileFieldChange('phone', event.target.value)}
-                  maxLength={40}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="profile-phone">{editProfileCopy.phone}</Label>
+              <Input
+                id="profile-phone"
+                value={profileForm.phone}
+                onChange={(event) => handleProfileFieldChange('phone', event.target.value)}
+                maxLength={40}
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="profile-location">{editProfileCopy.location}</Label>
-                <Input
-                  id="profile-location"
-                  value={profileForm.location}
-                  onChange={(event) => handleProfileFieldChange('location', event.target.value)}
-                  maxLength={240}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="profile-location">{editProfileCopy.location}</Label>
+              <Input
+                id="profile-location"
+                value={profileForm.location}
+                onChange={(event) => handleProfileFieldChange('location', event.target.value)}
+                maxLength={240}
+              />
+            </div>
 
-              <SheetFooter className="gap-3 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="min-h-11 w-full sm:w-auto"
-                  onClick={() => setIsEditProfileOpen(false)}
-                >
-                  {editProfileCopy.cancel}
-                </Button>
-                <Button type="submit" className="min-h-11 w-full sm:w-auto" disabled={isSavingProfile}>
-                  {isSavingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {editProfileCopy.save}
-                </Button>
-              </SheetFooter>
-            </form>
-          </SheetContent>
-        </Sheet>
-      </ProtectedRoute>
-    </MarketplaceShell>
+            <SheetFooter className="gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11 w-full sm:w-auto"
+                onClick={() => setIsEditProfileOpen(false)}
+              >
+                {editProfileCopy.cancel}
+              </Button>
+              <Button type="submit" className="min-h-11 w-full sm:w-auto" disabled={isSavingProfile}>
+                {isSavingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {editProfileCopy.save}
+              </Button>
+            </SheetFooter>
+          </form>
+        </SheetContent>
+      </Sheet>
+    </ProtectedRoute>
+    </MarketplaceShell >
   );
 }

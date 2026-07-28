@@ -41,6 +41,8 @@
 	<string>BirJoy uses your location while the app is open to help select a listing address and show nearby properties.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>BirJoy needs photo library access so you can select images for your listings.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>BirJoy may save edited listing photos to your photo library when you choose to do so.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

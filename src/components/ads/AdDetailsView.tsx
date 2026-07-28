@@ -394,24 +394,24 @@ export function AdDetailsView({
   const realEstateFacts = [
     isRealEstate && ad.rooms !== null
       ? {
-          icon: Building2,
-          label: locale === 'ru' ? 'Комнаты' : locale === 'en' ? 'Rooms' : 'Xonalar',
-          value: String(ad.rooms),
-        }
+        icon: Building2,
+        label: locale === 'ru' ? 'Комнаты' : locale === 'en' ? 'Rooms' : 'Xonalar',
+        value: String(ad.rooms),
+      }
       : null,
     isRealEstate && ad.area !== null
       ? {
-          icon: Square,
-          label: locale === 'ru' ? 'Площадь' : locale === 'en' ? 'Area' : 'Maydon',
-          value: `${ad.area} m²`,
-        }
+        icon: Square,
+        label: locale === 'ru' ? 'Площадь' : locale === 'en' ? 'Area' : 'Maydon',
+        value: `${ad.area} m²`,
+      }
       : null,
     isRealEstate && ad.floor !== null
       ? {
-          icon: Building2,
-          label: locale === 'ru' ? 'Этаж' : locale === 'en' ? 'Floor' : 'Qavat',
-          value: String(ad.floor),
-        }
+        icon: Building2,
+        label: locale === 'ru' ? 'Этаж' : locale === 'en' ? 'Floor' : 'Qavat',
+        value: String(ad.floor),
+      }
       : null,
   ].filter(Boolean) as Array<{
     icon: LucideIcon;
@@ -435,120 +435,120 @@ export function AdDetailsView({
   const manageCopy =
     locale === 'ru'
       ? {
-          action: 'Удалить',
-          title: 'Что сделать с объявлением?',
-          description:
-            'Вы можете отметить объявление как проданное или удалить его навсегда.',
-          manageButton: 'Продано / Удалить',
-          soldAction: 'Продано',
-          deleteAction: 'Удалить',
-          cancel: 'Отмена',
-          soldSuccessTitle: 'Объявление отмечено как проданное',
-          soldSuccessDescription: 'Объявление снято с активной витрины.',
-          deleteSuccessTitle: 'Объявление удалено',
-          deleteSuccessDescription: 'Объявление было успешно удалено.',
-          errorTitle: 'Не удалось выполнить действие',
-          soldStatus: 'Продано',
-        }
+        action: 'Удалить',
+        title: 'Что сделать с объявлением?',
+        description:
+          'Вы можете отметить объявление как проданное или удалить его навсегда.',
+        manageButton: 'Продано / Удалить',
+        soldAction: 'Продано',
+        deleteAction: 'Удалить',
+        cancel: 'Отмена',
+        soldSuccessTitle: 'Объявление отмечено как проданное',
+        soldSuccessDescription: 'Объявление снято с активной витрины.',
+        deleteSuccessTitle: 'Объявление удалено',
+        deleteSuccessDescription: 'Объявление было успешно удалено.',
+        errorTitle: 'Не удалось выполнить действие',
+        soldStatus: 'Продано',
+      }
       : locale === 'en'
         ? {
-            action: 'Delete',
-            title: 'What would you like to do with this listing?',
-            description:
-              'You can mark the listing as sold or delete it permanently.',
-            manageButton: 'Sold / Delete',
-            soldAction: 'Mark sold',
-            deleteAction: 'Delete',
-            cancel: 'Cancel',
-            soldSuccessTitle: 'Listing marked as sold',
-            soldSuccessDescription: 'The listing was removed from active browsing.',
-            deleteSuccessTitle: 'Listing deleted',
-            deleteSuccessDescription: 'The listing was removed successfully.',
-            errorTitle: 'The action could not be completed',
-            soldStatus: 'Sold',
-          }
+          action: 'Delete',
+          title: 'What would you like to do with this listing?',
+          description:
+            'You can mark the listing as sold or delete it permanently.',
+          manageButton: 'Sold / Delete',
+          soldAction: 'Mark sold',
+          deleteAction: 'Delete',
+          cancel: 'Cancel',
+          soldSuccessTitle: 'Listing marked as sold',
+          soldSuccessDescription: 'The listing was removed from active browsing.',
+          deleteSuccessTitle: 'Listing deleted',
+          deleteSuccessDescription: 'The listing was removed successfully.',
+          errorTitle: 'The action could not be completed',
+          soldStatus: 'Sold',
+        }
         : {
-            action: "O‘chirish",
-            title: 'Eʼlon bilan nima qilmoqchisiz?',
-            description:
-              'Uni sotildi deb belgilab aktiv ro‘yxatdan yashirishingiz yoki butunlay o‘chirishingiz mumkin.',
-            manageButton: 'Sotildi / O‘chirish',
-            soldAction: 'Sotildi',
-            deleteAction: "O‘chirish",
-            cancel: 'Bekor qilish',
-            soldSuccessTitle: 'Eʼlon sotildi deb belgilandi',
-            soldSuccessDescription: 'Eʼlon aktiv ro‘yxatdan olib tashlandi.',
-            deleteSuccessTitle: "Eʼlon o‘chirildi",
-            deleteSuccessDescription: 'Eʼlon muvaffaqiyatli o‘chirildi.',
-            errorTitle: 'Amal bajarilmadi',
-            soldStatus: 'Sotildi',
-          };
+          action: "O‘chirish",
+          title: 'Eʼlon bilan nima qilmoqchisiz?',
+          description:
+            'Uni sotildi deb belgilab aktiv ro‘yxatdan yashirishingiz yoki butunlay o‘chirishingiz mumkin.',
+          manageButton: 'Sotildi / O‘chirish',
+          soldAction: 'Sotildi',
+          deleteAction: "O‘chirish",
+          cancel: 'Bekor qilish',
+          soldSuccessTitle: 'Eʼlon sotildi deb belgilandi',
+          soldSuccessDescription: 'Eʼlon aktiv ro‘yxatdan olib tashlandi.',
+          deleteSuccessTitle: "Eʼlon o‘chirildi",
+          deleteSuccessDescription: 'Eʼlon muvaffaqiyatli o‘chirildi.',
+          errorTitle: 'Amal bajarilmadi',
+          soldStatus: 'Sotildi',
+        };
   const chatCopy =
     locale === 'ru'
       ? {
-          action: 'Написать продавцу',
-          loading: 'Открываем чат...',
-          helper: 'Продолжите общение в реальном чате внутри приложения.',
-          ownListing: 'Это ваше объявление, поэтому чат с самим собой недоступен.',
-          errorTitle: 'Не удалось открыть чат',
-        }
+        action: 'Написать продавцу',
+        loading: 'Открываем чат...',
+        helper: 'Продолжите общение в реальном чате внутри приложения.',
+        ownListing: 'Это ваше объявление, поэтому чат с самим собой недоступен.',
+        errorTitle: 'Не удалось открыть чат',
+      }
       : locale === 'en'
         ? {
-            action: 'Message seller',
-            loading: 'Opening chat...',
-            helper: 'Continue the conversation in the real in-app chat.',
-            ownListing: 'This is your own listing, so self-chat is disabled.',
-            errorTitle: 'Chat could not be opened',
-          }
+          action: 'Message seller',
+          loading: 'Opening chat...',
+          helper: 'Continue the conversation in the real in-app chat.',
+          ownListing: 'This is your own listing, so self-chat is disabled.',
+          errorTitle: 'Chat could not be opened',
+        }
         : {
-            action: 'Sotuvchiga yozish',
-            loading: 'Chat ochilmoqda...',
-            helper: 'Suhbatni ilova ichidagi haqiqiy chatda davom ettiring.',
-            ownListing: 'Bu sizning eʼloningiz, shuning uchun o‘zingizga chat ochib bo‘lmaydi.',
-            errorTitle: 'Chatni ochib bo‘lmadi',
+          action: 'Sotuvchiga yozish',
+          loading: 'Chat ochilmoqda...',
+          helper: 'Suhbatni ilova ichidagi haqiqiy chatda davom ettiring.',
+          ownListing: 'Bu sizning eʼloningiz, shuning uchun o‘zingizga chat ochib bo‘lmaydi.',
+          errorTitle: 'Chatni ochib bo‘lmadi',
         };
   const mobileDetailCopy =
     locale === 'ru'
       ? {
-          callAction: 'Позвонить',
-          sellerLabel: 'Кто разместил',
-          areaLabel: 'Площадь, м²',
-          floorLabel: 'Этаж',
-          roomsLabel: 'Комнаты',
-          mapTitle: 'Локация на карте',
-        }
+        callAction: 'Позвонить',
+        sellerLabel: 'Кто разместил',
+        areaLabel: 'Площадь, м²',
+        floorLabel: 'Этаж',
+        roomsLabel: 'Комнаты',
+        mapTitle: 'Локация на карте',
+      }
       : locale === 'en'
         ? {
-            callAction: 'Call',
-            sellerLabel: 'Listed by',
-            areaLabel: 'Area, m²',
-            floorLabel: 'Floor',
-            roomsLabel: 'Rooms',
-            mapTitle: 'Map location',
-          }
+          callAction: 'Call',
+          sellerLabel: 'Listed by',
+          areaLabel: 'Area, m²',
+          floorLabel: 'Floor',
+          roomsLabel: 'Rooms',
+          mapTitle: 'Map location',
+        }
         : {
-            callAction: 'Qo‘ng‘iroq',
-            sellerLabel: 'Kim joylashtirdi',
-            areaLabel: 'Maydon, m²',
-            floorLabel: 'Qavat',
-            roomsLabel: 'Xonalar',
-            mapTitle: 'Xaritadagi joylashuv',
-          };
+          callAction: 'Qo‘ng‘iroq',
+          sellerLabel: 'Kim joylashtirdi',
+          areaLabel: 'Maydon, m²',
+          floorLabel: 'Qavat',
+          roomsLabel: 'Xonalar',
+          mapTitle: 'Xaritadagi joylashuv',
+        };
   const nearbyCopy =
     locale === 'ru'
       ? {
-          title: 'Объявления рядом',
-          description: 'Жильё в радиусе 5 км от этой точки.',
-        }
+        title: 'Объявления рядом',
+        description: 'Жильё в радиусе 5 км от этой точки.',
+      }
       : locale === 'en'
         ? {
-            title: 'Nearby properties',
-            description: 'Homes within 5 km of this location.',
-          }
+          title: 'Nearby properties',
+          description: 'Homes within 5 km of this location.',
+        }
         : {
-            title: 'Yaqin uylar',
-            description: 'Ushbu joydan 5 km radiusdagi uylar.',
-          };
+          title: 'Yaqin uylar',
+          description: 'Ushbu joydan 5 km radiusdagi uylar.',
+        };
   const mobileMetaPills = [
     ad.status === 'sold' ? manageCopy.soldStatus : '',
     localizedCondition,
@@ -562,21 +562,21 @@ export function AdDetailsView({
     },
     isRealEstate
       ? {
-          label: mobileDetailCopy.areaLabel,
-          value: ad.area !== null ? String(ad.area) : '—',
-        }
+        label: mobileDetailCopy.areaLabel,
+        value: ad.area !== null ? String(ad.area) : '—',
+      }
       : null,
     isRealEstate
       ? {
-          label: mobileDetailCopy.floorLabel,
-          value: ad.floor !== null ? String(ad.floor) : '—',
-        }
+        label: mobileDetailCopy.floorLabel,
+        value: ad.floor !== null ? String(ad.floor) : '—',
+      }
       : null,
     isRealEstate
       ? {
-          label: mobileDetailCopy.roomsLabel,
-          value: ad.rooms !== null ? String(ad.rooms) : '—',
-        }
+        label: mobileDetailCopy.roomsLabel,
+        value: ad.rooms !== null ? String(ad.rooms) : '—',
+      }
       : null,
   ].filter(Boolean) as Array<{
     label: string;
@@ -585,30 +585,30 @@ export function AdDetailsView({
   const galleryCopy =
     locale === 'ru'
       ? {
-          title: 'Просмотр фото',
-          open: 'Открыть все фото',
-          previous: 'Предыдущее фото',
-          next: 'Следующее фото',
-          counter: 'Фото',
-          thumbnails: 'Все фото',
-        }
+        title: 'Просмотр фото',
+        open: 'Открыть все фото',
+        previous: 'Предыдущее фото',
+        next: 'Следующее фото',
+        counter: 'Фото',
+        thumbnails: 'Все фото',
+      }
       : locale === 'en'
         ? {
-            title: 'Photo viewer',
-            open: 'Open all photos',
-            previous: 'Previous photo',
-            next: 'Next photo',
-            counter: 'Photo',
-            thumbnails: 'All photos',
-          }
+          title: 'Photo viewer',
+          open: 'Open all photos',
+          previous: 'Previous photo',
+          next: 'Next photo',
+          counter: 'Photo',
+          thumbnails: 'All photos',
+        }
         : {
-            title: 'Rasm ko‘rish',
-            open: 'Barcha rasmlarni ochish',
-            previous: 'Oldingi rasm',
-            next: 'Keyingi rasm',
-            counter: 'Rasm',
-            thumbnails: 'Barcha rasmlar',
-          };
+          title: 'Rasm ko‘rish',
+          open: 'Barcha rasmlarni ochish',
+          previous: 'Oldingi rasm',
+          next: 'Keyingi rasm',
+          counter: 'Rasm',
+          thumbnails: 'Barcha rasmlar',
+        };
   const activeGalleryImage = ad.images[selectedImageIndex] || ad.images[0] || null;
 
   const scrollToImage = (index: number, target: 'mobile' | 'desktop') => {
@@ -1183,18 +1183,18 @@ export function AdDetailsView({
                 </div>
                 {isRealEstate
                   ? realEstateFacts.map((fact) => {
-                      const Icon = fact.icon;
+                    const Icon = fact.icon;
 
-                      return (
-                        <div key={fact.label} className="detail-fact-card">
-                          <Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                          <div>
-                            <p className="font-medium text-foreground">{fact.label}</p>
-                            <p>{fact.value}</p>
-                          </div>
+                    return (
+                      <div key={fact.label} className="detail-fact-card">
+                        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                        <div>
+                          <p className="font-medium text-foreground">{fact.label}</p>
+                          <p>{fact.value}</p>
                         </div>
-                      );
-                    })
+                      </div>
+                    );
+                  })
                   : null}
               </div>
 
@@ -1508,11 +1508,10 @@ export function AdDetailsView({
                           <button
                             key={`${image.slice(0, 32)}-gallery-${index}`}
                             type="button"
-                            className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-[1rem] border transition-all sm:h-24 sm:w-24 ${
-                              index === selectedImageIndex
-                                ? 'border-amber-400 ring-2 ring-amber-300/30'
-                                : 'border-white/10 hover:border-white/30'
-                            }`}
+                            className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-[1rem] border transition-all sm:h-24 sm:w-24 ${index === selectedImageIndex
+                              ? 'border-amber-400 ring-2 ring-amber-300/30'
+                              : 'border-white/10 hover:border-white/30'
+                              }`}
                             onClick={() => syncAllImageViews(index)}
                             aria-label={`${galleryCopy.open} ${index + 1}`}
                             aria-current={index === selectedImageIndex}

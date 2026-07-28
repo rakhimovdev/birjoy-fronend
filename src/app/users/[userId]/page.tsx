@@ -43,54 +43,54 @@ export default function PublicUserProfilePage({ params }: PublicUserProfilePageP
   const copy =
     locale === 'ru'
       ? {
-          profileKicker: 'Профиль продавца',
-          activeListings: 'Активные объявления',
-          activeListingsDescription: 'Все текущие объявления этого пользователя собраны ниже.',
-          listings: 'объявлений',
-          views: 'просмотры',
-          contacts: 'контакты',
-          call: 'Позвонить',
-          openOwnProfile: 'Мой профиль',
-          backToMarketplace: 'Назад к объявлениям',
-          retry: 'Повторить',
-          noAdsTitle: 'У пользователя нет активных объявлений',
-          noAdsDescription: 'Попробуйте открыть другого продавца или вернитесь в каталог.',
-          unknownUser: 'Пользователь BirJoy',
-          loadingTitle: 'Загружаем профиль продавца',
-        }
+        profileKicker: 'Профиль продавца',
+        activeListings: 'Активные объявления',
+        activeListingsDescription: 'Все текущие объявления этого пользователя собраны ниже.',
+        listings: 'объявлений',
+        views: 'просмотры',
+        contacts: 'контакты',
+        call: 'Позвонить',
+        openOwnProfile: 'Мой профиль',
+        backToMarketplace: 'Назад к объявлениям',
+        retry: 'Повторить',
+        noAdsTitle: 'У пользователя нет активных объявлений',
+        noAdsDescription: 'Попробуйте открыть другого продавца или вернитесь в каталог.',
+        unknownUser: 'Пользователь BirJoy',
+        loadingTitle: 'Загружаем профиль продавца',
+      }
       : locale === 'en'
         ? {
-            profileKicker: 'Seller profile',
-            activeListings: 'Active listings',
-            activeListingsDescription: 'All current listings from this user are shown below.',
-            listings: 'listings',
-            views: 'views',
-            contacts: 'contacts',
-            call: 'Call',
-            openOwnProfile: 'My profile',
-            backToMarketplace: 'Back to listings',
-            retry: 'Retry',
-            noAdsTitle: 'This user has no active listings',
-            noAdsDescription: 'Try another seller or head back to the marketplace.',
-            unknownUser: 'BirJoy user',
-            loadingTitle: 'Loading seller profile',
-          }
+          profileKicker: 'Seller profile',
+          activeListings: 'Active listings',
+          activeListingsDescription: 'All current listings from this user are shown below.',
+          listings: 'listings',
+          views: 'views',
+          contacts: 'contacts',
+          call: 'Call',
+          openOwnProfile: 'My profile',
+          backToMarketplace: 'Back to listings',
+          retry: 'Retry',
+          noAdsTitle: 'This user has no active listings',
+          noAdsDescription: 'Try another seller or head back to the marketplace.',
+          unknownUser: 'BirJoy user',
+          loadingTitle: 'Loading seller profile',
+        }
         : {
-            profileKicker: 'Sotuvchi profili',
-            activeListings: 'Faol eʼlonlar',
-            activeListingsDescription: 'Bu userning hozirgi barcha aktiv eʼlonlari quyida jamlandi.',
-            listings: 'eʼlon',
-            views: 'ko‘rish',
-            contacts: 'kontakt',
-            call: 'Qo‘ng‘iroq qilish',
-            openOwnProfile: 'Mening profilim',
-            backToMarketplace: 'Eʼlonlarga qaytish',
-            retry: 'Qayta urinish',
-            noAdsTitle: 'Bu userda aktiv eʼlon yo‘q',
-            noAdsDescription: 'Boshqa sotuvchini ochib ko‘ring yoki marketplacega qayting.',
-            unknownUser: 'BirJoy user',
-            loadingTitle: 'Sotuvchi profili yuklanmoqda',
-          };
+          profileKicker: 'Sotuvchi profili',
+          activeListings: 'Faol eʼlonlar',
+          activeListingsDescription: 'Bu userning hozirgi barcha aktiv eʼlonlari quyida jamlandi.',
+          listings: 'eʼlon',
+          views: 'ko‘rish',
+          contacts: 'kontakt',
+          call: 'Qo‘ng‘iroq qilish',
+          openOwnProfile: 'Mening profilim',
+          backToMarketplace: 'Eʼlonlarga qaytish',
+          retry: 'Qayta urinish',
+          noAdsTitle: 'Bu userda aktiv eʼlon yo‘q',
+          noAdsDescription: 'Boshqa sotuvchini ochib ko‘ring yoki marketplacega qayting.',
+          unknownUser: 'BirJoy user',
+          loadingTitle: 'Sotuvchi profili yuklanmoqda',
+        };
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -299,11 +299,11 @@ export default function PublicUserProfilePage({ params }: PublicUserProfilePageP
 
             <section className="surface-card section-shell rounded-[1.9rem]">
               <div className="section-header">
-                <div className="section-header__copy">
+                {/* <div className="section-header__copy">
                   <p className="section-kicker">{copy.activeListings}</p>
                   <h2 className="section-title">{copy.activeListings}</h2>
                   <p className="section-caption">{copy.activeListingsDescription}</p>
-                </div>
+                </div> */}
                 <div className="status-strip">
                   <Badge variant="secondary">
                     {statsFormatter.format(sortedAds.length)} {copy.listings}
