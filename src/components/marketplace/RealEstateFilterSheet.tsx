@@ -29,6 +29,10 @@ import {
   type RealEstateFilterState,
   type RealEstateRoomsFilter,
 } from '@/lib/real-estate-filters';
+import {
+  getRealEstateListingTypeLabel,
+  REAL_ESTATE_LISTING_TYPE_ORDER,
+} from '@/lib/real-estate-listing-types';
 
 type RealEstateFilterSheetProps = {
   locale: Language;
@@ -65,8 +69,6 @@ function getCopy(language: Language) {
       house: 'Дом',
       land: 'Участок',
       commercial: 'Коммерческая',
-      sale: 'Продажа',
-      rent: 'Аренда',
     };
   }
 
@@ -95,8 +97,6 @@ function getCopy(language: Language) {
       house: 'House',
       land: 'Land',
       commercial: 'Commercial',
-      sale: 'Sale',
-      rent: 'Rent',
     };
   }
 
@@ -124,8 +124,6 @@ function getCopy(language: Language) {
     house: 'Hovli',
     land: 'Yer',
     commercial: 'Tijorat',
-    sale: 'Sotuv',
-    rent: 'Ijara',
   };
 }
 
@@ -206,8 +204,10 @@ export function RealEstateFilterSheet({
   ] as const;
   const listingTypeOptions = [
     { value: 'all', label: copy.anyListingType },
-    { value: 'sale', label: copy.sale },
-    { value: 'rent', label: copy.rent },
+    ...REAL_ESTATE_LISTING_TYPE_ORDER.map((value) => ({
+      value,
+      label: getRealEstateListingTypeLabel(value, locale),
+    })),
   ] as const;
 
   const roomOptions: Array<{ value: RealEstateRoomsFilter; label: string }> = [

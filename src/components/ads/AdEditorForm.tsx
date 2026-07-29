@@ -33,6 +33,10 @@ import { restoreAuthSession, syncStoredUser } from '@/lib/auth';
 import { chooseNativeImages, takeNativePhoto } from '@/lib/native-media';
 import { isNativeApp } from '@/lib/native-app';
 import {
+  getRealEstateListingTypeLabel,
+  REAL_ESTATE_LISTING_TYPE_ORDER,
+} from '@/lib/real-estate-listing-types';
+import {
   MARKETPLACE_VERTICALS,
   REAL_ESTATE_CATEGORIES,
   getCategoriesForVertical,
@@ -259,8 +263,6 @@ export function AdEditorForm({
           locationSelectRequired: 'Сначала выберите область и район.',
           listingType: 'Тип сделки',
           selectListingType: 'Выберите тип сделки',
-          sale: 'Продажа',
-          rent: 'Аренда',
           rooms: 'Комнаты',
           area: 'Площадь, м²',
           floor: 'Этаж',
@@ -300,8 +302,6 @@ export function AdEditorForm({
             locationSelectRequired: 'Please select a region and district first.',
             listingType: 'Deal type',
             selectListingType: 'Select deal type',
-            sale: 'Sale',
-            rent: 'Rent',
             rooms: 'Rooms',
             area: 'Area, m²',
             floor: 'Floor',
@@ -340,8 +340,6 @@ export function AdEditorForm({
             locationSelectRequired: 'Avval viloyat va tumanni tanlang.',
             listingType: 'Bitim turi',
             selectListingType: 'Bitim turini tanlang',
-            sale: 'Sotuv',
-            rent: 'Ijara',
             rooms: 'Xonalar',
             area: 'Maydon, m²',
             floor: 'Qavat',
@@ -1097,8 +1095,11 @@ export function AdEditorForm({
                                 <SelectValue placeholder={editorCopy.selectListingType} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="sale">{editorCopy.sale}</SelectItem>
-                                <SelectItem value="rent">{editorCopy.rent}</SelectItem>
+                                {REAL_ESTATE_LISTING_TYPE_ORDER.map((value) => (
+                                  <SelectItem key={value} value={value}>
+                                    {getRealEstateListingTypeLabel(value, locale)}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </div>

@@ -2,7 +2,7 @@ import type { LocalizedText } from './i18n';
 
 export type AdVertical = 'market' | 'real_estate' | 'food' | 'auto';
 export type RealEstatePropertyType = 'apartment' | 'house' | 'land' | 'commercial';
-export type RealEstateListingType = 'sale' | 'rent';
+export type RealEstateListingType = 'sale' | 'rent' | 'daily' | 'mortgage';
 export type UserAccountType = 'regular' | 'realtor';
 export type PostingPermissions = {
   market: boolean;

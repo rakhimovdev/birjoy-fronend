@@ -62,6 +62,7 @@ import { deleteAdminAd } from '@/lib/admin';
 import { createChatConversation } from '@/lib/chat';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { getAdDisplayLocation } from '@/lib/listing-utils';
+import { getRealEstateListingTypeLabel } from '@/lib/real-estate-listing-types';
 
 const NEARBY_PROPERTIES_RADIUS_KM = 5;
 const MOBILE_DETAIL_SHELL_BACKGROUND = '';
@@ -391,7 +392,15 @@ export function AdDetailsView({
   const localizedCategory = category ? getLocalizedText(category.name, locale) : messages.adDetails.category;
   const localizedCondition = getConditionLabel(ad.condition, locale);
   const isRealEstate = ad.vertical === 'real_estate';
+  const localizedListingType = getRealEstateListingTypeLabel(ad.listingType, locale);
   const realEstateFacts = [
+    isRealEstate && localizedListingType
+      ? {
+        icon: Tag,
+        label: locale === 'ru' ? 'Тип сделки' : locale === 'en' ? 'Deal type' : 'Bitim turi',
+        value: localizedListingType,
+      }
+      : null,
     isRealEstate && ad.rooms !== null
       ? {
         icon: Building2,
@@ -514,6 +523,7 @@ export function AdDetailsView({
         sellerLabel: 'Кто разместил',
         areaLabel: 'Площадь, м²',
         floorLabel: 'Этаж',
+        listingTypeLabel: 'Тип сделки',
         roomsLabel: 'Комнаты',
         mapTitle: 'Локация на карте',
       }
@@ -523,6 +533,7 @@ export function AdDetailsView({
           sellerLabel: 'Listed by',
           areaLabel: 'Area, m²',
           floorLabel: 'Floor',
+          listingTypeLabel: 'Deal type',
           roomsLabel: 'Rooms',
           mapTitle: 'Map location',
         }
@@ -531,6 +542,7 @@ export function AdDetailsView({
           sellerLabel: 'Kim joylashtirdi',
           areaLabel: 'Maydon, m²',
           floorLabel: 'Qavat',
+          listingTypeLabel: 'Bitim turi',
           roomsLabel: 'Xonalar',
           mapTitle: 'Xaritadagi joylashuv',
         };
@@ -551,6 +563,7 @@ export function AdDetailsView({
         };
   const mobileMetaPills = [
     ad.status === 'sold' ? manageCopy.soldStatus : '',
+    localizedListingType,
     localizedCondition,
     localizedCategory,
     postedAgo,
@@ -560,6 +573,12 @@ export function AdDetailsView({
       label: mobileDetailCopy.sellerLabel,
       value: ad.userName || '—',
     },
+    isRealEstate
+      ? {
+        label: mobileDetailCopy.listingTypeLabel,
+        value: localizedListingType || '—',
+      }
+      : null,
     isRealEstate
       ? {
         label: mobileDetailCopy.areaLabel,
@@ -1263,6 +1282,14 @@ export function AdDetailsView({
                     <span className="font-medium text-foreground">{messages.adDetails.condition}: </span>
                     {localizedCondition}
                   </p>
+                  {isRealEstate && localizedListingType ? (
+                    <p>
+                      <span className="font-medium text-foreground">
+                        {locale === 'ru' ? 'Тип сделки: ' : locale === 'en' ? 'Deal type: ' : 'Bitim turi: '}
+                      </span>
+                      {localizedListingType}
+                    </p>
+                  ) : null}
                   <p>
                     <span className="font-medium text-foreground">{messages.adDetails.location}: </span>
                     {localizedLocation}

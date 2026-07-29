@@ -1,5 +1,6 @@
 import type { Ad, AdVertical } from '@/lib/types';
 import { getCategoryBySlug } from '@/lib/mock-data';
+import { REAL_ESTATE_LISTING_TYPE_LABELS, isRealEstateListingType } from '@/lib/real-estate-listing-types';
 
 function flattenLocalizedText(
   value:
@@ -51,6 +52,9 @@ export function filterAds(
     }
 
     const category = getCategoryBySlug(ad.category);
+    const listingTypeLabels = isRealEstateListingType(ad.listingType)
+      ? Object.values(REAL_ESTATE_LISTING_TYPE_LABELS[ad.listingType])
+      : [];
     const searchableValues = [
       ...flattenLocalizedText(ad.title),
       ...flattenLocalizedText(ad.description),
@@ -64,6 +68,7 @@ export function filterAds(
       ad.sellerPhone,
       ad.propertyType,
       ad.listingType,
+      ...listingTypeLabels,
       ...(category ? Object.values(category.name) : []),
       ad.rooms !== null ? String(ad.rooms) : '',
       ad.area !== null ? String(ad.area) : '',

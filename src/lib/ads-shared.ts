@@ -1,6 +1,7 @@
 import type { LocalizedText } from '@/lib/i18n';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { Ad, AdVertical, RealEstateListingType, RealEstatePropertyType } from '@/lib/types';
+import { isRealEstateListingType } from '@/lib/real-estate-listing-types';
 
 export type AdCondition = 'new' | 'like-new' | 'used' | 'needs-repair';
 
@@ -114,7 +115,7 @@ function normalizePropertyType(value: string | undefined): RealEstatePropertyTyp
 }
 
 function normalizeListingType(value: string | undefined): RealEstateListingType | '' {
-  if (value === 'sale' || value === 'rent') {
+  if (isRealEstateListingType(value)) {
     return value;
   }
 
