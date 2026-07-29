@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowRight, ArrowUpDown } from 'lucide-react';
+import { CategoryBar } from '@/components/ads/CategoryBar';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { AdCard } from '@/components/ads/AdCard';
 import {
@@ -18,7 +19,7 @@ import { useI18n } from '@/components/providers/LocaleProvider';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { fetchAds } from '@/lib/ads';
 import { getLocalizedText } from '@/lib/i18n';
-import { getCategoryBySlug, getVerticalHref } from '@/lib/mock-data';
+import { getCategoriesForVertical, getCategoryBySlug, getVerticalHref } from '@/lib/mock-data';
 import type { Ad, AdVertical } from '@/lib/types';
 
 export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) {
@@ -39,6 +40,8 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
     ? getLocalizedText(activeCategoryRecord.name, locale)
     : activeCategory;
   const retryLabel = locale === 'ru' ? 'Повторить' : locale === 'en' ? 'Retry' : 'Qayta urinish';
+  const verticalCategories = useMemo(() => getCategoriesForVertical(vertical), [vertical]);
+  const shouldShowCategoryBar = vertical === 'auto';
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -112,6 +115,10 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
   return (
     <MarketplaceShell>
       <main className="marketplace-main">
+        {shouldShowCategoryBar ? (
+          <CategoryBar categories={verticalCategories} basePath={basePath} />
+        ) : null}
+
         {hasFilters ? (
           <section className="hidden min-[769px]:block surface-card section-shell rounded-[1.85rem]">
             <div className="section-header">

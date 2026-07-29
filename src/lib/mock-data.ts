@@ -185,9 +185,14 @@ export const FOOD_CATEGORIES: Category[] = [
 
 export const AUTO_CATEGORIES: Category[] = [
   createCategory('auto-1', 'auto', 'cars', 'CarFront', {
-    uz: 'Yengil avtomobil',
+    uz: 'Yengil mashina',
     ru: 'Легковые авто',
-    en: 'Cars',
+    en: 'Light Cars',
+  }),
+  createCategory('auto-4', 'auto', 'commercial-transport', 'Truck', {
+    uz: 'Yuk mashina',
+    ru: 'Грузовые авто',
+    en: 'Trucks',
   }),
   createCategory('auto-2', 'auto', 'motorcycles', 'Bike', {
     uz: 'Moto',
@@ -198,11 +203,6 @@ export const AUTO_CATEGORIES: Category[] = [
     uz: 'Ehtiyot qismlar',
     ru: 'Запчасти',
     en: 'Parts',
-  }),
-  createCategory('auto-4', 'auto', 'commercial-transport', 'Truck', {
-    uz: 'Tijoriy transport',
-    ru: 'Коммерческий транспорт',
-    en: 'Commercial Transport',
   }),
 ];
 
