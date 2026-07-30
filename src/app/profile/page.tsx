@@ -742,9 +742,6 @@ function ProfilePageContent() {
                     <p className="truncate text-[1.5rem] font-black leading-none tracking-[-0.04em] sm:text-[1.7rem]">
                       {profileHandle}
                     </p>
-                    <p className="mt-3 max-w-[17rem] text-sm text-muted-foreground">
-                      {messages.profile.memberSince}
-                    </p>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -1212,7 +1209,7 @@ function ProfilePageContent() {
               </div>
             </div> */}
 
-          <div className="page-grid profile-grid">
+          <div className="hidden min-[769px]:grid page-grid profile-grid">
             <div className="page-stack">
               <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
                 <CardContent className="flex flex-col items-center p-5 pt-8 text-center sm:p-6 sm:pt-8">
@@ -1221,7 +1218,6 @@ function ProfilePageContent() {
                     <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <h2 className="text-xl font-bold">{user.name}</h2>
-                  <p className="mb-4 text-sm text-muted-foreground">{messages.profile.memberSince}</p>
                   <Badge variant="secondary" className="mb-6">
                     {messages.profile.verifiedSeller}
                   </Badge>
