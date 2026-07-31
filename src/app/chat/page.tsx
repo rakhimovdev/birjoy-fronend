@@ -19,6 +19,9 @@ import { createChatConversation, fetchChatConversationById, fetchChatConversatio
 import { languageMeta } from '@/lib/i18n';
 import type { ChatConversation, ChatConversationSummary } from '@/lib/types';
 
+const ADMIN_SUPPORT_PHONE = '+998332580404';
+const ADMIN_SUPPORT_PHONE_LABEL = '+998 33 258 04 04';
+
 function getChatCopy(locale: 'uz' | 'ru' | 'en') {
   if (locale === 'ru') {
     return {
@@ -48,6 +51,9 @@ function getChatCopy(locale: 'uz' | 'ru' | 'en') {
       you: 'Вы',
       retry: 'Повторить',
       backToChats: 'Назад к чатам',
+      adminSupportTitle: 'Связаться с админом',
+      adminSupportDescription: 'Если нужна помощь по объявлениям, аккаунту или сделке, позвоните администратору.',
+      adminSupportAction: 'Позвонить админу',
     };
   }
 
@@ -79,6 +85,9 @@ function getChatCopy(locale: 'uz' | 'ru' | 'en') {
       you: 'You',
       retry: 'Try again',
       backToChats: 'Back to chats',
+      adminSupportTitle: 'Contact admin',
+      adminSupportDescription: 'Call the admin if you need help with listings, your account, or a deal.',
+      adminSupportAction: 'Call admin',
     };
   }
 
@@ -109,6 +118,9 @@ function getChatCopy(locale: 'uz' | 'ru' | 'en') {
     you: 'Siz',
     retry: 'Qayta urinish',
     backToChats: 'Chatlarga qaytish',
+    adminSupportTitle: 'Admin bilan bog‘lanish',
+    adminSupportDescription: 'Eʼlon, akkaunt yoki kelishuv bo‘yicha yordam kerak bo‘lsa admin bilan bog‘laning.',
+    adminSupportAction: 'Adminga qo‘ng‘iroq',
   };
 }
 
@@ -433,6 +445,25 @@ function ChatPageContent() {
           <section className="chat-layout">
             {showConversationList ? (
               <div className="surface-card rounded-[1.75rem] p-4 sm:p-5">
+                <a
+                  href={`tel:${ADMIN_SUPPORT_PHONE}`}
+                  className="mb-4 flex items-center justify-between gap-3 rounded-[1.35rem] border border-primary/15 bg-primary/8 px-4 py-3 transition-colors hover:bg-primary/12"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+                      <ShieldCheck className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground">{copy.adminSupportTitle}</p>
+                      <p className="line-clamp-1 text-xs text-muted-foreground">{copy.adminSupportDescription}</p>
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-xs font-medium text-muted-foreground">{ADMIN_SUPPORT_PHONE_LABEL}</p>
+                    <p className="mt-1 text-sm font-semibold text-primary">{copy.adminSupportAction}</p>
+                  </div>
+                </a>
+
                 <div className="mb-4 flex items-center gap-3 rounded-2xl border border-border/70 bg-background/70 px-4 py-3">
                   <Search className="h-4 w-4 text-muted-foreground" />
                   <Input
@@ -630,32 +661,25 @@ function ChatPageContent() {
                       )}
                     </div>
 
-                    <div className="rounded-[1.5rem] border border-border/70 bg-card/84 p-4">
-                      <div className="mb-4 flex items-start gap-3 rounded-[1.25rem] bg-muted/40 p-4 text-sm text-muted-foreground">
-                        {/* <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> */}
-                        {/* <div>
-                          <p className="font-semibold text-foreground">{copy.safetyLabel}</p>
-                          <p className="mt-1">{copy.safetyDescription}</p>
-                        </div> */}
-                      </div>
-                      <form onSubmit={(event) => void handleSendMessage(event)} className="flex flex-col gap-3">
+                    <div className="rounded-[1.5rem] border border-border/70 bg-card/84 p-3 sm:p-4">
+                      <form onSubmit={(event) => void handleSendMessage(event)} className="flex items-end gap-2">
                         <Textarea
-                          className="min-h-[120px] rounded-[1.5rem]"
+                          rows={1}
+                          className="max-h-28 min-h-[48px] flex-1 resize-none rounded-[1.4rem] border-border/60 bg-background/85 px-4 py-3 text-sm leading-5 shadow-none"
                           placeholder={copy.composerPlaceholder}
                           value={draftMessage}
                           onChange={(event) => setDraftMessage(event.target.value)}
                           disabled={isSendingMessage}
                         />
-                        <div className="flex justify-end">
-                          <Button
-                            type="submit"
-                            className="h-12 min-w-32 rounded-2xl px-6"
-                            disabled={isSendingMessage || !draftMessage.trim() || !selectedConversationId}
-                          >
-                            {isSendingMessage ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                            {copy.sendLabel}
-                          </Button>
-                        </div>
+                        <Button
+                          type="submit"
+                          size="icon"
+                          className="h-12 w-12 shrink-0 rounded-full"
+                          disabled={isSendingMessage || !draftMessage.trim() || !selectedConversationId}
+                          aria-label={copy.sendLabel}
+                        >
+                          {isSendingMessage ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircleMore className="h-4 w-4" />}
+                        </Button>
                       </form>
                     </div>
                   </div>
