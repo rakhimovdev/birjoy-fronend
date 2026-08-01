@@ -3,6 +3,7 @@ import type { LocalizedText } from './i18n';
 export type AdVertical = 'market' | 'real_estate' | 'food' | 'auto';
 export type RealEstatePropertyType = 'apartment' | 'house' | 'land' | 'commercial';
 export type RealEstateListingType = 'sale' | 'rent' | 'daily' | 'mortgage';
+export type AreaUnit = 'm2' | 'sotix';
 export type UserAccountType = 'regular' | 'realtor';
 export type PostingPermissions = {
   market: boolean;
@@ -37,6 +38,7 @@ export type Ad = {
   listingType: RealEstateListingType | '';
   rooms: number | null;
   area: number | null;
+  areaUnit: AreaUnit;
   floor: number | null;
   images: string[];
   userId: string;

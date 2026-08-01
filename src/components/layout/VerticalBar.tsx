@@ -43,7 +43,7 @@ export function VerticalBar({
     >
       <div
         className={cn(
-          'vertical-bar-surface px-2.5 py-2.5 sm:px-3.5 sm:py-3.5',
+          'vertical-bar-surface px-1.5 py-1.5 sm:px-2 sm:py-2',
           variant === 'navbar' && 'vertical-bar-surface--inline px-0 py-0'
         )}
       >
@@ -61,7 +61,7 @@ export function VerticalBar({
                 aria-current={isActive ? 'page' : undefined}
               >
                 <span className="category-pill__icon">
-                  {Icon ? <Icon className="h-5 w-5" /> : null}
+                  {Icon ? <Icon className="h-4 w-4" /> : null}
                 </span>
                 <span className="category-pill__label">{getLocalizedText(vertical.name, locale)}</span>
               </Link>

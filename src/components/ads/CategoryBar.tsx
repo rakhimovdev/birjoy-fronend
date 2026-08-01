@@ -41,7 +41,7 @@ export function CategoryBar({
       id="browse-categories"
       className="sticky top-[var(--sticky-top)] z-30 scroll-mt-[var(--category-scroll-offset)]"
     >
-      <div className="surface-card rounded-[1.35rem] px-3 py-3 sm:rounded-[1.5rem] sm:px-4">
+      <div className="surface-card rounded-[1.05rem] px-2 py-2 sm:rounded-[1.2rem] sm:px-2.5 sm:py-2.5">
         <div className="category-bar-grid">
           <button
             type="button"
@@ -50,7 +50,7 @@ export function CategoryBar({
             data-active={activeCategory === 'all'}
           >
             <span className="category-pill__icon">
-              <LayoutGrid className="h-5 w-5" />
+              <LayoutGrid className="h-4 w-4" />
             </span>
             <span className="category-pill__label">{messages.categoryBar.all}</span>
           </button>
@@ -68,7 +68,7 @@ export function CategoryBar({
                 data-active={isActive}
               >
                 <span className="category-pill__icon">
-                  {Icon ? <Icon className="h-5 w-5" /> : null}
+                  {Icon ? <Icon className="h-4 w-4" /> : null}
                 </span>
                 <span className="category-pill__label">{getLocalizedText(category.name, locale)}</span>
               </button>

@@ -1,4 +1,4 @@
-import type { RealEstatePropertyType } from '@/lib/types';
+import type { AreaUnit, RealEstatePropertyType } from '@/lib/types';
 
 export interface Location {
   lat: number;
@@ -26,6 +26,7 @@ export interface PropertyMarker extends Location {
   district?: string;
   rooms?: number | null;
   area?: number | null;
+  areaUnit?: AreaUnit;
   href?: string;
   propertyType?: RealEstatePropertyType | '';
   icon?: string;

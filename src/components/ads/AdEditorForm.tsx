@@ -235,8 +235,8 @@ export function AdEditorForm({
     !isEditMode
       ? requiresAdminPostingApproval(formData.vertical)
       : Boolean(initialAd) &&
-        formData.vertical !== initialAd?.vertical &&
-        requiresAdminPostingApproval(formData.vertical);
+      formData.vertical !== initialAd?.vertical &&
+      requiresAdminPostingApproval(formData.vertical);
   const hasSelectedVerticalPostingAccess = hasPostingPermission(user, formData.vertical);
   const isPostingBlocked = isTransitioningIntoApprovalGatedVertical && !hasSelectedVerticalPostingAccess;
   const currentVerticalLabel = currentVerticalConfig
@@ -246,136 +246,136 @@ export function AdEditorForm({
   const editorCopy =
     locale === 'ru'
       ? {
-          editTitle: 'Редактировать объявление',
-          editDescription: 'Обновите информацию, категорию и карту, не ломая существующее объявление.',
-          vertical: 'Вертикаль',
-          selectVertical: 'Выберите вертикаль',
-          mapTitle: 'Точка на карте',
-          mapDescription: 'Ищите адрес или нажмите по карте, затем перетащите метку для точности.',
-          regionLabel: 'Область',
-          regionPlaceholder: 'Выберите область',
-          districtLabel: 'Район',
-          districtPlaceholder: 'Выберите район',
-          streetAddressLabel: 'Улица и дом',
-          streetAddressPlaceholder: 'Например, улица Шахрисабз, 12',
-          searchAddress: 'Найти на карте',
-          searchAddressPending: 'Поиск...',
-          locationSelectRequired: 'Сначала выберите область и район.',
-          listingType: 'Тип сделки',
-          selectListingType: 'Выберите тип сделки',
-          rooms: 'Комнаты',
-          area: 'Площадь, м²',
-          floor: 'Этаж',
-          mapRequiredHint: 'Для жилья точка на карте обязательна.',
-          selectedPoint: 'Координаты',
-          notSelected: 'Не выбрано',
-          myLocation: 'Моя локация',
-          myLocationPending: 'Определяем...',
-          geolocationDenied: 'Доступ к геолокации закрыт. Выберите точку вручную.',
-          geolocationUnsupported: 'Геолокация в этом браузере недоступна.',
-          geolocationError: 'Текущую локацию получить не удалось.',
-          apiKeyMissing: 'NEXT_PUBLIC_YANDEX_MAPS_API_KEY не найден.',
-          mapError: 'Yandex Maps не загрузился.',
-          retry: 'Повторить',
-          editAction: 'Сохранить изменения',
-          createAction: 'Опубликовать объявление',
-          updateSuccessTitle: 'Объявление обновлено',
-          updateSuccessDescription: 'Изменения сохранены успешно.',
-          submitRouteLabel: 'Открыть объявление',
-        }
+        editTitle: 'Редактировать объявление',
+        editDescription: 'Обновите информацию, категорию и карту, не ломая существующее объявление.',
+        vertical: 'Вертикаль',
+        selectVertical: 'Выберите вертикаль',
+        mapTitle: 'Точка на карте',
+        mapDescription: 'Ищите адрес или нажмите по карте, затем перетащите метку для точности.',
+        regionLabel: 'Область',
+        regionPlaceholder: 'Выберите область',
+        districtLabel: 'Район',
+        districtPlaceholder: 'Выберите район',
+        streetAddressLabel: 'Улица и дом',
+        streetAddressPlaceholder: 'Например, улица Шахрисабз, 12',
+        searchAddress: 'Найти на карте',
+        searchAddressPending: 'Поиск...',
+        locationSelectRequired: 'Сначала выберите область и район.',
+        listingType: 'Тип сделки',
+        selectListingType: 'Выберите тип сделки',
+        rooms: 'Комнаты',
+        area: 'Площадь, м²',
+        floor: 'Этаж',
+        mapRequiredHint: 'Для жилья точка на карте обязательна.',
+        selectedPoint: 'Координаты',
+        notSelected: 'Не выбрано',
+        myLocation: 'Моя локация',
+        myLocationPending: 'Определяем...',
+        geolocationDenied: 'Доступ к геолокации закрыт. Выберите точку вручную.',
+        geolocationUnsupported: 'Геолокация в этом браузере недоступна.',
+        geolocationError: 'Текущую локацию получить не удалось.',
+        apiKeyMissing: 'NEXT_PUBLIC_YANDEX_MAPS_API_KEY не найден.',
+        mapError: 'Yandex Maps не загрузился.',
+        retry: 'Повторить',
+        editAction: 'Сохранить изменения',
+        createAction: 'Опубликовать объявление',
+        updateSuccessTitle: 'Объявление обновлено',
+        updateSuccessDescription: 'Изменения сохранены успешно.',
+        submitRouteLabel: 'Открыть объявление',
+      }
       : locale === 'en'
         ? {
-            editTitle: 'Edit Listing',
-            editDescription: 'Update the content, vertical, and map details without breaking the current ad.',
-            vertical: 'Vertical',
-            selectVertical: 'Select a vertical',
-            mapTitle: 'Map location',
-            mapDescription: 'Search an address or tap the map, then drag the marker to refine the location.',
-            regionLabel: 'Region',
-            regionPlaceholder: 'Select a region',
-            districtLabel: 'District',
-            districtPlaceholder: 'Select a district',
-            streetAddressLabel: 'Street and house',
-            streetAddressPlaceholder: 'For example, 12 Shahrisabz Street',
-            searchAddress: 'Find on map',
-            searchAddressPending: 'Searching...',
-            locationSelectRequired: 'Please select a region and district first.',
-            listingType: 'Deal type',
-            selectListingType: 'Select deal type',
-            rooms: 'Rooms',
-            area: 'Area, m²',
-            floor: 'Floor',
-            mapRequiredHint: 'Real-estate listings require a selected map point.',
-            selectedPoint: 'Coordinates',
-            notSelected: 'Not selected',
-            myLocation: 'My Location',
-            myLocationPending: 'Locating...',
-            geolocationDenied: 'Location access was denied. You can still place the marker manually.',
-            geolocationUnsupported: 'Geolocation is not supported on this device.',
-            geolocationError: 'Current location could not be resolved.',
-            apiKeyMissing: 'NEXT_PUBLIC_YANDEX_MAPS_API_KEY is missing.',
-            mapError: 'Yandex Maps could not be loaded.',
-            retry: 'Retry',
-            editAction: 'Save Changes',
-            createAction: 'Publish Listing',
-            updateSuccessTitle: 'Listing updated',
-            updateSuccessDescription: 'Your changes were saved successfully.',
-            submitRouteLabel: 'Open listing',
-          }
+          editTitle: 'Edit Listing',
+          editDescription: 'Update the content, vertical, and map details without breaking the current ad.',
+          vertical: 'Vertical',
+          selectVertical: 'Select a vertical',
+          mapTitle: 'Map location',
+          mapDescription: 'Search an address or tap the map, then drag the marker to refine the location.',
+          regionLabel: 'Region',
+          regionPlaceholder: 'Select a region',
+          districtLabel: 'District',
+          districtPlaceholder: 'Select a district',
+          streetAddressLabel: 'Street and house',
+          streetAddressPlaceholder: 'For example, 12 Shahrisabz Street',
+          searchAddress: 'Find on map',
+          searchAddressPending: 'Searching...',
+          locationSelectRequired: 'Please select a region and district first.',
+          listingType: 'Deal type',
+          selectListingType: 'Select deal type',
+          rooms: 'Rooms',
+          area: 'Area, m²',
+          floor: 'Floor',
+          mapRequiredHint: 'Real-estate listings require a selected map point.',
+          selectedPoint: 'Coordinates',
+          notSelected: 'Not selected',
+          myLocation: 'My Location',
+          myLocationPending: 'Locating...',
+          geolocationDenied: 'Location access was denied. You can still place the marker manually.',
+          geolocationUnsupported: 'Geolocation is not supported on this device.',
+          geolocationError: 'Current location could not be resolved.',
+          apiKeyMissing: 'NEXT_PUBLIC_YANDEX_MAPS_API_KEY is missing.',
+          mapError: 'Yandex Maps could not be loaded.',
+          retry: 'Retry',
+          editAction: 'Save Changes',
+          createAction: 'Publish Listing',
+          updateSuccessTitle: 'Listing updated',
+          updateSuccessDescription: 'Your changes were saved successfully.',
+          submitRouteLabel: 'Open listing',
+        }
         : {
-            editTitle: 'E’lonni tahrirlash',
-            editDescription: 'Mavjud e’lonni buzmasdan ma’lumot, vertikal va xarita nuqtasini yangilang.',
-            vertical: 'Vertikal',
-            selectVertical: 'Vertikalni tanlang',
-            mapTitle: 'Xaritadagi nuqta',
-            mapDescription: 'Manzilni qidiring yoki xaritaga bosib marker qo‘ying, keyin uni aniq joyga suring.',
-            regionLabel: 'Viloyat',
-            regionPlaceholder: 'Viloyatni tanlang',
-            districtLabel: 'Tuman',
-            districtPlaceholder: 'Tumanni tanlang',
-            streetAddressLabel: 'Ko‘cha va uy',
-            streetAddressPlaceholder: 'Masalan, Shahrisabz ko‘chasi, 12',
-            searchAddress: 'Xaritadan topish',
-            searchAddressPending: 'Qidirilmoqda...',
-            locationSelectRequired: 'Avval viloyat va tumanni tanlang.',
-            listingType: 'Bitim turi',
-            selectListingType: 'Bitim turini tanlang',
-            rooms: 'Xonalar',
-            area: 'Maydon, m²',
-            floor: 'Qavat',
-            mapRequiredHint: 'Uy-joy e’lonlari uchun xaritadagi nuqta majburiy.',
-            selectedPoint: 'Koordinatalar',
-            notSelected: 'Tanlanmagan',
-            myLocation: 'Mening joylashuvim',
-            myLocationPending: 'Aniqlanmoqda...',
-            geolocationDenied: 'Joylashuv ruxsati berilmadi. Nuqtani qo‘lda tanlashingiz mumkin.',
-            geolocationUnsupported: 'Bu qurilmada geolokatsiya qo‘llab-quvvatlanmaydi.',
-            geolocationError: 'Joriy joylashuvni aniqlab bo‘lmadi.',
-            apiKeyMissing: 'NEXT_PUBLIC_YANDEX_MAPS_API_KEY topilmadi.',
-            mapError: 'Yandex Maps yuklanmadi.',
-            retry: 'Qayta urinish',
-            editAction: 'O‘zgarishlarni saqlash',
-            createAction: 'E’lonni chop etish',
-            updateSuccessTitle: 'E’lon yangilandi',
-            updateSuccessDescription: 'O‘zgarishlar muvaffaqiyatli saqlandi.',
-            submitRouteLabel: 'E’lonni ochish',
-          };
+          editTitle: 'E’lonni tahrirlash',
+          editDescription: 'Mavjud e’lonni buzmasdan ma’lumot, vertikal va xarita nuqtasini yangilang.',
+          vertical: 'Vertikal',
+          selectVertical: 'Vertikalni tanlang',
+          mapTitle: 'Xaritadagi nuqta',
+          mapDescription: 'Manzilni qidiring yoki xaritaga bosib marker qo‘ying, keyin uni aniq joyga suring.',
+          regionLabel: 'Viloyat',
+          regionPlaceholder: 'Viloyatni tanlang',
+          districtLabel: 'Tuman',
+          districtPlaceholder: 'Tumanni tanlang',
+          streetAddressLabel: 'Ko‘cha va uy',
+          streetAddressPlaceholder: 'Masalan, Shahrisabz ko‘chasi, 12',
+          searchAddress: 'Xaritadan topish',
+          searchAddressPending: 'Qidirilmoqda...',
+          locationSelectRequired: 'Avval viloyat va tumanni tanlang.',
+          listingType: 'Bitim turi',
+          selectListingType: 'Bitim turini tanlang',
+          rooms: 'Xonalar',
+          area: 'Maydon, m²',
+          floor: 'Qavat',
+          mapRequiredHint: 'Uy-joy e’lonlari uchun xaritadagi nuqta majburiy.',
+          selectedPoint: 'Koordinatalar',
+          notSelected: 'Tanlanmagan',
+          myLocation: 'Mening joylashuvim',
+          myLocationPending: 'Aniqlanmoqda...',
+          geolocationDenied: 'Joylashuv ruxsati berilmadi. Nuqtani qo‘lda tanlashingiz mumkin.',
+          geolocationUnsupported: 'Bu qurilmada geolokatsiya qo‘llab-quvvatlanmaydi.',
+          geolocationError: 'Joriy joylashuvni aniqlab bo‘lmadi.',
+          apiKeyMissing: 'NEXT_PUBLIC_YANDEX_MAPS_API_KEY topilmadi.',
+          mapError: 'Yandex Maps yuklanmadi.',
+          retry: 'Qayta urinish',
+          editAction: 'O‘zgarishlarni saqlash',
+          createAction: 'E’lonni chop etish',
+          updateSuccessTitle: 'E’lon yangilandi',
+          updateSuccessDescription: 'O‘zgarishlar muvaffaqiyatli saqlandi.',
+          submitRouteLabel: 'E’lonni ochish',
+        };
 
   const postingAccessCopy =
     locale === 'ru'
       ? {
-          title: 'Нужно одобрение администратора',
-          description: `Публикация в разделе "${currentVerticalLabel}" доступна только пользователям, которых одобрил администратор.`,
-        }
+        title: 'Нужно одобрение администратора',
+        description: `Публикация в разделе "${currentVerticalLabel}" доступна только пользователям, которых одобрил администратор.`,
+      }
       : locale === 'en'
         ? {
-            title: 'Admin approval required',
-            description: `Posting in "${currentVerticalLabel}" is available only to users approved by an admin.`,
-          }
+          title: 'Admin approval required',
+          description: `Posting in "${currentVerticalLabel}" is available only to users approved by an admin.`,
+        }
         : {
-            title: 'Admin ruxsati kerak',
-            description: `"${currentVerticalLabel}" bo‘limiga e’lon joylash faqat admin ruxsat bergan foydalanuvchilar uchun ochiq.`,
-          };
+          title: 'Admin ruxsati kerak',
+          description: `"${currentVerticalLabel}" bo‘limiga e’lon joylash faqat admin ruxsat bergan foydalanuvchilar uchun ochiq.`,
+        };
 
   const nativeMediaCopy = {
     uz: {
@@ -880,29 +880,12 @@ export function AdEditorForm({
     }
   };
 
-  const editorTitle = isEditMode ? editorCopy.editTitle : messages.createAd.title;
-  const editorDescription = isEditMode ? editorCopy.editDescription : messages.createAd.description;
   const editorAction = isEditMode ? editorCopy.editAction : editorCopy.createAction;
 
   return (
     <MarketplaceShell>
       <ProtectedRoute>
         <main className="marketplace-main">
-          <div className="surface-card section-shell rounded-[1.9rem]">
-            <div className="section-header">
-              <div className="section-header__copy">
-                <p className="section-kicker">{isEditMode ? editorCopy.editAction : messages.createAd.title}</p>
-                <h1 className="page-title font-bold text-primary">{editorTitle}</h1>
-                <p className="body-lead text-muted-foreground">{editorDescription}</p>
-              </div>
-              {currentVerticalConfig ? (
-                <Badge variant="secondary" className="w-fit">
-                  {getLocalizedText(currentVerticalConfig.name, locale)}
-                </Badge>
-              ) : null}
-            </div>
-          </div>
-
           {moderationResult?.flagged ? (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -1324,7 +1307,7 @@ export function AdEditorForm({
                       <span className="max-w-[11rem] truncate text-right font-semibold text-foreground">
                         {isRealEstate
                           ? selectedLocationLabel ||
-                            (selectedMapPoint ? `${selectedMapPoint.lat}, ${selectedMapPoint.lng}` : editorCopy.notSelected)
+                          (selectedMapPoint ? `${selectedMapPoint.lat}, ${selectedMapPoint.lng}` : editorCopy.notSelected)
                           : formData.location || messages.createAd.locationPlaceholder}
                       </span>
                     </div>

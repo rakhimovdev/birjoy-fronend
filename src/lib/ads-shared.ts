@@ -1,7 +1,8 @@
 import type { LocalizedText } from '@/lib/i18n';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { Ad, AdVertical, RealEstateListingType, RealEstatePropertyType } from '@/lib/types';
+import type { Ad, AdVertical, AreaUnit, RealEstateListingType, RealEstatePropertyType } from '@/lib/types';
 import { isRealEstateListingType } from '@/lib/real-estate-listing-types';
+import { normalizeAreaUnit } from '@/lib/area-units';
 
 export type AdCondition = 'new' | 'like-new' | 'used' | 'needs-repair';
 
@@ -35,6 +36,7 @@ export type RemoteAd = {
   listingType?: string;
   rooms?: number | null;
   area?: number | null;
+  areaUnit?: string;
   floor?: number | null;
   images?: Array<string | { url?: string; fileId?: string; name?: string; thumbnailUrl?: string }>;
   imageUrl?: string;
@@ -120,6 +122,10 @@ function normalizeListingType(value: string | undefined): RealEstateListingType 
   }
 
   return '';
+}
+
+function normalizeAreaUnitValue(value: string | undefined): AreaUnit {
+  return normalizeAreaUnit(value);
 }
 
 function normalizeStatus(value: string | undefined): Ad['status'] {
@@ -222,6 +228,7 @@ export function normalizeRemoteAd(ad: RemoteAd): Ad {
     listingType: normalizeListingType(ad.listingType),
     rooms: normalizeNullableNumber(ad.rooms),
     area: normalizeNullableNumber(ad.area),
+    areaUnit: normalizeAreaUnitValue(ad.areaUnit),
     floor: normalizeNullableNumber(ad.floor),
     images: imageUrls.length > 0 ? imageUrls : [getFallbackImage()],
     userId: ad.userId || '',
