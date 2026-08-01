@@ -1,5 +1,6 @@
 import type { LocalizedText } from './i18n';
 import type { AdVertical, Category } from './types';
+import { buildAutoCategories, normalizeAutoCategory } from './auto-config';
 
 export type MarketplaceVerticalConfig = {
   id: AdVertical;
@@ -183,28 +184,7 @@ export const FOOD_CATEGORIES: Category[] = [
   }),
 ];
 
-export const AUTO_CATEGORIES: Category[] = [
-  createCategory('auto-1', 'auto', 'cars', 'CarFront', {
-    uz: 'Yengil mashina',
-    ru: 'Легковые авто',
-    en: 'Light Cars',
-  }),
-  createCategory('auto-4', 'auto', 'commercial-transport', 'Truck', {
-    uz: 'Yuk mashina',
-    ru: 'Грузовые авто',
-    en: 'Trucks',
-  }),
-  createCategory('auto-2', 'auto', 'motorcycles', 'Bike', {
-    uz: 'Moto',
-    ru: 'Мото',
-    en: 'Motorcycles',
-  }),
-  createCategory('auto-3', 'auto', 'parts', 'Cog', {
-    uz: 'Ehtiyot qismlar',
-    ru: 'Запчасти',
-    en: 'Parts',
-  }),
-];
+export const AUTO_CATEGORIES: Category[] = buildAutoCategories();
 
 const LEGACY_MARKET_CATEGORIES: Category[] = [
   createCategory('legacy-1', 'market', 'vehicles', 'Car', {
@@ -263,5 +243,9 @@ export function getCategoriesForVertical(verticalId: AdVertical) {
 }
 
 export function getCategoryBySlug(slug: string) {
-  return ALL_CATEGORIES.find((category) => category.slug === slug);
+  const normalizedSlug = normalizeAutoCategory(slug);
+
+  return ALL_CATEGORIES.find((category) =>
+    category.vertical === 'auto' && normalizedSlug ? category.slug === normalizedSlug : category.slug === slug
+  );
 }

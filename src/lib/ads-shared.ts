@@ -1,8 +1,21 @@
 import type { LocalizedText } from '@/lib/i18n';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { Ad, AdVertical, AreaUnit, RealEstateListingType, RealEstatePropertyType } from '@/lib/types';
+import type {
+  Ad,
+  AdVertical,
+  AutoEngineUnit,
+  AutoFuelType,
+  AutoTransmission,
+  RealEstateListingType,
+  RealEstatePropertyType,
+} from '@/lib/types';
 import { isRealEstateListingType } from '@/lib/real-estate-listing-types';
-import { normalizeAreaUnit } from '@/lib/area-units';
+import {
+  normalizeAutoCategory,
+  normalizeAutoEngineUnit,
+  normalizeAutoFuelType,
+  normalizeAutoTransmission,
+} from '@/lib/auto-config';
 
 export type AdCondition = 'new' | 'like-new' | 'used' | 'needs-repair';
 
@@ -34,9 +47,16 @@ export type RemoteAd = {
   longitude?: number | null;
   propertyType?: string;
   listingType?: string;
+  fuelType?: string;
+  manufactureYear?: number | null;
+  engineDisplacement?: number | null;
+  engineUnit?: string;
+  mileage?: number | null;
+  transmission?: string;
+  specialEquipmentType?: string;
+  compatibleModel?: string;
   rooms?: number | null;
   area?: number | null;
-  areaUnit?: string;
   floor?: number | null;
   images?: Array<string | { url?: string; fileId?: string; name?: string; thumbnailUrl?: string }>;
   imageUrl?: string;
@@ -124,8 +144,16 @@ function normalizeListingType(value: string | undefined): RealEstateListingType 
   return '';
 }
 
-function normalizeAreaUnitValue(value: string | undefined): AreaUnit {
-  return normalizeAreaUnit(value);
+function normalizeFuelType(value: string | undefined): AutoFuelType | '' {
+  return normalizeAutoFuelType(value);
+}
+
+function normalizeTransmission(value: string | undefined): AutoTransmission | '' {
+  return normalizeAutoTransmission(value);
+}
+
+function normalizeEngineUnit(value: string | undefined): AutoEngineUnit | '' {
+  return normalizeAutoEngineUnit(value);
 }
 
 function normalizeStatus(value: string | undefined): Ad['status'] {
@@ -213,7 +241,10 @@ export function normalizeRemoteAd(ad: RemoteAd): Ad {
     title: normalizeText(ad.title, ''),
     description: normalizeText(ad.description, ''),
     price: normalizePrice(ad.price),
-    category: ad.category || (normalizeVertical(ad.vertical) === 'real_estate' ? normalizePropertyType(ad.propertyType) : ''),
+    category:
+      normalizeVertical(ad.vertical) === 'auto'
+        ? normalizeAutoCategory(ad.category) || ad.category || ''
+        : ad.category || (normalizeVertical(ad.vertical) === 'real_estate' ? normalizePropertyType(ad.propertyType) : ''),
     vertical: normalizeVertical(ad.vertical),
     condition: normalizeCondition(ad.condition),
     location: normalizeText(ad.location || ad.address, ''),
@@ -226,9 +257,16 @@ export function normalizeRemoteAd(ad: RemoteAd): Ad {
     longitude: normalizeNullableNumber(ad.longitude),
     propertyType: normalizePropertyType(ad.propertyType),
     listingType: normalizeListingType(ad.listingType),
+    fuelType: normalizeFuelType(ad.fuelType),
+    manufactureYear: normalizeNullableNumber(ad.manufactureYear),
+    engineDisplacement: normalizeNullableNumber(ad.engineDisplacement),
+    engineUnit: normalizeEngineUnit(ad.engineUnit),
+    mileage: normalizeNullableNumber(ad.mileage),
+    transmission: normalizeTransmission(ad.transmission),
+    specialEquipmentType: typeof ad.specialEquipmentType === 'string' ? ad.specialEquipmentType.trim() : '',
+    compatibleModel: typeof ad.compatibleModel === 'string' ? ad.compatibleModel.trim() : '',
     rooms: normalizeNullableNumber(ad.rooms),
     area: normalizeNullableNumber(ad.area),
-    areaUnit: normalizeAreaUnitValue(ad.areaUnit),
     floor: normalizeNullableNumber(ad.floor),
     images: imageUrls.length > 0 ? imageUrls : [getFallbackImage()],
     userId: ad.userId || '',

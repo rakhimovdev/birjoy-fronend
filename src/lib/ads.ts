@@ -4,7 +4,15 @@ import { getStoredAuthToken, signOutUser } from '@/lib/auth';
 import { backendApiBaseUrl, fetchWithTimeout } from '@/lib/api';
 import type { UploadedAdImage } from '@/lib/imagekit-upload';
 import type { LocalizedText, Language } from '@/lib/i18n';
-import type { Ad, AdVertical, AreaUnit, RealEstateListingType, RealEstatePropertyType } from '@/lib/types';
+import type {
+  Ad,
+  AdVertical,
+  AutoEngineUnit,
+  AutoFuelType,
+  AutoTransmission,
+  RealEstateListingType,
+  RealEstatePropertyType,
+} from '@/lib/types';
 import type { AdCondition, AdsApiResponse } from '@/lib/ads-shared';
 import { normalizeRemoteAd } from '@/lib/ads-shared';
 
@@ -24,9 +32,16 @@ export type CreateAdInput = {
   longitude?: number | null;
   propertyType?: RealEstatePropertyType | '';
   listingType?: RealEstateListingType | '';
+  fuelType?: AutoFuelType | '';
+  manufactureYear?: number | null;
+  engineDisplacement?: number | null;
+  engineUnit?: AutoEngineUnit | '';
+  mileage?: number | null;
+  transmission?: AutoTransmission | '';
+  specialEquipmentType?: string;
+  compatibleModel?: string;
   rooms?: number | null;
   area?: number | null;
-  areaUnit?: AreaUnit;
   floor?: number | null;
   condition: AdCondition;
   contactPhone: string;
@@ -80,13 +95,24 @@ export type FetchAdsOptions = {
   category?: string;
   excludeId?: string;
   fields?: 'card' | 'full';
+  fuelType?: string;
   hasCoordinates?: boolean;
   ids?: string[];
   limit?: number;
+  manufactureYearMax?: number;
+  manufactureYearMin?: number;
+  maxEngine?: number;
+  maxMileage?: number;
+  maxPrice?: number;
+  minEngine?: number;
+  minMileage?: number;
+  minPrice?: number;
   page?: number;
   search?: string;
   signal?: AbortSignal;
   status?: AdsStatus;
+  sort?: 'newest' | 'price_asc' | 'price_desc' | 'year_desc' | 'mileage_asc';
+  transmission?: string;
   userId?: string;
   vertical?: AdVertical;
 };
@@ -135,6 +161,14 @@ function buildAdsQueryString(options: FetchAdsOptions = {}) {
     searchParams.set('search', options.search.trim());
   }
 
+  if (options.fuelType?.trim()) {
+    searchParams.set('fuelType', options.fuelType.trim());
+  }
+
+  if (options.transmission?.trim()) {
+    searchParams.set('transmission', options.transmission.trim());
+  }
+
   if (options.userId?.trim()) {
     searchParams.set('userId', options.userId.trim());
   }
@@ -168,6 +202,42 @@ function buildAdsQueryString(options: FetchAdsOptions = {}) {
 
   if (limit) {
     searchParams.set('limit', String(limit));
+  }
+
+  if (typeof options.minPrice === 'number' && Number.isFinite(options.minPrice)) {
+    searchParams.set('minPrice', String(options.minPrice));
+  }
+
+  if (typeof options.maxPrice === 'number' && Number.isFinite(options.maxPrice)) {
+    searchParams.set('maxPrice', String(options.maxPrice));
+  }
+
+  if (typeof options.manufactureYearMin === 'number' && Number.isFinite(options.manufactureYearMin)) {
+    searchParams.set('minYear', String(options.manufactureYearMin));
+  }
+
+  if (typeof options.manufactureYearMax === 'number' && Number.isFinite(options.manufactureYearMax)) {
+    searchParams.set('maxYear', String(options.manufactureYearMax));
+  }
+
+  if (typeof options.minMileage === 'number' && Number.isFinite(options.minMileage)) {
+    searchParams.set('minMileage', String(options.minMileage));
+  }
+
+  if (typeof options.maxMileage === 'number' && Number.isFinite(options.maxMileage)) {
+    searchParams.set('maxMileage', String(options.maxMileage));
+  }
+
+  if (typeof options.minEngine === 'number' && Number.isFinite(options.minEngine)) {
+    searchParams.set('minEngine', String(options.minEngine));
+  }
+
+  if (typeof options.maxEngine === 'number' && Number.isFinite(options.maxEngine)) {
+    searchParams.set('maxEngine', String(options.maxEngine));
+  }
+
+  if (options.sort) {
+    searchParams.set('sort', options.sort);
   }
 
   const queryString = searchParams.toString();

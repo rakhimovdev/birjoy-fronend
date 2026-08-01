@@ -3,7 +3,16 @@ import type { LocalizedText } from './i18n';
 export type AdVertical = 'market' | 'real_estate' | 'food' | 'auto';
 export type RealEstatePropertyType = 'apartment' | 'house' | 'land' | 'commercial';
 export type RealEstateListingType = 'sale' | 'rent' | 'daily' | 'mortgage';
-export type AreaUnit = 'm2' | 'sotix';
+export type AutoCategory =
+  | 'passenger_car'
+  | 'foreign_car'
+  | 'truck'
+  | 'special_equipment'
+  | 'motorcycle'
+  | 'spare_parts';
+export type AutoFuelType = 'methane' | 'propane' | 'petrol' | 'electric' | 'hybrid' | 'diesel';
+export type AutoTransmission = 'manual' | 'automatic';
+export type AutoEngineUnit = 'L' | 'cc';
 export type UserAccountType = 'regular' | 'realtor';
 export type PostingPermissions = {
   market: boolean;
@@ -36,9 +45,16 @@ export type Ad = {
   longitude: number | null;
   propertyType: RealEstatePropertyType | '';
   listingType: RealEstateListingType | '';
+  fuelType: AutoFuelType | '';
+  manufactureYear: number | null;
+  engineDisplacement: number | null;
+  engineUnit: AutoEngineUnit | '';
+  mileage: number | null;
+  transmission: AutoTransmission | '';
+  specialEquipmentType: string;
+  compatibleModel: string;
   rooms: number | null;
   area: number | null;
-  areaUnit: AreaUnit;
   floor: number | null;
   images: string[];
   userId: string;
