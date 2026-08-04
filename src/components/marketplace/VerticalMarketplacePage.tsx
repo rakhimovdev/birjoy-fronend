@@ -37,8 +37,8 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
   const [pagination, setPagination] = useState({ hasMore: false, limit: 12, page: 1, total: 0 });
   const [loadRequestNonce, setLoadRequestNonce] = useState(0);
   const [sort, setSort] = useState(searchParams.get('sort') ?? 'newest');
-  const [fuelType, setFuelType] = useState(searchParams.get('fuelType') ?? '');
-  const [transmission, setTransmission] = useState(searchParams.get('transmission') ?? '');
+  const [fuelType, setFuelType] = useState(searchParams.get('fuelType') ?? 'all');
+  const [transmission, setTransmission] = useState(searchParams.get('transmission') ?? 'all');
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page') ?? '1'));
   const query = searchParams.get('q')?.trim() ?? '';
   const category = searchParams.get('category')?.trim() ?? '';
@@ -52,12 +52,12 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
   const verticalCategories = useMemo(() => getCategoriesForVertical(vertical), [vertical]);
   const shouldShowCategoryBar = vertical === 'auto';
   const shouldShowAutoFilters = vertical === 'auto';
-  const hasActiveAutoFilters = shouldShowAutoFilters && (sort !== 'newest' || Boolean(fuelType) || Boolean(transmission));
+  const hasActiveAutoFilters = shouldShowAutoFilters && (sort !== 'newest' || (fuelType !== 'all' && Boolean(fuelType)) || (transmission !== 'all' && Boolean(transmission)));
 
   useEffect(() => {
     setSort(searchParams.get('sort') ?? 'newest');
-    setFuelType(searchParams.get('fuelType') ?? '');
-    setTransmission(searchParams.get('transmission') ?? '');
+    setFuelType(searchParams.get('fuelType') ?? 'all');
+    setTransmission(searchParams.get('transmission') ?? 'all');
     setCurrentPage(Number(searchParams.get('page') ?? '1'));
   }, [searchParams]);
 
@@ -76,8 +76,8 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
           limit: 12,
           page: currentPage,
           sort: sort as 'newest' | 'price_asc' | 'price_desc' | 'year_desc' | 'mileage_asc',
-          fuelType: fuelType || undefined,
-          transmission: transmission || undefined,
+          fuelType: fuelType === 'all' ? undefined : fuelType,
+          transmission: transmission === 'all' ? undefined : transmission,
           signal: abortController.signal,
         });
         setAds(response.ads);
@@ -114,13 +114,13 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
       params.delete('sort');
     }
 
-    if (fuelType) {
+    if (fuelType && fuelType !== 'all') {
       params.set('fuelType', fuelType);
     } else {
       params.delete('fuelType');
     }
 
-    if (transmission) {
+    if (transmission && transmission !== 'all') {
       params.set('transmission', transmission);
     } else {
       params.delete('transmission');
@@ -200,7 +200,7 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
                       <SelectValue placeholder={locale === 'ru' ? 'Любое' : locale === 'en' ? 'Any' : 'Har qanday'} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">{locale === 'ru' ? 'Любое' : locale === 'en' ? 'Any' : 'Har qanday'}</SelectItem>
+                      <SelectItem value="all">{locale === 'ru' ? 'Любое' : locale === 'en' ? 'Any' : 'Har qanday'}</SelectItem>
                       {AUTO_FUEL_OPTIONS.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {getLocalizedText(option.label, locale)}
@@ -216,7 +216,7 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
                       <SelectValue placeholder={locale === 'ru' ? 'Любая' : locale === 'en' ? 'Any' : 'Har qanday'} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">{locale === 'ru' ? 'Любая' : locale === 'en' ? 'Any' : 'Har qanday'}</SelectItem>
+                      <SelectItem value="all">{locale === 'ru' ? 'Любая' : locale === 'en' ? 'Any' : 'Har qanday'}</SelectItem>
                       {AUTO_TRANSMISSION_OPTIONS.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {getLocalizedText(option.label, locale)}
@@ -230,8 +230,8 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
                 variant="outline"
                 onClick={() => {
                   setSort('newest');
-                  setFuelType('');
-                  setTransmission('');
+                  setFuelType('all');
+                  setTransmission('all');
                   setCurrentPage(1);
                 }}
               >
