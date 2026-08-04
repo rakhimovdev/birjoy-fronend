@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, ArrowUpDown } from 'lucide-react';
 import { CategoryBar } from '@/components/ads/CategoryBar';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
@@ -14,23 +14,32 @@ import {
 } from '@/components/marketplace/MarketplaceStates';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { useAdminSession } from '@/hooks/use-admin-session';
-import { fetchAds } from '@/lib/ads';
+import { fetchAdsPage } from '@/lib/ads';
+import { AUTO_FUEL_OPTIONS, AUTO_TRANSMISSION_OPTIONS } from '@/lib/auto-config';
 import { getLocalizedText } from '@/lib/i18n';
 import { getCategoriesForVertical, getCategoryBySlug, getVerticalHref } from '@/lib/mock-data';
 import type { Ad, AdVertical } from '@/lib/types';
 
 export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const { isFavorite } = useAuth();
   const { locale, messages } = useI18n();
   const { isAdmin } = useAdminSession();
   const [ads, setAds] = useState<Ad[]>([]);
   const [isLoadingAds, setIsLoadingAds] = useState(true);
   const [adsError, setAdsError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({ hasMore: false, limit: 12, page: 1, total: 0 });
   const [loadRequestNonce, setLoadRequestNonce] = useState(0);
+  const [sort, setSort] = useState(searchParams.get('sort') ?? 'newest');
+  const [fuelType, setFuelType] = useState(searchParams.get('fuelType') ?? '');
+  const [transmission, setTransmission] = useState(searchParams.get('transmission') ?? '');
+  const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page') ?? '1'));
   const query = searchParams.get('q')?.trim() ?? '';
   const category = searchParams.get('category')?.trim() ?? '';
   const basePath = getVerticalHref(vertical);
@@ -42,6 +51,15 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
   const retryLabel = locale === 'ru' ? 'Повторить' : locale === 'en' ? 'Retry' : 'Qayta urinish';
   const verticalCategories = useMemo(() => getCategoriesForVertical(vertical), [vertical]);
   const shouldShowCategoryBar = vertical === 'auto';
+  const shouldShowAutoFilters = vertical === 'auto';
+  const hasActiveAutoFilters = shouldShowAutoFilters && (sort !== 'newest' || Boolean(fuelType) || Boolean(transmission));
+
+  useEffect(() => {
+    setSort(searchParams.get('sort') ?? 'newest');
+    setFuelType(searchParams.get('fuelType') ?? '');
+    setTransmission(searchParams.get('transmission') ?? '');
+    setCurrentPage(Number(searchParams.get('page') ?? '1'));
+  }, [searchParams]);
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -49,16 +67,21 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
     async function loadAds() {
       try {
         setIsLoadingAds(true);
-        const response = await fetchAds({
+        const response = await fetchAdsPage({
           vertical,
           category: activeCategory || undefined,
           search: query || undefined,
           fields: 'card',
           status: 'active',
-          limit: 100,
+          limit: 12,
+          page: currentPage,
+          sort: sort as 'newest' | 'price_asc' | 'price_desc' | 'year_desc' | 'mileage_asc',
+          fuelType: fuelType || undefined,
+          transmission: transmission || undefined,
           signal: abortController.signal,
         });
-        setAds(response);
+        setAds(response.ads);
+        setPagination(response.pagination);
         setAdsError(null);
       } catch (error) {
         if (abortController.signal.aborted) {
@@ -67,6 +90,7 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
 
         setAdsError(error instanceof Error ? error.message : 'Unable to load ads.');
         setAds([]);
+        setPagination({ hasMore: false, limit: 12, page: 1, total: 0 });
       } finally {
         if (!abortController.signal.aborted) {
           setIsLoadingAds(false);
@@ -79,10 +103,41 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
     return () => {
       abortController.abort();
     };
-  }, [activeCategory, loadRequestNonce, query, vertical]);
+  }, [activeCategory, currentPage, fuelType, loadRequestNonce, query, sort, transmission, vertical]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (sort !== 'newest') {
+      params.set('sort', sort);
+    } else {
+      params.delete('sort');
+    }
+
+    if (fuelType) {
+      params.set('fuelType', fuelType);
+    } else {
+      params.delete('fuelType');
+    }
+
+    if (transmission) {
+      params.set('transmission', transmission);
+    } else {
+      params.delete('transmission');
+    }
+
+    if (currentPage > 1) {
+      params.set('page', String(currentPage));
+    } else {
+      params.delete('page');
+    }
+
+    const nextPath = `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+    router.replace(nextPath, { scroll: false });
+  }, [currentPage, fuelType, pathname, router, searchParams, sort, transmission]);
 
   const filteredAds = ads;
-  const hasFilters = Boolean(query || activeCategory);
+  const hasFilters = Boolean(query || activeCategory || hasActiveAutoFilters);
   const mobileResultsCount = useMemo(
     () =>
       new Intl.NumberFormat(locale === 'ru' ? 'ru-RU' : locale === 'en' ? 'en-US' : 'uz-UZ').format(
@@ -93,30 +148,97 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
   const mobileCopy =
     locale === 'ru'
       ? {
-          resultsPrefix: 'Мы нашли',
-          resultsSuffix: 'объявлений',
-          sortLabel: 'Сортировка',
-          sortValue: 'По умолчанию',
-        }
+        resultsPrefix: 'Мы нашли',
+        resultsSuffix: 'объявлений',
+        sortLabel: 'Сортировка',
+        sortValue: 'По умолчанию',
+      }
       : locale === 'en'
         ? {
-            resultsPrefix: 'We found',
-            resultsSuffix: 'listings',
-            sortLabel: 'Sort',
-            sortValue: 'Default order',
-          }
+          resultsPrefix: 'We found',
+          resultsSuffix: 'listings',
+          sortLabel: 'Sort',
+          sortValue: 'Default order',
+        }
         : {
-            resultsPrefix: 'Biz',
-            resultsSuffix: 'ta eʼlon topdik',
-            sortLabel: 'Saralash',
-            sortValue: 'Asli bo‘yicha',
-          };
+          resultsPrefix: 'Biz',
+          resultsSuffix: 'ta eʼlon topdik',
+          sortLabel: 'Saralash',
+          sortValue: 'Asli bo‘yicha',
+        };
 
   return (
     <MarketplaceShell>
       <main className="marketplace-main">
         {shouldShowCategoryBar ? (
           <CategoryBar categories={verticalCategories} basePath={basePath} />
+        ) : null}
+
+        {shouldShowAutoFilters ? (
+          <section className="surface-card section-shell rounded-[1.85rem]">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="grid w-full gap-3 md:grid-cols-3">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">{locale === 'ru' ? 'Сортировка' : locale === 'en' ? 'Sort' : 'Saralash'}</p>
+                  <Select value={sort} onValueChange={(value) => { setSort(value); setCurrentPage(1); }}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="newest">{locale === 'ru' ? 'Сначала новые' : locale === 'en' ? 'Newest first' : 'Eng yangi birinchi'}</SelectItem>
+                      <SelectItem value="price_asc">{locale === 'ru' ? 'Цена ↑' : locale === 'en' ? 'Price ↑' : 'Narx ↑'}</SelectItem>
+                      <SelectItem value="price_desc">{locale === 'ru' ? 'Цена ↓' : locale === 'en' ? 'Price ↓' : 'Narx ↓'}</SelectItem>
+                      <SelectItem value="year_desc">{locale === 'ru' ? 'Год ↓' : locale === 'en' ? 'Year ↓' : 'Yil ↓'}</SelectItem>
+                      <SelectItem value="mileage_asc">{locale === 'ru' ? 'Пробег ↑' : locale === 'en' ? 'Mileage ↑' : 'Yurgan masofa ↑'}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">{locale === 'ru' ? 'Топливо' : locale === 'en' ? 'Fuel' : 'Yonilg‘i'}</p>
+                  <Select value={fuelType} onValueChange={(value) => { setFuelType(value); setCurrentPage(1); }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={locale === 'ru' ? 'Любое' : locale === 'en' ? 'Any' : 'Har qanday'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">{locale === 'ru' ? 'Любое' : locale === 'en' ? 'Any' : 'Har qanday'}</SelectItem>
+                      {AUTO_FUEL_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {getLocalizedText(option.label, locale)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">{locale === 'ru' ? 'Коробка' : locale === 'en' ? 'Transmission' : 'Uzatish qutisi'}</p>
+                  <Select value={transmission} onValueChange={(value) => { setTransmission(value); setCurrentPage(1); }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={locale === 'ru' ? 'Любая' : locale === 'en' ? 'Any' : 'Har qanday'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">{locale === 'ru' ? 'Любая' : locale === 'en' ? 'Any' : 'Har qanday'}</SelectItem>
+                      {AUTO_TRANSMISSION_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {getLocalizedText(option.label, locale)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSort('newest');
+                  setFuelType('');
+                  setTransmission('');
+                  setCurrentPage(1);
+                }}
+              >
+                {messages.home.clearFilters}
+              </Button>
+            </div>
+          </section>
         ) : null}
 
         {hasFilters ? (
@@ -248,6 +370,21 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
                   />
                 ))}
               </div>
+              {pagination.total > pagination.limit ? (
+                <div className="mt-6 flex flex-col gap-3 rounded-[1.5rem] border border-border/60 bg-background/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {locale === 'ru' ? 'Страница' : locale === 'en' ? 'Page' : 'Sahifa'} {pagination.page} / {Math.max(1, Math.ceil(pagination.total / pagination.limit))}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setCurrentPage((value) => Math.max(1, value - 1))} disabled={pagination.page <= 1}>
+                      {locale === 'ru' ? 'Назад' : locale === 'en' ? 'Previous' : 'Oldinga'}
+                    </Button>
+                    <Button variant="outline" onClick={() => setCurrentPage((value) => value + 1)} disabled={!pagination.hasMore && pagination.page >= Math.max(1, Math.ceil(pagination.total / pagination.limit))}>
+                      {locale === 'ru' ? 'Дальше' : locale === 'en' ? 'Next' : 'Keyingi'}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
             </section>
           </>
         )}

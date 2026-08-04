@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { getCategoryBySlug } from '@/lib/mock-data';
+import { formatAutoEngineDisplacement, formatAutoMileage, getAutoFuelLabel, getAutoTransmissionLabel } from '@/lib/auto-config';
 import { getLocalizedText, languageMeta } from '@/lib/i18n';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
@@ -80,23 +81,34 @@ export function AdCard({
       ? [ad.rooms ? `${ad.rooms}R` : '', ad.area ? `${ad.area} m²` : ''].filter(Boolean).join(' · ')
       : '';
   const secondaryMetaLabel = ad.vertical === 'real_estate' && realEstateMeta ? realEstateMeta : localizedCondition;
+  const autoMetaSummary = ad.vertical === 'auto'
+    ? [
+      ad.manufactureYear ? String(ad.manufactureYear) : '',
+      ad.mileage !== null ? formatAutoMileage(ad.mileage, locale) : '',
+      ad.engineDisplacement !== null
+        ? formatAutoEngineDisplacement(ad.engineDisplacement, ad.engineUnit, locale)
+        : '',
+      ad.fuelType ? getAutoFuelLabel(ad.fuelType, locale) : '',
+      ad.transmission ? getAutoTransmissionLabel(ad.transmission, locale) : '',
+    ].filter(Boolean).join(' • ')
+    : '';
   const manageCopy =
     locale === 'ru'
       ? {
-          action: 'Удалить',
-          title: 'Что сделать с объявлением?',
-          description:
-            'Вы можете отметить объявление как проданное или удалить его навсегда.',
-          soldAction: 'Продано',
-          deleteAction: 'Удалить',
-          cancel: 'Отмена',
-          soldSuccessTitle: 'Объявление отмечено как проданное',
-          soldSuccessDescription: 'Объявление снято с активной витрины.',
-          deleteSuccessTitle: 'Объявление удалено',
-          deleteSuccessDescription: 'Объявление было успешно удалено.',
-          errorTitle: 'Не удалось выполнить действие',
-          soldStatus: 'Продано',
-        }
+        action: 'Удалить',
+        title: 'Что сделать с объявлением?',
+        description:
+          'Вы можете отметить объявление как проданное или удалить его навсегда.',
+        soldAction: 'Продано',
+        deleteAction: 'Удалить',
+        cancel: 'Отмена',
+        soldSuccessTitle: 'Объявление отмечено как проданное',
+        soldSuccessDescription: 'Объявление снято с активной витрины.',
+        deleteSuccessTitle: 'Объявление удалено',
+        deleteSuccessDescription: 'Объявление было успешно удалено.',
+        errorTitle: 'Не удалось выполнить действие',
+        soldStatus: 'Продано',
+      }
       : locale === 'en'
         ? {
           action: 'Delete',
@@ -113,7 +125,7 @@ export function AdCard({
           errorTitle: 'The action could not be completed',
           soldStatus: 'Sold',
         }
-      : {
+        : {
           action: "O‘chirish",
           title: 'Eʼlon bilan nima qilmoqchisiz?',
           description:
@@ -144,9 +156,9 @@ export function AdCard({
   const shouldDeleteAsAdmin = canDelete || (isAdmin && !isOwner);
   const postedAtLabel = mounted
     ? formatDistanceToNow(new Date(ad.createdAt), {
-        addSuffix: true,
-        locale: languageMeta[locale].dateLocale,
-      })
+      addSuffix: true,
+      locale: languageMeta[locale].dateLocale,
+    })
     : messages.adCard.loadingTime;
 
   useEffect(() => {
@@ -344,6 +356,12 @@ export function AdCard({
                     {ad.area} m²
                   </span>
                 ) : null}
+              </div>
+            ) : null}
+
+            {ad.vertical === 'auto' && autoMetaSummary ? (
+              <div className={cn('mt-1 flex items-center gap-1 !text-white/72', isCompactVariant ? 'text-[0.6rem]' : 'text-[0.62rem]')}>
+                <span className="truncate !text-white/72">{autoMetaSummary}</span>
               </div>
             ) : null}
 
@@ -655,6 +673,11 @@ export function AdCard({
               <div className="flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" />
                 <span className="truncate">{localizedLocation}</span>
+              </div>
+            ) : null}
+            {ad.vertical === 'auto' && autoMetaSummary ? (
+              <div className="flex items-center gap-1.5">
+                <span className="truncate">{autoMetaSummary}</span>
               </div>
             ) : null}
             <div className="flex items-center gap-1.5">

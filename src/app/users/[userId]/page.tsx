@@ -299,11 +299,11 @@ export default function PublicUserProfilePage({ params }: PublicUserProfilePageP
 
             <section className="surface-card section-shell rounded-[1.9rem]">
               <div className="section-header">
-                {/* <div className="section-header__copy">
+                <div className="section-header__copy">
                   <p className="section-kicker">{copy.activeListings}</p>
                   <h2 className="section-title">{copy.activeListings}</h2>
                   <p className="section-caption">{copy.activeListingsDescription}</p>
-                </div> */}
+                </div>
                 <div className="status-strip">
                   <Badge variant="secondary">
                     {statsFormatter.format(sortedAds.length)} {copy.listings}

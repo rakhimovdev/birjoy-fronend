@@ -43,6 +43,24 @@ import {
   getVerticalById,
   getVerticalHref,
 } from '@/lib/mock-data';
+import {
+  AUTO_FUEL_OPTIONS,
+  AUTO_SPECIAL_EQUIPMENT_SUGGESTIONS,
+  AUTO_TRANSMISSION_OPTIONS,
+  buildManufactureYears,
+  getAutoEngineUnitForCategory,
+  isMotorcycleCategory,
+  isSpecialEquipmentCategory,
+  isSparePartsCategory,
+  normalizeAutoCategory,
+  shouldShowAutoEngineField,
+  shouldShowAutoFuelField,
+  shouldShowAutoMileageField,
+  shouldShowAutoTransmissionField,
+  shouldShowAutoYearField,
+  shouldShowCompatibleModelField,
+  shouldShowSpecialEquipmentTypeField,
+} from '@/lib/auto-config';
 import type { Ad, AdVertical, RealEstateListingType, UserProfile } from '@/lib/types';
 import type { Location, ResolvedLocation } from '@/lib/map-types';
 import {
@@ -71,6 +89,14 @@ type FormState = {
   rooms: string;
   area: string;
   floor: string;
+  fuelType: string;
+  manufactureYear: string;
+  engineDisplacement: string;
+  engineUnit: string;
+  mileage: string;
+  transmission: string;
+  specialEquipmentType: string;
+  compatibleModel: string;
 };
 
 type LocationMetaState = {
@@ -84,6 +110,7 @@ const DEFAULT_COUNTRY = 'O‘zbekiston';
 
 function buildInitialFormState(initialVertical: AdVertical = 'market'): FormState {
   const defaultCategory = getCategoriesForVertical(initialVertical)[0]?.slug || '';
+  const defaultEngineUnit = initialVertical === 'auto' ? getAutoEngineUnitForCategory(defaultCategory) : '';
 
   return {
     title: '',
@@ -101,6 +128,14 @@ function buildInitialFormState(initialVertical: AdVertical = 'market'): FormStat
     rooms: '',
     area: '',
     floor: '',
+    fuelType: '',
+    manufactureYear: '',
+    engineDisplacement: '',
+    engineUnit: defaultEngineUnit,
+    mileage: '',
+    transmission: '',
+    specialEquipmentType: '',
+    compatibleModel: '',
   };
 }
 
@@ -128,6 +163,14 @@ function buildFormStateFromAd(ad: Ad): FormState {
     rooms: ad.rooms !== null ? String(ad.rooms) : '',
     area: ad.area !== null ? String(ad.area) : '',
     floor: ad.floor !== null ? String(ad.floor) : '',
+    fuelType: ad.fuelType || '',
+    manufactureYear: ad.manufactureYear !== null ? String(ad.manufactureYear) : '',
+    engineDisplacement: ad.engineDisplacement !== null ? String(ad.engineDisplacement) : '',
+    engineUnit: ad.engineUnit || getAutoEngineUnitForCategory(ad.category),
+    mileage: ad.mileage !== null ? String(ad.mileage) : '',
+    transmission: ad.transmission || '',
+    specialEquipmentType: ad.specialEquipmentType || '',
+    compatibleModel: ad.compatibleModel || '',
   };
 }
 
@@ -223,6 +266,18 @@ export function AdEditorForm({
   const categories = getCategoriesForVertical(formData.vertical);
   const selectedCategoryConfig = categories.find((category) => category.slug === formData.category);
   const isRealEstate = formData.vertical === 'real_estate';
+  const isAutoVertical = formData.vertical === 'auto';
+  const normalizedCategory = normalizeAutoCategory(formData.category);
+  const shouldShowVehicleFuelField = isAutoVertical && shouldShowAutoFuelField(normalizedCategory);
+  const shouldShowVehicleYearField = isAutoVertical && shouldShowAutoYearField(normalizedCategory);
+  const shouldShowVehicleEngineField = isAutoVertical && shouldShowAutoEngineField(normalizedCategory);
+  const shouldShowVehicleMileageField = isAutoVertical && shouldShowAutoMileageField(normalizedCategory);
+  const shouldShowVehicleTransmissionField = isAutoVertical && shouldShowAutoTransmissionField(normalizedCategory);
+  const shouldShowVehicleSpecialEquipmentField = isAutoVertical && shouldShowSpecialEquipmentTypeField(normalizedCategory);
+  const shouldShowVehicleCompatibleModelField = isAutoVertical && shouldShowCompatibleModelField(normalizedCategory);
+  const isVehicleMotorcycle = isAutoVertical && isMotorcycleCategory(normalizedCategory);
+  const isVehicleSpecialEquipment = isAutoVertical && isSpecialEquipmentCategory(normalizedCategory);
+  const isVehicleSpareParts = isAutoVertical && isSparePartsCategory(normalizedCategory);
   const regionOptions = UZBEKISTAN_REGION_OPTIONS.map((option) => option.name);
   const selectedDistrictOptions = getDistrictsForRegion(formData.region);
   const selectedLocationLabel = buildLocationLabel({
@@ -747,14 +802,37 @@ export function AdEditorForm({
         ? previous.category
         : nextCategories[0]?.slug || '',
       listingType: normalizedVertical === 'real_estate' ? previous.listingType || 'sale' : '',
+      fuelType: normalizedVertical === 'auto' ? '' : '',
+      manufactureYear: '',
+      engineDisplacement: '',
+      engineUnit: normalizedVertical === 'auto' ? getAutoEngineUnitForCategory(nextCategories[0]?.slug || '') : '',
+      mileage: '',
+      transmission: '',
+      specialEquipmentType: '',
+      compatibleModel: '',
     }));
   };
 
   const handleCategoryChange = (categorySlug: string) => {
-    setFormData((previous) => ({
-      ...previous,
-      category: categorySlug,
-    }));
+    setFormData((previous) => {
+      const normalizedCategoryValue = normalizeAutoCategory(categorySlug);
+      const shouldKeepCompatibleModel = isSparePartsCategory(normalizedCategoryValue);
+
+      return {
+        ...previous,
+        category: categorySlug,
+        fuelType: shouldShowAutoFuelField(normalizedCategoryValue) ? '' : '',
+        manufactureYear: shouldShowAutoYearField(normalizedCategoryValue) ? '' : '',
+        engineDisplacement: shouldShowAutoEngineField(normalizedCategoryValue) ? '' : '',
+        engineUnit: shouldShowAutoEngineField(normalizedCategoryValue)
+          ? getAutoEngineUnitForCategory(normalizedCategoryValue)
+          : '',
+        mileage: shouldShowAutoMileageField(normalizedCategoryValue) ? '' : '',
+        transmission: shouldShowAutoTransmissionField(normalizedCategoryValue) ? '' : '',
+        specialEquipmentType: shouldShowSpecialEquipmentTypeField(normalizedCategoryValue) ? '' : '',
+        compatibleModel: shouldKeepCompatibleModel ? previous.compatibleModel : '',
+      };
+    });
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -840,6 +918,14 @@ export function AdEditorForm({
         rooms: isRealEstate && formData.rooms ? Number(formData.rooms) : null,
         area: isRealEstate && formData.area ? Number(formData.area) : null,
         floor: isRealEstate && formData.floor ? Number(formData.floor) : null,
+        fuelType: isAutoVertical ? ((formData.fuelType || '') as CreateAdInput['fuelType']) : '',
+        manufactureYear: isAutoVertical && formData.manufactureYear ? Number(formData.manufactureYear) : null,
+        engineDisplacement: isAutoVertical && formData.engineDisplacement ? Number(formData.engineDisplacement) : null,
+        engineUnit: isAutoVertical ? ((formData.engineUnit || getAutoEngineUnitForCategory(formData.category)) as CreateAdInput['engineUnit']) : '',
+        mileage: isAutoVertical && formData.mileage ? Number(formData.mileage) : null,
+        transmission: isAutoVertical ? ((formData.transmission || '') as CreateAdInput['transmission']) : '',
+        specialEquipmentType: isAutoVertical ? formData.specialEquipmentType.trim() : '',
+        compatibleModel: isAutoVertical ? formData.compatibleModel.trim() : '',
         contactPhone: formData.contactPhone.trim(),
         images: uploadedImages,
       };
@@ -992,6 +1078,158 @@ export function AdEditorForm({
                         </Select>
                       </div>
                     </div>
+
+                    {isAutoVertical ? (
+                      <div className="grid grid-cols-1 gap-4 min-[481px]:grid-cols-2 xl:grid-cols-3">
+                        {shouldShowVehicleFuelField ? (
+                          <div className="space-y-2">
+                            <Label htmlFor="fuelType">{locale === 'ru' ? 'Топливо' : locale === 'en' ? 'Fuel' : 'Yonilg‘i'}</Label>
+                            <Select
+                              value={formData.fuelType}
+                              onValueChange={(value) =>
+                                setFormData((previous) => ({ ...previous, fuelType: value }))
+                              }
+                            >
+                              <SelectTrigger id="fuelType">
+                                <SelectValue placeholder={locale === 'ru' ? 'Выберите топливо' : locale === 'en' ? 'Select fuel' : 'Yonilg‘i tanlang'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {AUTO_FUEL_OPTIONS.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {getLocalizedText(option.label, locale)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        ) : null}
+                        {shouldShowVehicleYearField ? (
+                          <div className="space-y-2">
+                            <Label htmlFor="manufactureYear">{locale === 'ru' ? 'Год выпуска' : locale === 'en' ? 'Year' : 'Ishlab chiqarilgan yil'}</Label>
+                            <Select
+                              value={formData.manufactureYear}
+                              onValueChange={(value) =>
+                                setFormData((previous) => ({ ...previous, manufactureYear: value }))
+                              }
+                            >
+                              <SelectTrigger id="manufactureYear">
+                                <SelectValue placeholder={locale === 'ru' ? 'Выберите год' : locale === 'en' ? 'Select year' : 'Yilni tanlang'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {buildManufactureYears().map((year) => (
+                                  <SelectItem key={year} value={String(year)}>
+                                    {year}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        ) : null}
+                        {shouldShowVehicleEngineField ? (
+                          <div className="space-y-2">
+                            <Label htmlFor="engineDisplacement">{locale === 'ru' ? 'Двигатель' : locale === 'en' ? 'Engine' : 'Dvigatel'}</Label>
+                            <div className="grid grid-cols-[1fr_auto] gap-2">
+                              <Input
+                                id="engineDisplacement"
+                                type="number"
+                                min="0"
+                                placeholder={locale === 'ru' ? 'Объём' : locale === 'en' ? 'Displacement' : 'Sig‘im'}
+                                value={formData.engineDisplacement}
+                                onChange={(event) =>
+                                  setFormData((previous) => ({ ...previous, engineDisplacement: event.target.value }))
+                                }
+                              />
+                              <Select
+                                value={formData.engineUnit}
+                                onValueChange={(value) =>
+                                  setFormData((previous) => ({ ...previous, engineUnit: value }))
+                                }
+                              >
+                                <SelectTrigger id="engineUnit" className="w-[88px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="L">L</SelectItem>
+                                  <SelectItem value="cc">cc</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        ) : null}
+                        {shouldShowVehicleMileageField ? (
+                          <div className="space-y-2">
+                            <Label htmlFor="mileage">{locale === 'ru' ? 'Пробег' : locale === 'en' ? 'Mileage' : 'Bosib o‘tilgan masofa'}</Label>
+                            <Input
+                              id="mileage"
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              value={formData.mileage}
+                              onChange={(event) =>
+                                setFormData((previous) => ({ ...previous, mileage: event.target.value }))
+                              }
+                            />
+                          </div>
+                        ) : null}
+                        {shouldShowVehicleTransmissionField ? (
+                          <div className="space-y-2">
+                            <Label htmlFor="transmission">{locale === 'ru' ? 'Коробка' : locale === 'en' ? 'Transmission' : 'Uzatish qutisi'}</Label>
+                            <Select
+                              value={formData.transmission}
+                              onValueChange={(value) =>
+                                setFormData((previous) => ({ ...previous, transmission: value }))
+                              }
+                            >
+                              <SelectTrigger id="transmission">
+                                <SelectValue placeholder={locale === 'ru' ? 'Выберите коробку' : locale === 'en' ? 'Select transmission' : 'Uzatish qutisini tanlang'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {AUTO_TRANSMISSION_OPTIONS.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {getLocalizedText(option.label, locale)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        ) : null}
+                        {shouldShowVehicleSpecialEquipmentField ? (
+                          <div className="space-y-2">
+                            <Label htmlFor="specialEquipmentType">{locale === 'ru' ? 'Тип спецтехники' : locale === 'en' ? 'Equipment type' : 'Maxsus texnika turi'}</Label>
+                            <Select
+                              value={formData.specialEquipmentType}
+                              onValueChange={(value) =>
+                                setFormData((previous) => ({ ...previous, specialEquipmentType: value }))
+                              }
+                            >
+                              <SelectTrigger id="specialEquipmentType">
+                                <SelectValue placeholder={locale === 'ru' ? 'Выберите тип' : locale === 'en' ? 'Select type' : 'Turini tanlang'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {AUTO_SPECIAL_EQUIPMENT_SUGGESTIONS[locale].map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        ) : null}
+                        {shouldShowVehicleCompatibleModelField ? (
+                          <div className="space-y-2">
+                            <Label htmlFor="compatibleModel">{locale === 'ru' ? 'Совместимая модель' : locale === 'en' ? 'Compatible model' : 'Mos keluvchi model'}</Label>
+                            <Input
+                              id="compatibleModel"
+                              placeholder={locale === 'ru' ? 'Введите модель' : locale === 'en' ? 'Enter model' : 'Modelni kiriting'}
+                              value={formData.compatibleModel}
+                              onChange={(event) =>
+                                setFormData((previous) => ({ ...previous, compatibleModel: event.target.value }))
+                              }
+                            />
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </CardContent>
                 </Card>
 

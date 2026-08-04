@@ -62,6 +62,7 @@ import { deleteAdminAd } from '@/lib/admin';
 import { createChatConversation } from '@/lib/chat';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { getAdDisplayLocation } from '@/lib/listing-utils';
+import { formatAutoEngineDisplacement, formatAutoMileage, getAutoFuelLabel, getAutoTransmissionLabel } from '@/lib/auto-config';
 import { getRealEstateListingTypeLabel } from '@/lib/real-estate-listing-types';
 
 const NEARBY_PROPERTIES_RADIUS_KM = 5;
@@ -392,7 +393,54 @@ export function AdDetailsView({
   const localizedCategory = category ? getLocalizedText(category.name, locale) : messages.adDetails.category;
   const localizedCondition = getConditionLabel(ad.condition, locale);
   const isRealEstate = ad.vertical === 'real_estate';
+  const isAuto = ad.vertical === 'auto';
   const localizedListingType = getRealEstateListingTypeLabel(ad.listingType, locale);
+  const autoSpecs = isAuto
+    ? [
+      ad.manufactureYear !== null
+        ? {
+          label: locale === 'ru' ? 'Год выпуска' : locale === 'en' ? 'Year' : 'Ishlab chiqarilgan yil',
+          value: String(ad.manufactureYear),
+        }
+        : null,
+      ad.fuelType
+        ? {
+          label: locale === 'ru' ? 'Топливо' : locale === 'en' ? 'Fuel type' : 'Yonilg‘i turi',
+          value: getAutoFuelLabel(ad.fuelType, locale),
+        }
+        : null,
+      ad.engineDisplacement !== null
+        ? {
+          label: locale === 'ru' ? 'Двигатель' : locale === 'en' ? 'Engine' : 'Dvigatel',
+          value: formatAutoEngineDisplacement(ad.engineDisplacement, ad.engineUnit, locale),
+        }
+        : null,
+      ad.mileage !== null
+        ? {
+          label: locale === 'ru' ? 'Пробег' : locale === 'en' ? 'Mileage' : 'Bosib o‘tilgan masofa',
+          value: formatAutoMileage(ad.mileage, locale),
+        }
+        : null,
+      ad.transmission
+        ? {
+          label: locale === 'ru' ? 'Коробка' : locale === 'en' ? 'Transmission' : 'Uzatish qutisi',
+          value: getAutoTransmissionLabel(ad.transmission, locale),
+        }
+        : null,
+      ad.specialEquipmentType
+        ? {
+          label: locale === 'ru' ? 'Тип спецтехники' : locale === 'en' ? 'Equipment type' : 'Maxsus texnika turi',
+          value: ad.specialEquipmentType,
+        }
+        : null,
+      ad.compatibleModel
+        ? {
+          label: locale === 'ru' ? 'Совместимая модель' : locale === 'en' ? 'Compatible model' : 'Mos keluvchi model',
+          value: ad.compatibleModel,
+        }
+        : null,
+    ].filter(Boolean) as Array<{ label: string; value: string }>
+    : [];
   const realEstateFacts = [
     isRealEstate && localizedListingType
       ? {
@@ -1222,6 +1270,24 @@ export function AdDetailsView({
                   <h2 className="mb-3 text-xl font-semibold">{messages.adDetails.description}</h2>
                   <p className="body-lead whitespace-pre-line text-muted-foreground">{localizedDescription}</p>
                 </div>
+
+                {isAuto && autoSpecs.length > 0 ? (
+                  <div className="space-y-4 border-t border-border/70 pt-6">
+                    <div className="soft-panel">
+                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+                        {locale === 'ru' ? 'Характеристики авто' : locale === 'en' ? 'Vehicle details' : 'Avtomobil xususiyatlari'}
+                      </p>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        {autoSpecs.map((fact) => (
+                          <div key={fact.label} className="rounded-[1rem] border border-border/60 bg-background/70 p-3">
+                            <p className="text-sm font-medium text-muted-foreground">{fact.label}</p>
+                            <p className="mt-1 font-semibold text-foreground">{fact.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
 
                 {isRealEstate && typeof ad.latitude === 'number' && typeof ad.longitude === 'number' ? (
                   <div className="space-y-4 border-t border-border/70 pt-6">

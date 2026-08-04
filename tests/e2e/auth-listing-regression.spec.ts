@@ -150,6 +150,21 @@ test.describe.serial('auth and listing regression', () => {
     ).toBeVisible();
   });
 
+  test('auto listing editor exposes vehicle-specific fields', async ({ page }) => {
+    if (isLocalRun) {
+      test.slow();
+    }
+
+    await signInWithQaUser(page, qaUser);
+    await waitForPageSettled(page);
+    await page.waitForURL(/\/profile/, { timeout: 20_000 });
+
+    await gotoRoute(page, '/ads/create?vertical=auto');
+    await expect(page.getByLabel(/Fuel|Yonilg|Топливо/i).first()).toBeVisible();
+    await expect(page.getByLabel(/Year|Yil|Год/i).first()).toBeVisible();
+    await expect(page.getByLabel(/Transmission|Korobka|Uzatish/i).first()).toBeVisible();
+  });
+
   test('login, search, favorites, create, edit, and delete listing flows work', async ({ page }) => {
     if (isLocalRun) {
       test.slow();
