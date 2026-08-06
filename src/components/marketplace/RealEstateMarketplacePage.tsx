@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, ArrowUpDown, MapPinned } from 'lucide-react';
 import { AdCard } from '@/components/ads/AdCard';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
-import { RealEstateFilterSheet } from '@/components/marketplace/RealEstateFilterSheet';
+import { RealEstateFilterBar } from '@/components/marketplace/RealEstateFilterBar';
 import { RealEstateFullscreenMapOverlay } from '@/components/marketplace/RealEstateFullscreenMapOverlay';
 import {
   ListingsShowcaseSkeleton,
@@ -137,9 +137,9 @@ export function RealEstateMarketplacePage() {
         ad,
         distanceKm: userCoordinates
           ? getDistanceKm(userCoordinates, {
-              lat: ad.latitude,
-              lng: ad.longitude,
-            })
+            lat: ad.latitude,
+            lng: ad.longitude,
+          })
           : null,
       })),
     [mapEligibleAds, userCoordinates]
@@ -186,96 +186,104 @@ export function RealEstateMarketplacePage() {
   const viewCopy =
     locale === 'ru'
       ? {
-          filter: 'Фильтр',
-          map: 'Карта',
-          galleryTitle: 'Галерея жилья',
-          galleryDescription: 'Подберите жильё из ленты или откройте полноэкранную карту.',
-          vipTitle: 'VIP объявления',
-          vipDescription: 'Лучшие предложения собраны в горизонтальной витрине.',
+        filter: 'Фильтр',
+        map: 'Карта',
+        galleryTitle: 'Галерея жилья',
+        galleryDescription: 'Подберите жильё из ленты или откройте полноэкранную карту.',
+        vipTitle: 'VIP объявления',
+        vipDescription: 'Лучшие предложения собраны в горизонтальной витрине.',
+        topTenTitle: 'TOP 10',
+        topTenDescription: 'Отобранные объявления вынесены в отдельную короткую витрину.',
+        regularTitle: 'Остальные объявления',
+        regularDescription: 'Ниже показаны все остальные предложения по жилью.',
+        mapTitle: 'Карта жилья',
+        mapDescription:
+          'Полноэкранная карта с теми же фильтрами. Нажмите на цену, чтобы открыть объявление.',
+        yourLocation: 'Вы здесь',
+        locateMe: 'Моё местоположение',
+        locatingMe: 'Определяем место...',
+        locationDenied: 'Разрешение на геолокацию не выдано.',
+        locationUnsupported: 'Это устройство не поддерживает геолокацию.',
+        locationError: 'Не удалось определить текущее местоположение.',
+        noMapTitle: 'Пока нет объявлений с координатами',
+        noMapDescription:
+          'Чтобы объявление попало на карту, для него нужна локация на карте.',
+        activeFilters: 'активных фильтров',
+        clearAll: 'Очистить всё',
+        resultsPrefix: 'Мы нашли',
+        resultsSuffix: 'объявлений',
+        sortLabel: 'Сортировка',
+        sortValue: 'По умолчанию',
+        topBadge: 'TOP 10',
+        topRibbon: 'TOP',
+      }
+      : locale === 'en'
+        ? {
+          filter: 'Filter',
+          map: 'Map',
+          galleryTitle: 'Home gallery',
+          galleryDescription: 'Browse the feed or open the full-screen property map.',
+          vipTitle: 'VIP listings',
+          vipDescription: 'Featured homes appear first in a side-scrolling carousel.',
           topTenTitle: 'TOP 10',
-          topTenDescription: 'Отобранные объявления вынесены в отдельную короткую витрину.',
-          regularTitle: 'Остальные объявления',
-          regularDescription: 'Ниже показаны все остальные предложения по жилью.',
-          mapTitle: 'Карта жилья',
-          mapDescription: 'Полноэкранная карта с теми же фильтрами. Нажмите на цену, чтобы открыть объявление.',
-          yourLocation: 'Вы здесь',
-          locateMe: 'Моё местоположение',
-          locatingMe: 'Определяем место...',
-          locationDenied: 'Разрешение на геолокацию не выдано.',
-          locationUnsupported: 'Это устройство не поддерживает геолокацию.',
-          locationError: 'Не удалось определить текущее местоположение.',
-          noMapTitle: 'Пока нет объявлений с координатами',
-          noMapDescription: 'Чтобы объявление попало на карту, для него нужна локация на карте.',
-          activeFilters: 'активных фильтров',
-          clearAll: 'Очистить всё',
-          resultsPrefix: 'Мы нашли',
-          resultsSuffix: 'объявлений',
-          sortLabel: 'Сортировка',
-          sortValue: 'По умолчанию',
+          topTenDescription:
+            'A short strip of standout listings appears separately before the full grid.',
+          regularTitle: 'Other listings',
+          regularDescription: 'Browse the rest of the home listings below.',
+          mapTitle: 'Property map',
+          mapDescription:
+            'A full-screen map with the same filters. Tap a price marker to view the listing.',
+          yourLocation: 'You are here',
+          locateMe: 'My location',
+          locatingMe: 'Finding location...',
+          locationDenied: 'Location permission was denied.',
+          locationUnsupported: 'This device does not support geolocation.',
+          locationError: 'Current location could not be detected.',
+          noMapTitle: 'No mapped home listings yet',
+          noMapDescription:
+            'A housing listing needs coordinates before it can appear on the map.',
+          activeFilters: 'active filters',
+          clearAll: 'Clear all',
+          resultsPrefix: 'We found',
+          resultsSuffix: 'listings',
+          sortLabel: 'Sort',
+          sortValue: 'Default order',
           topBadge: 'TOP 10',
           topRibbon: 'TOP',
         }
-      : locale === 'en'
-        ? {
-            filter: 'Filter',
-            map: 'Map',
-            galleryTitle: 'Home gallery',
-            galleryDescription: 'Browse the feed or open the full-screen property map.',
-            vipTitle: 'VIP listings',
-            vipDescription: 'Featured homes appear first in a side-scrolling carousel.',
-            topTenTitle: 'TOP 10',
-            topTenDescription: 'A short strip of standout listings appears separately before the full grid.',
-            regularTitle: 'Other listings',
-            regularDescription: 'Browse the rest of the home listings below.',
-            mapTitle: 'Property map',
-            mapDescription: 'A full-screen map with the same filters. Tap a price marker to view the listing.',
-            yourLocation: 'You are here',
-            locateMe: 'My location',
-            locatingMe: 'Finding location...',
-            locationDenied: 'Location permission was denied.',
-            locationUnsupported: 'This device does not support geolocation.',
-            locationError: 'Current location could not be detected.',
-            noMapTitle: 'No mapped home listings yet',
-            noMapDescription: 'A housing listing needs coordinates before it can appear on the map.',
-            activeFilters: 'active filters',
-            clearAll: 'Clear all',
-            resultsPrefix: 'We found',
-            resultsSuffix: 'listings',
-            sortLabel: 'Sort',
-            sortValue: 'Default order',
-            topBadge: 'TOP 10',
-            topRibbon: 'TOP',
-          }
         : {
-            filter: 'Filter',
-            map: 'Xarita',
-            galleryTitle: 'Uy-joy galereyasi',
-            galleryDescription: 'Ro‘yxatdan tanlang yoki to‘liq ekran xaritada ko‘ring.',
-            vipTitle: 'VIP eʼlonlar',
-            vipDescription: 'Tanlangan uylar tepada yonlama karuselda ko‘rsatiladi.',
-            topTenTitle: 'TOP 10',
-            topTenDescription: 'Ajratib ko‘rsatiladigan 10 ta tanlangan eʼlon shu bo‘limda chiqadi.',
-            regularTitle: 'Boshqa eʼlonlar',
-            regularDescription: 'Quyida qolgan barcha uy-joy eʼlonlari chiqadi.',
-            mapTitle: 'Uy-joy xaritasi',
-            mapDescription: 'Bir xil filtrlarga ega to‘liq ekran xarita. Eʼlonni ko‘rish uchun narx markerini bosing.',
-            yourLocation: 'Siz turgan joy',
-            locateMe: 'Mening joyim',
-            locatingMe: 'Joylashuv aniqlanmoqda...',
-            locationDenied: 'Joylashuvga ruxsat berilmadi.',
-            locationUnsupported: 'Bu qurilmada geolokatsiya qo‘llab-quvvatlanmaydi.',
-            locationError: 'Hozirgi joylashuvni aniqlab bo‘lmadi.',
-            noMapTitle: 'Hali koordinatali uy eʼlonlari yo‘q',
-            noMapDescription: 'Uy eʼloni xaritada ko‘rinishi uchun unga koordinata biriktirilgan bo‘lishi kerak.',
-            activeFilters: 'faol filter',
-            clearAll: 'Hammasini tozalash',
-            resultsPrefix: 'Biz',
-            resultsSuffix: 'ta eʼlon topdik',
-            sortLabel: 'Saralash',
-            sortValue: 'Asli bo‘yicha',
-            topBadge: 'TOP 10',
-            topRibbon: 'TOP',
-          };
+          filter: 'Filter',
+          map: 'Xarita',
+          galleryTitle: 'Uy-joy galereyasi',
+          galleryDescription: 'Ro‘yxatdan tanlang yoki to‘liq ekran xaritada ko‘ring.',
+          vipTitle: 'VIP eʼlonlar',
+          vipDescription: 'Tanlangan uylar tepada yonlama karuselda ko‘rsatiladi.',
+          topTenTitle: 'TOP 10',
+          topTenDescription:
+            'Ajratib ko‘rsatiladigan 10 ta tanlangan eʼlon shu bo‘limda chiqadi.',
+          regularTitle: 'Boshqa eʼlonlar',
+          regularDescription: 'Quyida qolgan barcha uy-joy eʼlonlari chiqadi.',
+          mapTitle: 'Uy-joy xaritasi',
+          mapDescription:
+            'Bir xil filtrlarga ega to‘liq ekran xarita. Eʼlonni ko‘rish uchun narx markerini bosing.',
+          yourLocation: 'Siz turgan joy',
+          locateMe: 'Mening joyim',
+          locatingMe: 'Joylashuv aniqlanmoqda...',
+          locationDenied: 'Joylashuvga ruxsat berilmadi.',
+          locationUnsupported: 'Bu qurilmada geolokatsiya qo‘llab-quvvatlanmaydi.',
+          locationError: 'Hozirgi joylashuvni aniqlab bo‘lmadi.',
+          noMapTitle: 'Hali koordinatali uy eʼlonlari yo‘q',
+          noMapDescription:
+            'Uy eʼloni xaritada ko‘rinishi uchun unga koordinata biriktirilgan bo‘lishi kerak.',
+          activeFilters: 'faol filter',
+          clearAll: 'Hammasini tozalash',
+          resultsPrefix: 'Biz',
+          resultsSuffix: 'ta eʼlon topdik',
+          sortLabel: 'Saralash',
+          sortValue: 'Asli bo‘yicha',
+          topBadge: 'TOP 10',
+          topRibbon: 'TOP',
+        };
 
   const handleLocateUser = () => {
     setSelectedAdId(undefined);
@@ -309,6 +317,20 @@ export function RealEstateMarketplacePage() {
     setFilters({ ...EMPTY_REAL_ESTATE_FILTERS });
   };
 
+  const handleSearch = (nextQuery: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const trimmed = nextQuery.trim();
+
+    if (trimmed) {
+      params.set('q', trimmed);
+    } else {
+      params.delete('q');
+    }
+
+    const nextPath = params.toString() ? `${basePath}?${params.toString()}` : basePath;
+    router.replace(nextPath, { scroll: false });
+  };
+
   const handleResetAllFilters = () => {
     handleClearFilters();
 
@@ -327,6 +349,15 @@ export function RealEstateMarketplacePage() {
   return (
     <MarketplaceShell>
       <main className="marketplace-main">
+        <RealEstateFilterBar
+          locale={locale}
+          filters={filters}
+          searchQuery={query}
+          onSearch={handleSearch}
+          onApply={handleApplyFilters}
+          onClear={handleClearFilters}
+        />
+
         {isLoadingAds ? (
           <ListingsShowcaseSkeleton
             title={messages.home.loadingListings}
@@ -364,31 +395,6 @@ export function RealEstateMarketplacePage() {
         ) : (
           <>
             <section className="phone-nav-only mx-[calc(var(--page-gutter)*-1)] flex-col gap-4 bg-transparent px-[var(--page-gutter)] pb-6 pt-1 text-foreground">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="min-w-0">
-                  <RealEstateFilterSheet
-                    locale={locale}
-                    filters={filters}
-                    onApply={handleApplyFilters}
-                    onClear={handleClearFilters}
-                    buttonVariant="ghost"
-                    buttonClassName="w-full min-h-12 justify-center rounded-[1.2rem] border-border/60 bg-background/82 text-foreground shadow-[0_14px_30px_rgba(7,28,85,0.08)] hover:bg-background hover:text-foreground dark:shadow-[0_18px_36px_rgba(0,0,0,0.26)]"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="min-h-12 rounded-[1.2rem] border-border/60 bg-background/82 text-foreground shadow-[0_14px_30px_rgba(7,28,85,0.08)] hover:bg-background hover:text-foreground dark:shadow-[0_18px_36px_rgba(0,0,0,0.26)]"
-                  onClick={() => {
-                    setSelectedAdId(undefined);
-                    setIsMapOpen(true);
-                  }}
-                >
-                  <MapPinned className="h-4 w-4" />
-                  {viewCopy.map}
-                </Button>
-              </div>
-
               {mobileFeaturedAds.length > 0 ? (
                 <div className="space-y-3">
                   <h2 className="text-[1.15rem] font-semibold tracking-[-0.03em] text-foreground">
@@ -422,7 +428,8 @@ export function RealEstateMarketplacePage() {
                 <div className="flex items-center gap-2 text-[0.78rem] text-muted-foreground">
                   <ArrowUpDown className="h-3.5 w-3.5" />
                   <span>
-                    {viewCopy.sortLabel}: <span className="font-medium text-foreground">{viewCopy.sortValue}</span>
+                    {viewCopy.sortLabel}:{' '}
+                    <span className="font-medium text-foreground">{viewCopy.sortValue}</span>
                   </span>
                 </div>
               </div>
@@ -452,11 +459,17 @@ export function RealEstateMarketplacePage() {
                   <p className="section-kicker">{messages.home.browseAllListings}</p>
                   <div className="flex flex-wrap items-center gap-3">
                     <h2 className="section-title">{viewCopy.galleryTitle}</h2>
-                    <span className="stat-pill">{filteredAds.length} {messages.home.resultsTitle}</span>
+                    <span className="stat-pill">
+                      {filteredAds.length} {messages.home.resultsTitle}
+                    </span>
                   </div>
                   {query || activeCategoryLabel || hasCustomFilters || mapEligibleAds.length > 0 ? (
                     <div className="status-strip">
-                      {mapEligibleAds.length > 0 ? <span className="stat-pill">{mapEligibleAds.length} {viewCopy.map}</span> : null}
+                      {mapEligibleAds.length > 0 ? (
+                        <span className="stat-pill">
+                          {mapEligibleAds.length} {viewCopy.map}
+                        </span>
+                      ) : null}
                       {query ? <Badge variant="secondary">{query}</Badge> : null}
                       {activeCategoryLabel ? <Badge variant="outline">{activeCategoryLabel}</Badge> : null}
                       {hasCustomFilters ? (
@@ -469,13 +482,6 @@ export function RealEstateMarketplacePage() {
                 </div>
 
                 <div className="action-cluster w-full sm:w-auto">
-                  <RealEstateFilterSheet
-                    locale={locale}
-                    filters={filters}
-                    onApply={handleApplyFilters}
-                    onClear={handleClearFilters}
-                    buttonClassName="w-full sm:w-auto sm:min-w-[9rem]"
-                  />
                   <Button
                     type="button"
                     variant="outline"
@@ -505,7 +511,10 @@ export function RealEstateMarketplacePage() {
                   </div>
                   <div className="scroll-row">
                     {featuredAds.map((ad) => (
-                      <div key={ad.id} className="w-[14.25rem] shrink-0 sm:w-[15rem] lg:w-[16.25rem] xl:w-[17rem]">
+                      <div
+                        key={ad.id}
+                        className="w-[14.25rem] shrink-0 sm:w-[15rem] lg:w-[16.25rem] xl:w-[17rem]"
+                      >
                         <AdCard
                           ad={ad}
                           isFavorite={isFavorite(ad.id)}
@@ -530,7 +539,11 @@ export function RealEstateMarketplacePage() {
                         <h2 className="section-title">{viewCopy.regularTitle}</h2>
                         <p className="section-caption">{viewCopy.regularDescription}</p>
                       </div>
-                      <Button asChild variant="ghost" className="gap-1 px-0 font-semibold text-primary hover:bg-transparent">
+                      <Button
+                        asChild
+                        variant="ghost"
+                        className="gap-1 px-0 font-semibold text-primary hover:bg-transparent"
+                      >
                         <Link href="/ads/create?vertical=real_estate">
                           {messages.home.startSelling}
                           <ArrowRight className="h-4 w-4" />
