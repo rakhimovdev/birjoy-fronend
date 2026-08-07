@@ -4,8 +4,8 @@ import {
     Building2,
     ChevronDown,
     Landmark,
+    MapPinned,
     RotateCcw,
-    Search,
     Settings2,
     SlidersHorizontal,
     Coins,
@@ -29,10 +29,9 @@ import { getRealEstateListingTypeLabel } from '@/lib/real-estate-listing-types';
 type RealEstateFilterBarProps = {
     locale: Language;
     filters: RealEstateFilterState;
-    searchQuery: string;
-    onSearch: (query: string) => void;
     onApply: (filters: RealEstateFilterState) => void;
     onClear: () => void;
+    onOpenMap: () => void;
 };
 
 function getCopy(language: Language) {
@@ -40,6 +39,7 @@ function getCopy(language: Language) {
         return {
             searchPlaceholder: 'Шукать жильё, адрес или район...',
             clear: 'Сбросить',
+            map: 'Карта',
             active: 'активно',
             propertyType: 'Тип жилья',
             mortgage: 'Ипотека',
@@ -63,6 +63,7 @@ function getCopy(language: Language) {
         return {
             searchPlaceholder: 'Search homes, addresses, or districts...',
             clear: 'Reset',
+            map: 'Map',
             active: 'active',
             propertyType: 'Property type',
             mortgage: 'Mortgage',
@@ -85,6 +86,7 @@ function getCopy(language: Language) {
     return {
         searchPlaceholder: 'Uy-joy, manzil yoki hudud qidirish...',
         clear: 'Tozalash',
+        map: 'Xarita',
         active: 'faol',
         propertyType: 'Uy turi',
         mortgage: 'Ipoteka',
@@ -109,13 +111,11 @@ const SEGMENT_VALUES = ['sale', 'rent', 'daily'] as const;
 export function RealEstateFilterBar({
     locale,
     filters,
-    searchQuery,
-    onSearch,
     onApply,
     onClear,
+    onOpenMap,
 }: RealEstateFilterBarProps) {
     const [expanded, setExpanded] = useState(false);
-    const [focused, setFocused] = useState(false);
     const copy = getCopy(locale);
     const activeCount = useMemo(() => getActiveRealEstateFilterCount(filters), [filters]);
 
@@ -211,36 +211,25 @@ export function RealEstateFilterBar({
             <div className="re-filter-bar__inner">
                 {/* Search row */}
                 <div className="re-filter-search-row">
-                    <div className="re-filter-search-field" data-focused={focused}>
-                        <Search className="re-filter-search-icon" />
-                        <Input
-                            type="search"
-                            inputMode="search"
-                            autoComplete="off"
-                            value={searchQuery}
-                            placeholder={copy.searchPlaceholder}
-                            onChange={(event) => onSearch(event.target.value)}
-                            onFocus={() => setFocused(true)}
-                            onBlur={() => setFocused(false)}
-                            className="re-filter-search-input"
-                        />
-                        {searchQuery ? (
-                            <button
-                                type="button"
-                                className="re-filter-search-clear"
-                                aria-label={copy.clear}
-                                onClick={() => onSearch('')}
-                            >
-                                <RotateCcw className="h-4 w-4" />
-                            </button>
-                        ) : null}
-                    </div>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        className="re-filter-map-btn"
+                        onClick={onOpenMap}
+                        aria-label={copy.map}
+                        title={copy.map}
+                    >
+                        <MapPinned className="h-5 w-5" />
+                        <span>{copy.map}</span>
+                    </Button>
 
                     <Button
                         type="button"
                         variant="secondary"
                         className="re-filter-settings-btn"
                         onClick={() => setExpanded((value) => !value)}
+                        aria-label={copy.advanced}
+                        title={copy.advanced}
                     >
                         <Settings2 className="h-5 w-5" />
                         {activeCount > 0 ? (

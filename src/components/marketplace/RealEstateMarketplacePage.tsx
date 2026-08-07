@@ -317,18 +317,9 @@ export function RealEstateMarketplacePage() {
     setFilters({ ...EMPTY_REAL_ESTATE_FILTERS });
   };
 
-  const handleSearch = (nextQuery: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    const trimmed = nextQuery.trim();
-
-    if (trimmed) {
-      params.set('q', trimmed);
-    } else {
-      params.delete('q');
-    }
-
-    const nextPath = params.toString() ? `${basePath}?${params.toString()}` : basePath;
-    router.replace(nextPath, { scroll: false });
+  const handleOpenMap = () => {
+    setSelectedAdId(undefined);
+    setIsMapOpen(true);
   };
 
   const handleResetAllFilters = () => {
@@ -352,10 +343,9 @@ export function RealEstateMarketplacePage() {
         <RealEstateFilterBar
           locale={locale}
           filters={filters}
-          searchQuery={query}
-          onSearch={handleSearch}
           onApply={handleApplyFilters}
           onClear={handleClearFilters}
+          onOpenMap={handleOpenMap}
         />
 
         {isLoadingAds ? (

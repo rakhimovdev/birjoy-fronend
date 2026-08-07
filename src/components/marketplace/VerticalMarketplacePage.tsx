@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, ArrowUpDown } from 'lucide-react';
 import { CategoryBar } from '@/components/ads/CategoryBar';
+import { AutoFilterBar } from '@/components/marketplace/AutoFilterBar';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { AdCard } from '@/components/ads/AdCard';
 import {
@@ -14,12 +15,10 @@ import {
 } from '@/components/marketplace/MarketplaceStates';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { fetchAdsPage } from '@/lib/ads';
-import { AUTO_FUEL_OPTIONS, AUTO_TRANSMISSION_OPTIONS } from '@/lib/auto-config';
 import { getLocalizedText } from '@/lib/i18n';
 import { getCategoriesForVertical, getCategoryBySlug, getVerticalHref } from '@/lib/mock-data';
 import type { Ad, AdVertical } from '@/lib/types';
@@ -53,6 +52,20 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
   const shouldShowCategoryBar = vertical === 'auto';
   const shouldShowAutoFilters = vertical === 'auto';
   const hasActiveAutoFilters = shouldShowAutoFilters && (sort !== 'newest' || (fuelType !== 'all' && Boolean(fuelType)) || (transmission !== 'all' && Boolean(transmission)));
+
+  const handleSearch = (nextQuery: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const trimmed = nextQuery.trim();
+
+    if (trimmed) {
+      params.set('q', trimmed);
+    } else {
+      params.delete('q');
+    }
+
+    const nextPath = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(nextPath, { scroll: false });
+  };
 
   useEffect(() => {
     setSort(searchParams.get('sort') ?? 'newest');
@@ -175,70 +188,32 @@ export function VerticalMarketplacePage({ vertical }: { vertical: AdVertical }) 
         ) : null}
 
         {shouldShowAutoFilters ? (
-          <section className="surface-card section-shell rounded-[1.85rem]">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="grid w-full gap-3 md:grid-cols-3">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">{locale === 'ru' ? 'Сортировка' : locale === 'en' ? 'Sort' : 'Saralash'}</p>
-                  <Select value={sort} onValueChange={(value) => { setSort(value); setCurrentPage(1); }}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="newest">{locale === 'ru' ? 'Сначала новые' : locale === 'en' ? 'Newest first' : 'Eng yangi birinchi'}</SelectItem>
-                      <SelectItem value="price_asc">{locale === 'ru' ? 'Цена ↑' : locale === 'en' ? 'Price ↑' : 'Narx ↑'}</SelectItem>
-                      <SelectItem value="price_desc">{locale === 'ru' ? 'Цена ↓' : locale === 'en' ? 'Price ↓' : 'Narx ↓'}</SelectItem>
-                      <SelectItem value="year_desc">{locale === 'ru' ? 'Год ↓' : locale === 'en' ? 'Year ↓' : 'Yil ↓'}</SelectItem>
-                      <SelectItem value="mileage_asc">{locale === 'ru' ? 'Пробег ↑' : locale === 'en' ? 'Mileage ↑' : 'Yurgan masofa ↑'}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">{locale === 'ru' ? 'Топливо' : locale === 'en' ? 'Fuel' : 'Yonilg‘i'}</p>
-                  <Select value={fuelType} onValueChange={(value) => { setFuelType(value); setCurrentPage(1); }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={locale === 'ru' ? 'Любое' : locale === 'en' ? 'Any' : 'Har qanday'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{locale === 'ru' ? 'Любое' : locale === 'en' ? 'Any' : 'Har qanday'}</SelectItem>
-                      {AUTO_FUEL_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {getLocalizedText(option.label, locale)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">{locale === 'ru' ? 'Коробка' : locale === 'en' ? 'Transmission' : 'Uzatish qutisi'}</p>
-                  <Select value={transmission} onValueChange={(value) => { setTransmission(value); setCurrentPage(1); }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={locale === 'ru' ? 'Любая' : locale === 'en' ? 'Any' : 'Har qanday'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{locale === 'ru' ? 'Любая' : locale === 'en' ? 'Any' : 'Har qanday'}</SelectItem>
-                      {AUTO_TRANSMISSION_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {getLocalizedText(option.label, locale)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSort('newest');
-                  setFuelType('all');
-                  setTransmission('all');
-                  setCurrentPage(1);
-                }}
-              >
-                {messages.home.clearFilters}
-              </Button>
-            </div>
-          </section>
+          <AutoFilterBar
+            locale={locale}
+            searchQuery={query}
+            sort={sort}
+            fuelType={fuelType}
+            transmission={transmission}
+            onSearch={handleSearch}
+            onSortChange={(value) => {
+              setSort(value);
+              setCurrentPage(1);
+            }}
+            onFuelChange={(value) => {
+              setFuelType(value);
+              setCurrentPage(1);
+            }}
+            onTransmissionChange={(value) => {
+              setTransmission(value);
+              setCurrentPage(1);
+            }}
+            onClear={() => {
+              setSort('newest');
+              setFuelType('all');
+              setTransmission('all');
+              setCurrentPage(1);
+            }}
+          />
         ) : null}
 
         {hasFilters ? (
