@@ -1173,6 +1173,7 @@
     padding: 0 1.25rem;
     font-size: 0.95rem;
     font-weight: 700;
+    white-space: nowrap;
   }
 
   .re-filter-map-btn:hover {
@@ -1286,88 +1287,7 @@
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
   }
 
-  .re-filter-chips {
-    display: flex;
-    gap: 0.5rem;
-    overflow-x: auto;
-    padding: 0.1rem 0.1rem 0.35rem;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .re-filter-chips::-webkit-scrollbar {
-    display: none;
-  }
-
-  .re-filter-chip {
-    display: inline-flex;
-    min-height: 2.5rem;
-    min-width: max-content;
-    align-items: center;
-    gap: 0.45rem;
-    border-radius: 9999px;
-    border: 1px solid rgba(174, 184, 206, 0.42);
-    background: hsla(var(--muted), 0.55);
-    padding: 0.45rem 0.85rem;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: hsl(var(--muted-foreground));
-    transition:
-      border-color 180ms ease,
-      background-color 180ms ease,
-      color 180ms ease,
-      transform 180ms ease;
-  }
-
-  .re-filter-chip:hover {
-    transform: translateY(-1px);
-    border-color: hsla(var(--ring), 0.42);
-    background: hsla(var(--primary), 0.1);
-    color: hsl(var(--primary));
-  }
-
-  .re-filter-chip[data-active='true'] {
-    border-color: hsla(var(--ring), 0.5);
-    background: linear-gradient(135deg, hsla(var(--primary), 0.18), hsla(var(--accent), 0.12));
-    color: hsl(var(--primary));
-  }
-
-  .re-filter-chip--toggle[data-active='true'] {
-    border-color: hsla(var(--ring), 0.5);
-    background: hsla(var(--muted), 0.7);
-  }
-
-  .dark .re-filter-chip {
-    border-color: rgba(91, 105, 141, 0.34);
-    background: rgba(255, 255, 255, 0.07);
-    color: rgba(232, 239, 255, 0.82);
-  }
-
-  .dark .re-filter-chip:hover {
-    border-color: rgba(108, 146, 255, 0.4);
-    background: rgba(255, 255, 255, 0.12);
-    color: #ffffff;
-  }
-
-  .dark .re-filter-chip[data-active='true'] {
-    border-color: rgba(108, 146, 255, 0.5);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.26), rgba(255, 115, 10, 0.18));
-    color: #f5f8ff;
-  }
-
-  .dark .re-filter-chip--toggle[data-active='true'] {
-    border-color: rgba(108, 146, 255, 0.5);
-    background: rgba(255, 255, 255, 0.12);
-  }
-
-  .re-filter-chip-chevron {
-    transition: transform 220ms ease;
-  }
-
-  .re-filter-chip-chevron--open {
-    -webkit-transform: rotate(180deg);
-    transform: rotate(180deg);
-  }
+  /* Chip row styles removed (Sort / Fuel / Transmission chips no longer used in AutoFilterBar) */
 
   /* Collapsible advanced panel */
   .re-filter-collapsible {

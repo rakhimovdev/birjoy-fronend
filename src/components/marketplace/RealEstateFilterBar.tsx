@@ -2,15 +2,13 @@
 
 import {
     Building2,
-    ChevronDown,
+    Coins,
+    DoorOpen,
     Landmark,
     MapPinned,
     RotateCcw,
-    Settings2,
-    SlidersHorizontal,
-    Coins,
     Ruler,
-    DoorOpen,
+    Settings2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -19,7 +17,6 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import type { Language } from '@/lib/i18n';
 import {
-    EMPTY_REAL_ESTATE_FILTERS,
     getActiveRealEstateFilterCount,
     type RealEstateFilterState,
     type RealEstateRoomsFilter,
@@ -37,7 +34,6 @@ type RealEstateFilterBarProps = {
 function getCopy(language: Language) {
     if (language === 'ru') {
         return {
-            searchPlaceholder: 'Шукать жильё, адрес или район...',
             clear: 'Сбросить',
             map: 'Карта',
             active: 'активно',
@@ -61,7 +57,6 @@ function getCopy(language: Language) {
 
     if (language === 'en') {
         return {
-            searchPlaceholder: 'Search homes, addresses, or districts...',
             clear: 'Reset',
             map: 'Map',
             active: 'active',
@@ -84,7 +79,6 @@ function getCopy(language: Language) {
     }
 
     return {
-        searchPlaceholder: 'Uy-joy, manzil yoki hudud qidirish...',
         clear: 'Tozalash',
         map: 'Xarita',
         active: 'faol',
@@ -157,51 +151,6 @@ export function RealEstateFilterBar({
     ];
 
     const isMortgageActive = filters.listingType === 'mortgage';
-    const hasPrice = Boolean(filters.priceMin.trim() || filters.priceMax.trim());
-    const hasArea = Boolean(filters.areaMin.trim() || filters.areaMax.trim());
-    const hasPropertyType = filters.propertyType !== 'all';
-    const hasRooms = filters.rooms !== 'any';
-
-    const chips = [
-        {
-            key: 'propertyType',
-            icon: Building2,
-            label: copy.propertyType,
-            active: hasPropertyType,
-        },
-        {
-            key: 'mortgage',
-            icon: Landmark,
-            label: copy.mortgage,
-            active: isMortgageActive,
-        },
-        {
-            key: 'price',
-            icon: Coins,
-            label: copy.price,
-            active: hasPrice,
-        },
-        {
-            key: 'rooms',
-            icon: DoorOpen,
-            label: copy.rooms,
-            active: hasRooms,
-        },
-        {
-            key: 'area',
-            icon: Ruler,
-            label: copy.area,
-            active: hasArea,
-        },
-    ];
-
-    const scrollToChip = (key: string) => {
-        setExpanded(true);
-        requestAnimationFrame(() => {
-            const target = document.getElementById(`re-filter-section-${key}`);
-            target?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        });
-    };
 
     const fieldClassName =
         'h-11 rounded-[1.05rem] border border-white/10 bg-slate-900/82 text-white placeholder:text-slate-400 shadow-none backdrop-blur-0 focus:border-primary/45 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-0 focus-visible:border-primary/45 focus-visible:ring-primary/30 focus-visible:ring-offset-0';
@@ -209,7 +158,7 @@ export function RealEstateFilterBar({
     return (
         <section className="re-filter-bar">
             <div className="re-filter-bar__inner">
-                {/* Search row */}
+                {/* Actions row: Map + Filter */}
                 <div className="re-filter-search-row">
                     <Button
                         type="button"
@@ -256,38 +205,6 @@ export function RealEstateFilterBar({
                             </button>
                         );
                     })}
-                </div>
-
-                {/* Filter chips */}
-                <div className="re-filter-chips">
-                    {chips.map((chip) => {
-                        const Icon = chip.icon;
-                        return (
-                            <button
-                                key={chip.key}
-                                type="button"
-                                className="re-filter-chip"
-                                data-active={chip.active}
-                                onClick={() => scrollToChip(chip.key)}
-                            >
-                                <Icon className="h-4 w-4" />
-                                {chip.label}
-                            </button>
-                        );
-                    })}
-
-                    <button
-                        type="button"
-                        className="re-filter-chip re-filter-chip--toggle"
-                        data-active={expanded}
-                        onClick={() => setExpanded((value) => !value)}
-                    >
-                        <SlidersHorizontal className="h-4 w-4" />
-                        {copy.advanced}
-                        <ChevronDown
-                            className={cn('re-filter-chip-chevron', expanded && 're-filter-chip-chevron--open')}
-                        />
-                    </button>
                 </div>
 
                 {/* Advanced panel */}

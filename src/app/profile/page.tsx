@@ -34,7 +34,6 @@ import {
   Mail,
   MapPin,
   Megaphone,
-  Menu,
   Package,
   Phone,
   RefreshCcw,
@@ -230,9 +229,6 @@ function ProfilePageContent() {
         views: 'Просмотры',
         calls: 'Звонки',
         sales: 'Продажи',
-        balance: 'Баланс',
-        topUp: 'Пополнить',
-        package: 'Пакет',
         adsTab: 'Мои объявления',
         servicesTab: 'Управление',
         favoritesTab: 'Избранное',
@@ -260,13 +256,9 @@ function ProfilePageContent() {
         shareSuccessDescription: 'Профилем можно поделиться.',
         shareErrorTitle: 'Не удалось поделиться профилем',
         shareErrorDescription: 'Попробуйте ещё раз через пару секунд.',
-        soonTitle: 'Скоро будет',
-        topUpDescription: 'Пополнение баланса подключим в следующих обновлениях.',
-        packageDescription: 'Пакеты продвижения добавим в ближайших обновлениях.',
         tabHint: 'Быстрое управление объявлениями, избранным и настройками.',
         shareAria: 'Поделиться профилем',
         editAria: 'Редактировать профиль',
-        menuAria: 'Открыть управление',
       }
       : locale === 'en'
         ? {
@@ -274,9 +266,6 @@ function ProfilePageContent() {
           views: 'Views',
           calls: 'Calls',
           sales: 'Sales',
-          balance: 'Balance',
-          topUp: 'Top up',
-          package: 'Package',
           adsTab: 'My listings',
           servicesTab: 'Manage',
           favoritesTab: 'Favorites',
@@ -304,22 +293,15 @@ function ProfilePageContent() {
           shareSuccessDescription: 'You can share it anywhere now.',
           shareErrorTitle: 'Unable to share the profile',
           shareErrorDescription: 'Please try again in a moment.',
-          soonTitle: 'Coming soon',
-          topUpDescription: 'Balance top-up will be available in a future update.',
-          packageDescription: 'Promotion packages will arrive in the next updates.',
           tabHint: 'Quick access to your listings, favorites, and settings.',
           shareAria: 'Share profile',
           editAria: 'Edit profile',
-          menuAria: 'Open profile management',
         }
         : {
           listings: 'Eʼlonlar',
           views: 'Ko‘rishlar',
           calls: 'Qo‘ng‘iroqlar',
           sales: 'Sotuvlar',
-          balance: 'Balans',
-          topUp: 'To‘ldirish',
-          package: 'Paket',
           adsTab: "Mening e'lonlarim",
           servicesTab: 'Boshqaruv',
           favoritesTab: 'Saqlanganlar',
@@ -347,13 +329,9 @@ function ProfilePageContent() {
           shareSuccessDescription: 'Endi uni xohlagan joyga yuborishingiz mumkin.',
           shareErrorTitle: 'Profilni ulashib bo‘lmadi',
           shareErrorDescription: 'Bir necha soniyadan keyin yana urinib ko‘ring.',
-          soonTitle: 'Tez orada',
-          topUpDescription: 'Balansni to‘ldirish keyingi yangilanishlarda qo‘shiladi.',
-          packageDescription: 'Promoushen paketlari tez orada qo‘shiladi.',
           tabHint: 'Eʼlonlar, saqlanganlar va sozlamalarga tez kirish.',
           shareAria: 'Profilni ulashish',
           editAria: 'Profilni tahrirlash',
-          menuAria: 'Profil boshqaruvini ochish',
         };
 
   const propertyTypeLabels = useMemo(
@@ -714,13 +692,6 @@ function ProfilePageContent() {
     }
   };
 
-  const handleBalanceAction = (action: 'top-up' | 'package') => {
-    toast({
-      title: mobileCopy.soonTitle,
-      description: action === 'top-up' ? mobileCopy.topUpDescription : mobileCopy.packageDescription,
-    });
-  };
-
   const resetMobileFilters = () => {
     setStatusFilter('all');
     setSortFilter('newest');
@@ -761,14 +732,6 @@ function ProfilePageContent() {
                     >
                       <Edit className="h-5 w-5" />
                     </button>
-                    <button
-                      type="button"
-                      className={MOBILE_PROFILE_ICON_BUTTON}
-                      aria-label={mobileCopy.menuAria}
-                      onClick={() => setActiveMobileTab('services')}
-                    >
-                      <Menu className="h-5 w-5" />
-                    </button>
                   </div>
                 </div>
 
@@ -807,28 +770,6 @@ function ProfilePageContent() {
                       </div>
                     );
                   })}
-                </div>
-              </section>
-
-              <section className={cn(MOBILE_PROFILE_CARD, 'overflow-hidden p-4')}>
-                <div className="rounded-[1.45rem] bg-background/60 px-4 py-5 text-center text-[1.35rem] font-extrabold">
-                  {mobileCopy.balance}: 0 so&apos;m
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    className="flex min-h-14 items-center justify-center rounded-full bg-primary px-4 text-base font-semibold text-primary-foreground transition-transform hover:scale-[0.99] hover:bg-primary/90"
-                    onClick={() => handleBalanceAction('top-up')}
-                  >
-                    {mobileCopy.topUp}
-                  </button>
-                  <button
-                    type="button"
-                    className="flex min-h-14 items-center justify-center rounded-full bg-gradient-to-r from-[#ffd21f] via-[#ffe15e] to-[#fff4aa] px-4 text-base font-extrabold text-black transition-transform hover:scale-[0.99]"
-                    onClick={() => handleBalanceAction('package')}
-                  >
-                    {mobileCopy.package}
-                  </button>
                 </div>
               </section>
 
@@ -919,7 +860,7 @@ function ProfilePageContent() {
                       </Select>
                     </div>
 
-                    <div className="property-listing-grid">
+                    <div className="grid grid-cols-2 gap-3">
                       {isLoadingAds ? (
                         <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full py-16 text-center')}>
                           <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
@@ -946,6 +887,7 @@ function ProfilePageContent() {
                             ad={ad}
                             isFavorite={isFavorite(ad.id)}
                             canDelete={isAdmin}
+                            variant="mobile"
                             onDeleted={handleAdDeleted}
                             onUpdated={handleAdUpdated}
                           />
@@ -991,7 +933,7 @@ function ProfilePageContent() {
                 ) : null}
 
                 {activeMobileTab === 'favorites' ? (
-                  <div className="property-listing-grid">
+                  <div className="grid grid-cols-2 gap-3">
                     {isLoadingAds ? (
                       <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full py-16 text-center')}>
                         <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
@@ -1018,6 +960,7 @@ function ProfilePageContent() {
                           ad={ad}
                           isFavorite={isFavorite(ad.id)}
                           canDelete={isAdmin}
+                          variant="mobile"
                           onDeleted={handleAdDeleted}
                           onUpdated={handleAdUpdated}
                         />
@@ -1475,68 +1418,68 @@ function ProfilePageContent() {
               </Tabs>
             </div>
           </div>
-      </main>
+        </main>
 
-      <Sheet open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
-        <SheetContent
-          side="bottom"
-          className="mx-auto w-full max-w-2xl rounded-t-[2rem] border border-border/70 px-4 pb-6 pt-10 sm:px-6"
-        >
-          <SheetHeader className="text-left">
-            <SheetTitle>{editProfileCopy.title}</SheetTitle>
-            <SheetDescription>{editProfileCopy.description}</SheetDescription>
-          </SheetHeader>
+        <Sheet open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
+          <SheetContent
+            side="bottom"
+            className="mx-auto w-full max-w-2xl rounded-t-[2rem] border border-border/70 px-4 pb-6 pt-10 sm:px-6"
+          >
+            <SheetHeader className="text-left">
+              <SheetTitle>{editProfileCopy.title}</SheetTitle>
+              <SheetDescription>{editProfileCopy.description}</SheetDescription>
+            </SheetHeader>
 
-          <form className="mt-6 space-y-4" onSubmit={(event) => void handleSaveProfile(event)}>
-            <div className="space-y-2">
-              <Label htmlFor="profile-name">{editProfileCopy.name}</Label>
-              <Input
-                id="profile-name"
-                value={profileForm.name}
-                onChange={(event) => handleProfileFieldChange('name', event.target.value)}
-                maxLength={80}
-                required
-              />
-            </div>
+            <form className="mt-6 space-y-4" onSubmit={(event) => void handleSaveProfile(event)}>
+              <div className="space-y-2">
+                <Label htmlFor="profile-name">{editProfileCopy.name}</Label>
+                <Input
+                  id="profile-name"
+                  value={profileForm.name}
+                  onChange={(event) => handleProfileFieldChange('name', event.target.value)}
+                  maxLength={80}
+                  required
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="profile-phone">{editProfileCopy.phone}</Label>
-              <Input
-                id="profile-phone"
-                value={profileForm.phone}
-                onChange={(event) => handleProfileFieldChange('phone', event.target.value)}
-                maxLength={40}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="profile-phone">{editProfileCopy.phone}</Label>
+                <Input
+                  id="profile-phone"
+                  value={profileForm.phone}
+                  onChange={(event) => handleProfileFieldChange('phone', event.target.value)}
+                  maxLength={40}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="profile-location">{editProfileCopy.location}</Label>
-              <Input
-                id="profile-location"
-                value={profileForm.location}
-                onChange={(event) => handleProfileFieldChange('location', event.target.value)}
-                maxLength={240}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="profile-location">{editProfileCopy.location}</Label>
+                <Input
+                  id="profile-location"
+                  value={profileForm.location}
+                  onChange={(event) => handleProfileFieldChange('location', event.target.value)}
+                  maxLength={240}
+                />
+              </div>
 
-            <SheetFooter className="gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="min-h-11 w-full sm:w-auto"
-                onClick={() => setIsEditProfileOpen(false)}
-              >
-                {editProfileCopy.cancel}
-              </Button>
-              <Button type="submit" className="min-h-11 w-full sm:w-auto" disabled={isSavingProfile}>
-                {isSavingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {editProfileCopy.save}
-              </Button>
-            </SheetFooter>
-          </form>
-        </SheetContent>
-      </Sheet>
-    </ProtectedRoute>
+              <SheetFooter className="gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-11 w-full sm:w-auto"
+                  onClick={() => setIsEditProfileOpen(false)}
+                >
+                  {editProfileCopy.cancel}
+                </Button>
+                <Button type="submit" className="min-h-11 w-full sm:w-auto" disabled={isSavingProfile}>
+                  {isSavingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {editProfileCopy.save}
+                </Button>
+              </SheetFooter>
+            </form>
+          </SheetContent>
+        </Sheet>
+      </ProtectedRoute>
     </MarketplaceShell>
   );
 }

@@ -2,15 +2,11 @@
 
 import {
     ArrowUpDown,
-    Calendar,
-    ChevronDown,
     Cog,
     Fuel,
-    Gauge,
     RotateCcw,
     Search,
     Settings2,
-    SlidersHorizontal,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -49,7 +45,6 @@ function getCopy(language: Language) {
             sort: 'Сортировка',
             fuel: 'Топливо',
             transmission: 'Коробка',
-            advanced: 'Все фильтры',
             anyFuel: 'Любое топливо',
             anyTransmission: 'Любая коробка',
             newest: 'Сначала новые',
@@ -67,7 +62,6 @@ function getCopy(language: Language) {
             sort: 'Sort',
             fuel: 'Fuel',
             transmission: 'Transmission',
-            advanced: 'All filters',
             anyFuel: 'Any fuel',
             anyTransmission: 'Any transmission',
             newest: 'Newest first',
@@ -84,7 +78,6 @@ function getCopy(language: Language) {
         sort: 'Saralash',
         fuel: 'Yonilg‘i',
         transmission: 'Uzatish qutisi',
-        advanced: 'Barcha filtrlar',
         anyFuel: 'Har qanday yoqilg‘i',
         anyTransmission: 'Har qanday quti',
         newest: 'Eng yangi birinchi',
@@ -118,14 +111,6 @@ export function AutoFilterBar({
     const hasSort = sort !== 'newest';
     const activeCount = [hasFuel, hasTransmission, hasSort].filter(Boolean).length;
 
-    const scrollToSection = (key: string) => {
-        setExpanded(true);
-        requestAnimationFrame(() => {
-            const target = document.getElementById(`auto-filter-section-${key}`);
-            target?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        });
-    };
-
     const sortLabel = (value: string) => {
         switch (value) {
             case 'price_asc':
@@ -147,12 +132,6 @@ export function AutoFilterBar({
         'border-white/10 bg-slate-900 text-white shadow-[0_24px_56px_rgba(2,6,23,0.48)] backdrop-blur-none';
     const selectItemClassName =
         'text-white hover:text-white focus:text-white data-[highlighted]:text-white data-[state=checked]:text-white';
-
-    const chips = [
-        { key: 'sort', icon: ArrowUpDown, label: copy.sort, active: hasSort },
-        { key: 'fuel', icon: Fuel, label: copy.fuel, active: hasFuel },
-        { key: 'transmission', icon: Cog, label: copy.transmission, active: hasTransmission },
-    ];
 
     return (
         <section className="re-filter-bar">
@@ -195,38 +174,6 @@ export function AutoFilterBar({
                             <span className="re-filter-settings-count">{activeCount}</span>
                         ) : null}
                     </Button>
-                </div>
-
-                {/* Filter chips */}
-                <div className="re-filter-chips">
-                    {chips.map((chip) => {
-                        const Icon = chip.icon;
-                        return (
-                            <button
-                                key={chip.key}
-                                type="button"
-                                className="re-filter-chip"
-                                data-active={chip.active}
-                                onClick={() => scrollToSection(chip.key)}
-                            >
-                                <Icon className="h-4 w-4" />
-                                {chip.label}
-                            </button>
-                        );
-                    })}
-
-                    <button
-                        type="button"
-                        className="re-filter-chip re-filter-chip--toggle"
-                        data-active={expanded}
-                        onClick={() => setExpanded((value) => !value)}
-                    >
-                        <SlidersHorizontal className="h-4 w-4" />
-                        {copy.advanced}
-                        <ChevronDown
-                            className={cn('re-filter-chip-chevron', expanded && 're-filter-chip-chevron--open')}
-                        />
-                    </button>
                 </div>
 
                 {/* Advanced panel */}

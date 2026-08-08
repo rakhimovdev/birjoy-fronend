@@ -385,6 +385,20 @@ export function RealEstateMarketplacePage() {
         ) : (
           <>
             <section className="phone-nav-only mx-[calc(var(--page-gutter)*-1)] flex-col gap-4 bg-transparent px-[var(--page-gutter)] pb-6 pt-1 text-foreground">
+              <div className="space-y-3">
+                <h2 className="text-[1.28rem] font-semibold leading-tight tracking-[-0.03em] text-foreground">
+                  {viewCopy.resultsPrefix} {mobileResultsCount} {viewCopy.resultsSuffix}
+                </h2>
+
+                <div className="flex items-center gap-2 text-[0.78rem] text-muted-foreground">
+                  <ArrowUpDown className="h-3.5 w-3.5" />
+                  <span>
+                    {viewCopy.sortLabel}:{' '}
+                    <span className="font-medium text-foreground">{viewCopy.sortValue}</span>
+                  </span>
+                </div>
+              </div>
+
               {mobileFeaturedAds.length > 0 ? (
                 <div className="space-y-3">
                   <h2 className="text-[1.15rem] font-semibold tracking-[-0.03em] text-foreground">
@@ -409,20 +423,6 @@ export function RealEstateMarketplacePage() {
                   </div>
                 </div>
               ) : null}
-
-              <div className="space-y-3">
-                <h2 className="text-[1.28rem] font-semibold leading-tight tracking-[-0.03em] text-foreground">
-                  {viewCopy.resultsPrefix} {mobileResultsCount} {viewCopy.resultsSuffix}
-                </h2>
-
-                <div className="flex items-center gap-2 text-[0.78rem] text-muted-foreground">
-                  <ArrowUpDown className="h-3.5 w-3.5" />
-                  <span>
-                    {viewCopy.sortLabel}:{' '}
-                    <span className="font-medium text-foreground">{viewCopy.sortValue}</span>
-                  </span>
-                </div>
-              </div>
 
               {mobileGridAds.length > 0 ? (
                 <section className="grid grid-cols-2 gap-3">
