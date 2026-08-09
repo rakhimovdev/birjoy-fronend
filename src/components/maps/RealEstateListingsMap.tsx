@@ -27,6 +27,7 @@ export function RealEstateListingsMap(props: {
   mapClassName?: string;
   mapHeight?: number | string;
   previewMode?: 'full' | 'address-only' | 'hidden';
+  focusZoom?: number;
 }) {
   return <RealEstateListingsMapClient {...props} />;
 }

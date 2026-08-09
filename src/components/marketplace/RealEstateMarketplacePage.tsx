@@ -73,6 +73,7 @@ export function RealEstateMarketplacePage() {
   const [locationState, setLocationState] = useState<LocationState>('idle');
   const [userCoordinates, setUserCoordinates] = useState<Location | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
+  const [nearbyZoomed, setNearbyZoomed] = useState(false);
   const [filters, setFilters] = useState<RealEstateFilterState>({ ...EMPTY_REAL_ESTATE_FILTERS });
   const query = searchParams.get('q')?.trim() ?? '';
   const category = searchParams.get('category')?.trim() ?? '';
@@ -287,6 +288,14 @@ export function RealEstateMarketplacePage() {
 
   const handleLocateUser = () => {
     setSelectedAdId(undefined);
+
+    // If the user already has a location pinned and zoomed in, a second
+    // click on the locate button zoom back out to the normal map view.
+    if (userCoordinates && nearbyZoomed) {
+      setNearbyZoomed(false);
+      return;
+    }
+
     setLocationState('loading');
     void requestCurrentDeviceLocation().then((result) => {
       if (result.status !== 'success') {
@@ -296,6 +305,7 @@ export function RealEstateMarketplacePage() {
       }
 
       setUserCoordinates(result.location);
+      setNearbyZoomed(true);
       setLocationState('ready');
     });
   };
@@ -319,6 +329,7 @@ export function RealEstateMarketplacePage() {
 
   const handleOpenMap = () => {
     setSelectedAdId(undefined);
+    setNearbyZoomed(false);
     setIsMapOpen(true);
   };
 
@@ -587,6 +598,7 @@ export function RealEstateMarketplacePage() {
         title={viewCopy.mapTitle}
         emptyTitle={viewCopy.noMapTitle}
         emptyDescription={viewCopy.noMapDescription}
+        focusZoom={nearbyZoomed ? 15 : undefined}
       />
     </MarketplaceShell>
   );

@@ -25,6 +25,7 @@ type YandexMapProps = MapProps & {
   containerId?: string;
   isVisible?: boolean;
   previewMode?: 'full' | 'address-only' | 'hidden';
+  focusZoom?: number;
 };
 
 function getCopy(language: Language) {
@@ -84,6 +85,7 @@ function YandexMapComponent({
   containerId,
   isVisible = true,
   previewMode = 'full',
+  focusZoom,
 }: YandexMapProps) {
   const { theme } = useTheme();
   const [loaderNonce, setLoaderNonce] = useState(0);
@@ -225,6 +227,20 @@ function YandexMapComponent({
       return;
     }
 
+    if (focusZoom) {
+      if (userLocation) {
+        map.setCenter(toYandexCoordinates(userLocation), focusZoom, {
+          duration: 220,
+        });
+      } else {
+        map.setZoom(focusZoom, {
+          duration: 220,
+        });
+      }
+
+      return;
+    }
+
     if (selectedMarker) {
       void map.panTo(toYandexCoordinates(selectedMarker), {
         duration: 220,
@@ -268,7 +284,7 @@ function YandexMapComponent({
     map.setCenter(toYandexCoordinates(center), zoom, {
       duration: 220,
     });
-  }, [center, fitBounds, markers, selectedMarker, userLocation, zoom]);
+  }, [center, fitBounds, focusZoom, markers, selectedMarker, userLocation, zoom]);
 
   useEffect(() => {
     const map = mapRef.current;

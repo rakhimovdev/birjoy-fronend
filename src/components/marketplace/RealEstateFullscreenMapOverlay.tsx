@@ -3,7 +3,7 @@
 import { AlertCircle, ArrowLeft, Loader2, LocateFixed, MapPinned } from 'lucide-react';
 import { useEffect } from 'react';
 import { RealEstateListingsMap } from '@/components/maps/RealEstateListingsMap';
-import { RealEstateFilterSheet } from '@/components/marketplace/RealEstateFilterSheet';
+import { RealEstateFilterBar } from '@/components/marketplace/RealEstateFilterBar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { Language } from '@/lib/i18n';
@@ -33,6 +33,7 @@ type RealEstateFullscreenMapOverlayProps = {
   title: string;
   emptyTitle: string;
   emptyDescription: string;
+  focusZoom?: number;
 };
 
 function getBackLabel(language: Language) {
@@ -93,6 +94,7 @@ export function RealEstateFullscreenMapOverlay({
   title,
   emptyTitle,
   emptyDescription,
+  focusZoom,
 }: RealEstateFullscreenMapOverlayProps) {
   useEffect(() => {
     if (!open || typeof document === 'undefined') {
@@ -129,6 +131,7 @@ export function RealEstateFullscreenMapOverlay({
             isVisible={open}
             mapClassName="marketplace-property-map-shell marketplace-property-map-shell--fullscreen"
             mapHeight="100%"
+            focusZoom={focusZoom}
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-gradient-to-br from-background via-background to-muted/60 px-6">
@@ -142,7 +145,7 @@ export function RealEstateFullscreenMapOverlay({
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:p-4 sm:pt-[calc(env(safe-area-inset-top)+1rem)]">
-        <div className="pointer-events-auto mx-auto flex max-w-6xl flex-col gap-3 rounded-[1.85rem] border border-white/10 bg-slate-900 p-3 text-white shadow-[0_24px_60px_rgba(2,6,23,0.5)] sm:flex-row sm:items-start sm:justify-between sm:p-4">
+        <div className="pointer-events-auto mx-auto flex max-w-6xl flex-col gap-3 rounded-[1.85rem] border border-white/10 bg-slate-900 p-3 text-white shadow-[0_24px_60px_rgba(2,6,23,0.5)] sm:p-4">
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -159,12 +162,15 @@ export function RealEstateFullscreenMapOverlay({
             </div>
           </div>
 
-          <RealEstateFilterSheet
+          <RealEstateFilterBar
             locale={locale}
             filters={filters}
             onApply={onApplyFilters}
             onClear={onClearFilters}
-            buttonClassName="h-11 w-full rounded-[1.15rem] border-white/10 bg-white/8 text-white hover:bg-white/12 hover:text-white sm:w-auto"
+            onOpenMap={() => {
+              // No-op: we are already on the map.
+            }}
+            showMapButton={false}
           />
         </div>
       </div>

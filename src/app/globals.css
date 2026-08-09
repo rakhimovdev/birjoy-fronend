@@ -1207,6 +1207,16 @@
     color: hsl(var(--primary));
   }
 
+  .re-filter-settings-btn--full {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
   .dark .re-filter-settings-btn {
     border-color: rgba(91, 105, 141, 0.4);
     background: rgba(255, 255, 255, 0.08);

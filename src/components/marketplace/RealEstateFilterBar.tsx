@@ -29,6 +29,7 @@ type RealEstateFilterBarProps = {
     onApply: (filters: RealEstateFilterState) => void;
     onClear: () => void;
     onOpenMap: () => void;
+    showMapButton?: boolean;
 };
 
 function getCopy(language: Language) {
@@ -108,6 +109,7 @@ export function RealEstateFilterBar({
     onApply,
     onClear,
     onOpenMap,
+    showMapButton = true,
 }: RealEstateFilterBarProps) {
     const [expanded, setExpanded] = useState(false);
     const copy = getCopy(locale);
@@ -160,22 +162,27 @@ export function RealEstateFilterBar({
             <div className="re-filter-bar__inner">
                 {/* Actions row: Map + Filter */}
                 <div className="re-filter-search-row">
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        className="re-filter-map-btn"
-                        onClick={onOpenMap}
-                        aria-label={copy.map}
-                        title={copy.map}
-                    >
-                        <MapPinned className="h-5 w-5" />
-                        <span>{copy.map}</span>
-                    </Button>
+                    {showMapButton ? (
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            className="re-filter-map-btn"
+                            onClick={onOpenMap}
+                            aria-label={copy.map}
+                            title={copy.map}
+                        >
+                            <MapPinned className="h-5 w-5" />
+                            <span>{copy.map}</span>
+                        </Button>
+                    ) : null}
 
                     <Button
                         type="button"
                         variant="secondary"
-                        className="re-filter-settings-btn"
+                        className={cn(
+                            're-filter-settings-btn',
+                            !showMapButton && 're-filter-settings-btn--full'
+                        )}
                         onClick={() => setExpanded((value) => !value)}
                         aria-label={copy.advanced}
                         title={copy.advanced}

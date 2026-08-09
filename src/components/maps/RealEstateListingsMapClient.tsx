@@ -30,6 +30,7 @@ export default function RealEstateListingsMapClient({
   mapClassName,
   mapHeight,
   previewMode,
+  focusZoom,
 }: {
   ads: Ad[];
   locale: Language;
@@ -43,6 +44,7 @@ export default function RealEstateListingsMapClient({
   mapClassName?: string;
   mapHeight?: number | string;
   previewMode?: 'full' | 'address-only' | 'hidden';
+  focusZoom?: number;
 }) {
   const validAds = useMemo(() => ads.filter(hasCoordinates), [ads]);
   const priceFormatter = useMemo(
@@ -83,13 +85,19 @@ export default function RealEstateListingsMapClient({
   const mapCenter = useMemo<Location>(() => {
     const selectedMarker = markers.find((marker) => marker.id === selectedAdId);
 
+    if (focusZoom && userLocation) {
+      return userLocation;
+    }
+
     return selectedMarker || userLocation || markers[0] || YANDEX_MAPS_DEFAULT_CENTER;
-  }, [markers, selectedAdId, userLocation]);
+  }, [focusZoom, markers, selectedAdId, userLocation]);
+
+  const mapZoom = focusZoom ?? (selectedAdId ? 14 : 12);
 
   return (
     <YandexMap
       center={mapCenter}
-      zoom={selectedAdId ? 14 : 12}
+      zoom={mapZoom}
       markers={markers}
       onMarkerClick={(marker) => onSelectAd(marker.id)}
       onMarkerClose={() => onSelectAd(undefined)}
@@ -99,12 +107,13 @@ export default function RealEstateListingsMapClient({
       nearbyRadiusKm={userLocation ? nearbyRadiusKm : undefined}
       popupActionLabel={popupActionLabel}
       language={locale}
-      fitBounds={markers.length > 1 || Boolean(userLocation)}
+      fitBounds={!focusZoom && (markers.length > 1 || Boolean(userLocation))}
       containerId="marketplace-property-map"
       isVisible={isVisible}
       height={mapHeight}
       className={mapClassName || 'marketplace-property-map-shell'}
       previewMode={previewMode}
+      focusZoom={focusZoom}
     />
   );
 }
