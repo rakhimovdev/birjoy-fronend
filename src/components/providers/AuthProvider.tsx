@@ -16,6 +16,7 @@ import {
   type SignInInput,
   type SignUpInput,
   type UpdateCurrentUserInput,
+  signInWithAppleUser,
 } from '@/lib/auth';
 import type { UserProfile } from '@/lib/types';
 
@@ -31,6 +32,7 @@ type AuthContextValue = {
   signOut: () => void;
   isFavorite: (adId: string) => boolean;
   toggleFavorite: (adId: string) => Promise<{ ok: boolean; isFavorite: boolean; message?: string }>;
+    signInWithApple?: (credential: string, audience?: string) => Promise<unknown>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -96,6 +98,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async (credential: string) => {
     const result = await signInWithGoogleUser(credential);
+
+    if (result.ok) {
+      setUser(result.user);
+    }
+
+    return result;
+  };
+
+  const signInWithApple = async (credential: string, audience?: string) => {
+    const result = await signInWithAppleUser(credential, audience);
 
     if (result.ok) {
       setUser(result.user);
@@ -184,6 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isReady,
         signIn,
         signInWithGoogle,
+        signInWithApple,
         signUp,
         updateProfile,
         signOut,

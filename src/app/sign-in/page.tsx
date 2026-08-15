@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Loader2, LogIn } from 'lucide-react';
 import { AuthPageShell } from '@/components/auth/AuthPageShell';
 import { GoogleAuthSection } from '@/components/auth/GoogleAuthSection';
+import { AppleAuthSection } from '@/components/auth/AppleAuthSection';
 import { YandexAuthSection } from '@/components/auth/YandexAuthSection';
 import { Navbar } from '@/components/layout/Navbar';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -154,6 +155,7 @@ function SignInPageContent() {
         footerActionLabel={messages.auth.signUpAction}
         footerActionHref="/sign-up"
       >
+        <AppleAuthSection redirectTo={redirect} />
         <GoogleAuthSection redirectTo={redirect} />
         <YandexAuthSection redirectTo={redirect} />
         <form onSubmit={(event) => void handleSubmit(event)} className="space-y-5">

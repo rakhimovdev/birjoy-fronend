@@ -577,6 +577,67 @@ export async function signInWithGoogleUser(credential: string): Promise<AuthResu
   return callAuthEndpoint('google', { credential });
 }
 
+export async function signInWithAppleUser(credential: string, audience?: string): Promise<AuthResult> {
+  if (!backendApiBaseUrl) {
+    return {
+      ok: false,
+      error: 'server_unavailable',
+    };
+  }
+
+  // The backend endpoint expects { credential, audience? }
+  const requestUrl = `${backendApiBaseUrl}/auth/apple`;
+
+  try {
+    const response = await fetch(requestUrl, {
+      method: 'POST',
+      credentials: 'include',
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ credential, audience }),
+    });
+
+    const data = (await response.json().catch(() => ({}))) as RemoteAuthResponse;
+
+    if (!response.ok) {
+      if (response.status >= 500) {
+        return {
+          ok: false,
+          error: 'server_unavailable',
+          message: data.message,
+        };
+      }
+
+      return {
+        ok: false,
+        error: 'validation_error',
+        message: data.message || 'Authentication request failed.',
+      };
+    }
+
+    if (!data.user || !data.token) {
+      return {
+        ok: false,
+        error: 'server_unavailable',
+      };
+    }
+
+    const user = normalizeRemoteUser(data.user);
+    writeStoredToken(data.token);
+    writeStoredSessionUser(user);
+    notifyAuthSync();
+
+    return { ok: true, user };
+  } catch (error) {
+    return {
+      ok: false,
+      error: 'server_unavailable',
+    };
+  }
+}
+
 export function completeExternalAuthSession(
   token: string,
   user: RemoteAuthUser

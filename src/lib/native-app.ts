@@ -49,6 +49,15 @@ type BirJoyAuthPlugin = {
     email?: string;
     photoUrl?: string;
   }>;
+  signInWithApple(options?: {
+    // Optionally allow passing requested scopes or state if needed
+    scopes?: string[];
+  }): Promise<{
+    identityToken?: string;
+    authorizationCode?: string;
+    email?: string;
+    fullName?: string;
+  }>;
   addListener(
     eventName: 'googleAuthDebug',
     listenerFunc: (event: NativeGoogleAuthDebugEvent) => void
