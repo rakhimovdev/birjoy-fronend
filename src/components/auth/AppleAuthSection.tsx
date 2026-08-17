@@ -12,7 +12,8 @@ import { isNativeIosApp, waitForBirJoyAuthPlugin } from '@/lib/native-app';
 import { registerPlugin, Capacitor } from '@capacitor/core';
 
 // Use the community plugin for Apple Sign-In (iOS native)
-const AppleSignIn = registerPlugin('AppleSignIn') as any;
+// Plugin registers as `SignInWithApple` (v7+)
+const AppleSignIn = registerPlugin('SignInWithApple') as any;
 
 type AppleAuthSectionProps = {
   redirectTo: string;
@@ -59,18 +60,20 @@ export function AppleAuthSection({ redirectTo }: AppleAuthSectionProps) {
       }
 
       // Ensure plugin is available
-      if (!Capacitor.isPluginAvailable || !Capacitor.isPluginAvailable('AppleSignIn')) {
+      if (!Capacitor.isPluginAvailable || !Capacitor.isPluginAvailable('SignInWithApple')) {
         throw new Error('Apple Sign-In plugin is not available in this WebView.');
       }
 
-      // Call community Apple Sign-In plugin
-      const nativeResult = await AppleSignIn.signIn();
+      // Call community Apple Sign-In plugin (native uses `authorize`)
+      const nativeResult = await AppleSignIn.authorize({});
 
-      if (!nativeResult || !nativeResult.identityToken) {
+      const identityToken = nativeResult?.response?.identityToken as string | undefined;
+
+      if (!identityToken) {
         throw new Error('Apple identity token was not returned.');
       }
 
-      const credential = nativeResult.identityToken as string;
+      const credential = identityToken;
 
       // Use context method if available, otherwise fallback to direct helper
       const rawResult = typeof signInWithApple === 'function'
