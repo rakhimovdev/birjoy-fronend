@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { AppleLogo } from '@/components/brand/AppleLogo';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { MarketplaceShell } from '@/components/layout/MarketplaceShell';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -72,6 +73,10 @@ const MOBILE_PROFILE_SELECT_TRIGGER =
   'h-14 rounded-[1.3rem] border-border/70 bg-card/78 px-4 text-left text-sm font-semibold text-foreground shadow-none';
 const MOBILE_PROFILE_OUTLINE_BUTTON =
   'min-h-12 rounded-full border-border/60 bg-background/60 px-6 text-foreground hover:bg-primary/8 hover:text-foreground';
+// Haqiqiy pochta qutisiga tegishli bo'lmagan domenlar: Apple relay manzillari va
+// backend email bermagan Apple hisoblari uchun ishlatadigan zaxira domen.
+const RELAY_EMAIL_DOMAINS = ['privaterelay.appleid.com', 'appleid.local'];
+
 const MOBILE_PROFILE_SHELL_BACKGROUND = '';
 
 export default function ProfilePage() {
@@ -257,6 +262,7 @@ function ProfilePageContent() {
         shareErrorTitle: 'Не удалось поделиться профилем',
         shareErrorDescription: 'Попробуйте ещё раз через пару секунд.',
         tabHint: 'Быстрое управление объявлениями, избранным и настройками.',
+        appleHiddenEmail: 'Вход через Apple',
         shareAria: 'Поделиться профилем',
         editAria: 'Редактировать профиль',
       }
@@ -294,6 +300,7 @@ function ProfilePageContent() {
           shareErrorTitle: 'Unable to share the profile',
           shareErrorDescription: 'Please try again in a moment.',
           tabHint: 'Quick access to your listings, favorites, and settings.',
+          appleHiddenEmail: 'Signed in with Apple',
           shareAria: 'Share profile',
           editAria: 'Edit profile',
         }
@@ -330,6 +337,7 @@ function ProfilePageContent() {
           shareErrorTitle: 'Profilni ulashib bo‘lmadi',
           shareErrorDescription: 'Bir necha soniyadan keyin yana urinib ko‘ring.',
           tabHint: 'Eʼlonlar, saqlanganlar va sozlamalarga tez kirish.',
+          appleHiddenEmail: 'Apple orqali kirilgan',
           shareAria: 'Profilni ulashish',
           editAria: 'Profilni tahrirlash',
         };
@@ -500,8 +508,20 @@ function ProfilePageContent() {
       return 'birjoy_user';
     }
 
-    const emailSegment = user.email.split('@')[0] || user.name;
-    const normalizedHandle = emailSegment.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    const [emailLocalPart = '', emailDomain = ''] = user.email.toLowerCase().split('@');
+
+    // Apple "Hide My Email" tasodifiy manzil beradi (zvw8prchv7@privaterelay.appleid.com).
+    // Undan yasalgan handle foydalanuvchiga hech narsa anglatmaydi, shuning uchun
+    // bu holatda handle o'rniga "Apple orqali kirilgan" belgisi ko'rsatiladi.
+    if (RELAY_EMAIL_DOMAINS.includes(emailDomain)) {
+      return '';
+    }
+
+    const normalizedHandle = (emailLocalPart || user.name)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+
     return normalizedHandle || `birjoy_${user.id.slice(-4)}`;
   }, [user]);
 
@@ -703,16 +723,26 @@ function ProfilePageContent() {
     <MarketplaceShell contentClassName={MOBILE_PROFILE_SHELL_BACKGROUND}>
       <ProtectedRoute>
         <main className="marketplace-main">
+          {/* Navbar profil sahifasida render qilinmaydi (Navbar.tsx), shuning uchun
+              .marketplace-top-nav dagi safe-area padding ham yo'q. Bu sarlavha
+              ekranning eng tepasida turadi va o'zi status bar uchun joy ajratadi. */}
           <section
-            className="phone-nav-only min-[769px]:hidden mx-[calc(var(--page-gutter)*-1)] px-[var(--page-gutter)] pb-28 pt-3 text-foreground"
+            className="phone-nav-only min-[769px]:hidden mx-[calc(var(--page-gutter)*-1)] px-[var(--page-gutter)] pb-28 pt-[calc(env(safe-area-inset-top)+0.75rem)] text-foreground"
           >
             <div className="space-y-6">
               <header className="space-y-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="truncate text-[1.5rem] font-black leading-none tracking-[-0.04em] sm:text-[1.7rem]">
-                      {profileHandle}
-                    </p>
+                    {profileHandle ? (
+                      <p className="truncate text-[1.5rem] font-black leading-none tracking-[-0.04em] sm:text-[1.7rem]">
+                        {profileHandle}
+                      </p>
+                    ) : (
+                      <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border/70 bg-secondary/60 px-3 py-1.5 text-sm font-semibold text-muted-foreground">
+                        <AppleLogo className="h-4 w-4 shrink-0 -translate-y-[1px]" />
+                        <span className="truncate">{mobileCopy.appleHiddenEmail}</span>
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">

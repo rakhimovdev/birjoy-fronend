@@ -271,6 +271,49 @@ export function invalidateAdsCache() {
   inflightAdsGetRequests.clear();
 }
 
+/**
+ * Ulashilgan (dedupe qilingan) so'rovni chaqiruvchining bekor qilishidan ajratadi.
+ *
+ * inflight kesh bitta promise'ni bir necha chaqiruvchiga beradi. Agar o'sha promise
+ * birinchi chaqiruvchining AbortSignal'iga bog'langan bo'lsa, o'sha chaqiruvchi
+ * unmount bo'lganda promise yiqiladi va HALI HAM mount bo'lgan boshqa chaqiruvchilar
+ * "Fetch is aborted" xatosini oladi — o'zlari hech narsani bekor qilmagan bo'lsa ham.
+ * (React StrictMode dev'da mount/unmount/remount qilgani uchun bu doim yuz beradi.)
+ *
+ * Shuning uchun asosiy so'rov signalsiz ishlaydi, har bir chaqiruvchi esa faqat
+ * o'zining signali uzilganda rad javob oladi.
+ */
+function abortableForCaller<T>(promise: Promise<T>, signal?: AbortSignal | null): Promise<T> {
+  if (!signal) {
+    return promise;
+  }
+
+  if (signal.aborted) {
+    // Yutilmagan rad javobni oldini olish uchun asosiy promise'ni kuzatib qo'yamiz.
+    void promise.catch(() => {});
+    return Promise.reject(signal.reason ?? new DOMException('Aborted', 'AbortError'));
+  }
+
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => {
+      reject(signal.reason ?? new DOMException('Aborted', 'AbortError'));
+    };
+
+    signal.addEventListener('abort', onAbort, { once: true });
+
+    promise.then(
+      (value) => {
+        signal.removeEventListener('abort', onAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener('abort', onAbort);
+        reject(error);
+      }
+    );
+  });
+}
+
 async function requestAdsApi(
   path: string,
   init?: RequestInit,
@@ -300,9 +343,16 @@ async function requestAdsApi(
     const existingRequest = inflightAdsGetRequests.get(cacheKey);
 
     if (existingRequest) {
-      return existingRequest;
+      // Ulashilgan promise, shuning uchun uni ham shu chaqiruvchining signaliga bog'laymiz.
+      return abortableForCaller(existingRequest, options.signal || init?.signal);
     }
   }
+
+  const callerSignal = options.signal || init?.signal;
+  // Keshlanadigan GET'lar chaqiruvchilar o'rtasida ulashiladi, shuning uchun asosiy
+  // so'rov birorta chaqiruvchining signaliga bog'lanmasligi kerak. Bitta chaqiruvchi
+  // ketib qolsa ham so'rov davom etadi va natija keshga tushadi — remount uni darhol oladi.
+  const isSharedRequest = isGetRequest && !options.skipCache;
 
   const requestPromise = fetchWithTimeout(
     `${backendApiBaseUrl}${path}`,
@@ -311,7 +361,7 @@ async function requestAdsApi(
       credentials: 'include',
       headers,
       cache: 'no-store',
-      signal: options.signal || init?.signal,
+      signal: isSharedRequest ? undefined : callerSignal,
     }
   )
     .then(async (response) => {
@@ -337,8 +387,9 @@ async function requestAdsApi(
       }
     });
 
-  if (isGetRequest && !options.skipCache) {
+  if (isSharedRequest) {
     inflightAdsGetRequests.set(cacheKey, requestPromise);
+    return abortableForCaller(requestPromise, callerSignal);
   }
 
   return requestPromise;

@@ -49,15 +49,6 @@ type BirJoyAuthPlugin = {
     email?: string;
     photoUrl?: string;
   }>;
-  signInWithApple(options?: {
-    // Optionally allow passing requested scopes or state if needed
-    scopes?: string[];
-  }): Promise<{
-    identityToken?: string;
-    authorizationCode?: string;
-    email?: string;
-    fullName?: string;
-  }>;
   addListener(
     eventName: 'googleAuthDebug',
     listenerFunc: (event: NativeGoogleAuthDebugEvent) => void
@@ -201,6 +192,41 @@ export async function waitForBirJoyAuthPlugin(options?: {
   }
 
   return diagnostics;
+}
+
+/**
+ * Waits for a Capacitor plugin to be reachable through the native bridge.
+ *
+ * The app loads the live site over `server.url`, so the bridge and the page can
+ * finish initialising in either order. Polling avoids reporting a plugin as
+ * missing purely because the check ran first.
+ */
+export async function waitForCapacitorPlugin(
+  pluginName: string,
+  options?: {
+    timeoutMs?: number;
+    pollIntervalMs?: number;
+  }
+) {
+  if (!hasWindowObject() || !Capacitor.isNativePlatform()) {
+    return false;
+  }
+
+  const timeoutMs = options?.timeoutMs ?? 4000;
+  const pollIntervalMs = options?.pollIntervalMs ?? 120;
+  const startedAt = Date.now();
+
+  while (!Capacitor.isPluginAvailable(pluginName)) {
+    if (Date.now() - startedAt >= timeoutMs) {
+      return false;
+    }
+
+    await new Promise<void>((resolve) => {
+      window.setTimeout(resolve, pollIntervalMs);
+    });
+  }
+
+  return true;
 }
 
 export function logNativeAuthDebug(step: string, data?: Record<string, unknown>) {

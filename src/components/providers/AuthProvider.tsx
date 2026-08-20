@@ -13,6 +13,8 @@ import {
   signUpUser,
   syncStoredUser,
   updateCurrentUserProfile,
+  type AppleSignInPayload,
+  type AuthResult,
   type SignInInput,
   type SignUpInput,
   type UpdateCurrentUserInput,
@@ -32,7 +34,7 @@ type AuthContextValue = {
   signOut: () => void;
   isFavorite: (adId: string) => boolean;
   toggleFavorite: (adId: string) => Promise<{ ok: boolean; isFavorite: boolean; message?: string }>;
-    signInWithApple?: (credential: string, audience?: string) => Promise<unknown>;
+  signInWithApple: (payload: AppleSignInPayload) => Promise<AuthResult>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -106,8 +108,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return result;
   };
 
-  const signInWithApple = async (credential: string, audience?: string) => {
-    const result = await signInWithAppleUser(credential, audience);
+  const signInWithApple = async (payload: AppleSignInPayload) => {
+    const result = await signInWithAppleUser(payload);
 
     if (result.ok) {
       setUser(result.user);

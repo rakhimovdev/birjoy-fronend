@@ -71,6 +71,22 @@ export type AuthResult =
       message?: string;
     };
 
+/**
+ * Payload sent to the backend after a native Sign in with Apple authorization.
+ *
+ * The email is deliberately absent: it is read from the verified identity token
+ * server-side, so a client can never assert someone else's address. The name is
+ * only ever returned by Apple on the first authorization, which is why it has to
+ * travel separately from the token.
+ */
+export type AppleSignInPayload = {
+  identityToken: string;
+  authorizationCode?: string;
+  givenName?: string;
+  familyName?: string;
+  audience?: string;
+};
+
 export type DeleteAccountResult =
   | {
       ok: true;
@@ -577,7 +593,7 @@ export async function signInWithGoogleUser(credential: string): Promise<AuthResu
   return callAuthEndpoint('google', { credential });
 }
 
-export async function signInWithAppleUser(credential: string, audience?: string): Promise<AuthResult> {
+export async function signInWithAppleUser(payload: AppleSignInPayload): Promise<AuthResult> {
   if (!backendApiBaseUrl) {
     return {
       ok: false,
@@ -585,7 +601,6 @@ export async function signInWithAppleUser(credential: string, audience?: string)
     };
   }
 
-  // The backend endpoint expects { credential, audience? }
   const requestUrl = `${backendApiBaseUrl}/auth/apple`;
 
   try {
@@ -596,7 +611,15 @@ export async function signInWithAppleUser(credential: string, audience?: string)
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ credential, audience }),
+      body: JSON.stringify({
+        credential: payload.identityToken,
+        // Lets the backend redeem a refresh token, which it needs to revoke the
+        // Apple grant if the user later deletes their account.
+        authorizationCode: payload.authorizationCode,
+        givenName: payload.givenName,
+        familyName: payload.familyName,
+        audience: payload.audience,
+      }),
     });
 
     const data = (await response.json().catch(() => ({}))) as RemoteAuthResponse;
