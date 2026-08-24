@@ -64,7 +64,7 @@ const sections = [
   {
     title: '12. Contact',
     body:
-      'For privacy or data deletion questions, contact BirJoy via phone at +998 33 258 04 04 or Telegram at @bir_joyuz. If you use this page in production, replace or supplement these channels with a monitored privacy email such as privacy@bir-joy.uz.',
+      'For privacy or data deletion questions, contact BirJoy via phone at +998 33 258 04 04 or Telegram at @bir_joyuz.',
   },
 ];
 

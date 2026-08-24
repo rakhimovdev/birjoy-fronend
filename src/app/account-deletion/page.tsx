@@ -50,10 +50,6 @@ export default function AccountDeletionPage() {
               <div className="mt-4 space-y-3 text-sm leading-7 text-muted-foreground">
                 <p>Phone: <a className="font-semibold text-primary transition-colors hover:text-primary/80" href="tel:+998332580404">+998 33 258 04 04</a></p>
                 <p>Telegram: <a className="font-semibold text-primary transition-colors hover:text-primary/80" href="https://t.me/bir_joyuz" target="_blank" rel="noreferrer">@bir_joyuz</a></p>
-                <p>
-                  Recommended production addition: a monitored mailbox such as
-                  <span className="font-semibold"> privacy@bir-joy.uz</span>.
-                </p>
               </div>
             </article>
           </div>
