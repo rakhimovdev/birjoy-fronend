@@ -611,6 +611,12 @@
     display: none;
   }
 
+  /* Faqat keng ekranlar uchun. Planshet kengligida yuqori panelga hamma
+     element sig'maydi, bularning har biri esa drawer ichida ham bor. */
+  .desktop-only {
+    display: none;
+  }
+
   .marketplace-bottom-nav {
     position: fixed;
     inset-inline: 0;
@@ -1693,6 +1699,10 @@
       display: flex !important;
     }
 
+    .desktop-only {
+      display: none !important;
+    }
+
     .listing-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -1752,7 +1762,8 @@
     }
 
     .tablet-nav-only,
-    .tablet-and-up-only {
+    .tablet-and-up-only,
+    .desktop-only {
       display: flex !important;
     }
 

@@ -125,7 +125,7 @@ function NavbarContent() {
     <nav className="marketplace-top-nav sticky top-0 z-40 w-full">
       <div className="marketplace-frame py-3">
         <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/50 bg-background/72 px-3 py-3 shadow-[0_18px_42px_rgba(7,28,85,0.06)] backdrop-blur-xl sm:px-4">
-          <div className="flex items-center justify-between gap-2 min-[481px]:gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 min-[481px]:gap-x-3">
             <div className="flex min-w-0 items-center gap-2 min-[481px]:gap-3">
               <div className="tablet-and-up-only">
                 <MarketplaceDrawer />
@@ -135,8 +135,11 @@ function NavbarContent() {
               </Link>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1.5 min-[481px]:gap-2">
-              <Link href={searchPageHref} className="tablet-and-up-only">
+            {/* min-w-0 + shrink: kontent sig'masa guruh qisqaradi. shrink-0 bo'lsa
+                justify-between oxirgi guruhni o'ngga qadaydi va u chap guruh
+                ustiga chiqib ketadi — iPad'da aynan shu bo'lgan edi. */}
+            <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-1.5 min-[481px]:gap-2">
+              <Link href={searchPageHref} className="desktop-only">
                 <Button
                   variant="ghost"
                   className="h-11 gap-2 rounded-[1.15rem] border border-white/55 bg-background/78 px-4 font-semibold shadow-none hover:bg-background sm:h-12"
@@ -146,9 +149,9 @@ function NavbarContent() {
                 </Button>
               </Link>
 
-              <div className="tablet-and-up-only">
+              <div className="desktop-only">
                 <Select value={locale} onValueChange={handleLocaleChange}>
-                  <SelectTrigger className="h-11 w-[120px] rounded-[1.15rem] border-white/55 bg-background/78 shadow-none sm:h-12 lg:w-[142px]">
+                  <SelectTrigger className="h-11 w-auto min-w-[9rem] rounded-[1.15rem] border-white/55 bg-background/78 shadow-none sm:h-12">
                     <SelectValue placeholder={messages.navbar.language} />
                   </SelectTrigger>
                   <SelectContent>
@@ -179,7 +182,7 @@ function NavbarContent() {
                 <>
                   <Link
                     href={favoritesHref}
-                    className="tablet-and-up-only touch-target items-center justify-center rounded-full border text-muted-foreground shadow-none transition-colors hover:text-primary marketplace-glass-button"
+                    className="desktop-only touch-target items-center justify-center rounded-full border text-muted-foreground shadow-none transition-colors hover:text-primary marketplace-glass-button"
                     aria-label={messages.navbar.favorites}
                   >
                     <Heart className="h-5 w-5" />

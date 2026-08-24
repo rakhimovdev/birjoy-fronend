@@ -16,12 +16,13 @@ import {
   getVerticalHref,
 } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
-import { getLocalizedText } from '@/lib/i18n';
+import { getLocalizedText, isLanguage, languageMeta, languages, type Language } from '@/lib/i18n';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type NavigationLink = {
   href: string;
@@ -126,7 +127,7 @@ export function MarketplaceBottomNav() {
 
 export function MarketplaceDrawer() {
   const { links, pathname } = useNavigationLinks();
-  const { locale, messages } = useI18n();
+  const { locale, setLocale, messages } = useI18n();
   const activeVertical = pathname === '/' ? 'real_estate' : getVerticalBySlug(pathname.slice(1))?.id || 'market';
   const verticalSectionLabel =
     locale === 'ru' ? 'Вертикали' : locale === 'en' ? 'Verticals' : 'Vertikallar';
@@ -210,6 +211,33 @@ export function MarketplaceDrawer() {
                   </SheetClose>
                 ))}
               </div>
+            </div>
+
+            {/* Til tanlash planshetda yuqori paneldan olib tashlangan (u yerda joy
+                yetmaydi), shuning uchun boshqaruv shu yerda turadi. */}
+            <div className="space-y-3">
+              <p className="text-xs font-bold uppercase tracking-[0.26em] text-muted-foreground">
+                {messages.navbar.language}
+              </p>
+              <Select
+                value={locale}
+                onValueChange={(value) => {
+                  if (isLanguage(value)) {
+                    setLocale(value as Language);
+                  }
+                }}
+              >
+                <SelectTrigger className="marketplace-drawer-card h-12 w-full rounded-2xl">
+                  <SelectValue placeholder={messages.navbar.language} />
+                </SelectTrigger>
+                <SelectContent>
+                  {languages.map((language) => (
+                    <SelectItem key={language} value={language}>
+                      {languageMeta[language].label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
           </div>
