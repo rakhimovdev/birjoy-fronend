@@ -93,6 +93,8 @@ export type DeleteAccountResult =
     }
   | {
       ok: false;
+      /** Chaqiruvchi xabarni tarjima qilishi uchun. */
+      reason?: 'no_session' | 'session_expired' | 'request_failed';
       message: string;
     };
 
@@ -909,11 +911,14 @@ export async function deleteCurrentUserAccount(): Promise<DeleteAccountResult> {
   if (!storedUser) {
     return {
       ok: false,
+      reason: 'no_session',
       message: 'No signed-in user was found.',
     };
   }
 
-  if (!backendApiBaseUrl || !token) {
+  // Backend manzili yo'q bo'lsa akkauntlar faqat shu qurilmada saqlanadi,
+  // shuning uchun lokal o'chirish haqiqiy o'chirish hisoblanadi.
+  if (!backendApiBaseUrl) {
     deleteStoredUserById(storedUser.id);
     writeStoredToken(null);
     writeStoredSessionUser(null);
@@ -921,6 +926,17 @@ export async function deleteCurrentUserAccount(): Promise<DeleteAccountResult> {
 
     return {
       ok: true,
+    };
+  }
+
+  // Backend bor, lekin token yo'q: so'rovni tasdiqlab bo'lmaydi. Avval bu holatda
+  // ham lokal ma'lumot tozalanib "o'chirildi" deyilardi — server'da yozuv qolib
+  // ketardi va foydalanuvchiga yolg'on aytilardi.
+  if (!token) {
+    return {
+      ok: false,
+      reason: 'session_expired',
+      message: 'Your session has expired. Please sign in again and retry.',
     };
   }
 
@@ -939,6 +955,7 @@ export async function deleteCurrentUserAccount(): Promise<DeleteAccountResult> {
     if (!response.ok) {
       return {
         ok: false,
+        reason: 'request_failed',
         message: data.message || 'Account deletion failed.',
       };
     }
@@ -954,6 +971,7 @@ export async function deleteCurrentUserAccount(): Promise<DeleteAccountResult> {
   } catch {
     return {
       ok: false,
+      reason: 'request_failed',
       message: 'Account deletion failed.',
     };
   }

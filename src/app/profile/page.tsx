@@ -127,6 +127,8 @@ function ProfilePageContent() {
       successTitle: 'Akkaunt o‘chirildi',
       successDescription: 'Sizning maʼlumotlaringiz tizimdan olib tashlandi.',
       errorTitle: 'Akkaunt o‘chirilmadi',
+      sessionExpired: 'Sessiya muddati tugagan. Iltimos, qaytadan kiring va yana urinib ko‘ring.',
+      requestFailed: 'Serverga ulanib bo‘lmadi. Internetni tekshirib, qayta urinib ko‘ring.',
     },
     ru: {
       title: 'Удалить аккаунт?',
@@ -137,6 +139,8 @@ function ProfilePageContent() {
       successTitle: 'Аккаунт удалён',
       successDescription: 'Ваши данные были удалены из системы.',
       errorTitle: 'Не удалось удалить аккаунт',
+      sessionExpired: 'Сессия истекла. Войдите заново и повторите попытку.',
+      requestFailed: 'Не удалось связаться с сервером. Проверьте интернет и попробуйте снова.',
     },
     en: {
       title: 'Delete your account?',
@@ -147,6 +151,8 @@ function ProfilePageContent() {
       successTitle: 'Account deleted',
       successDescription: 'Your data has been removed from the system.',
       errorTitle: 'Account could not be deleted',
+      sessionExpired: 'Your session has expired. Sign in again and retry.',
+      requestFailed: 'We could not reach the server. Check your connection and try again.',
     },
   } as const;
 
@@ -605,9 +611,19 @@ function ProfilePageContent() {
       const result = await deleteCurrentUserAccount();
 
       if (!result.ok) {
+        const copy = deleteAccountCopy[locale];
+        // Xabar lib/auth.ts dan inglizcha keladi, shuning uchun sababni
+        // tarjimaga o'giramiz va uni faqat zaxira sifatida ishlatamiz.
+        const description =
+          result.reason === 'session_expired'
+            ? copy.sessionExpired
+            : result.reason === 'request_failed'
+              ? copy.requestFailed
+              : result.message;
+
         toast({
-          title: deleteAccountCopy[locale].errorTitle,
-          description: result.message,
+          title: copy.errorTitle,
+          description,
           variant: 'destructive',
         });
         return;
