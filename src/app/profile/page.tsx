@@ -55,6 +55,7 @@ import { getLocalizedText, isLanguage, languageMeta, languages, type Language } 
 import { useI18n } from '@/components/providers/LocaleProvider';
 import { fetchAds, getConditionLabel, invalidateAdsCache } from '@/lib/ads';
 import { deleteCurrentUserAccount } from '@/lib/auth';
+import { isNativeApp } from '@/lib/native-app';
 import { useAdminSession } from '@/hooks/use-admin-session';
 import { cn } from '@/lib/utils';
 import type { Ad } from '@/lib/types';
@@ -116,6 +117,7 @@ function ProfilePageContent() {
     phone: '',
     location: '',
   });
+  const [keyboardInset, setKeyboardInset] = useState(0);
 
   const deleteAccountCopy = {
     uz: {
@@ -166,6 +168,13 @@ function ProfilePageContent() {
         supportDescription: 'Позвоните, если нужна помощь с аккаунтом, заказами или публикацией объявлений.',
         exportTitle: 'Скачать мои данные',
         exportDescription: 'Сохраните свои объявления в JSON для личного архива.',
+        exportSharedTitle: 'Файл готов',
+        exportSharedDescription: 'Сохраните или отправьте JSON через окно «Поделиться».',
+        exportCopiedTitle: 'Данные скопированы',
+        exportCopiedDescription: 'JSON с вашими объявлениями скопирован в буфер обмена.',
+        exportErrorTitle: 'Не удалось выгрузить данные',
+        exportErrorDescription: 'Попробуйте ещё раз через пару секунд.',
+        signOutDescription: 'Вы выйдете из аккаунта на этом устройстве. Объявления останутся на месте.',
         dangerTitle: 'Опасная зона',
         dangerDescription: 'Удаление аккаунта навсегда удалит профиль, объявления и связанные заявки.',
       }
@@ -178,6 +187,13 @@ function ProfilePageContent() {
           supportDescription: 'Call for help with your account, orders, or publishing listings.',
           exportTitle: 'Download my data',
           exportDescription: 'Save your listings as JSON for your own records.',
+          exportSharedTitle: 'Your file is ready',
+          exportSharedDescription: 'Use the share sheet to save or send the JSON file.',
+          exportCopiedTitle: 'Data copied',
+          exportCopiedDescription: 'The JSON export was copied to your clipboard.',
+          exportErrorTitle: 'Export failed',
+          exportErrorDescription: 'Please try again in a moment.',
+          signOutDescription: 'Sign out on this device. Your listings stay in your account.',
           dangerTitle: 'Danger zone',
           dangerDescription: 'Deleting your account permanently removes your profile, listings, and linked requests.',
         }
@@ -189,6 +205,13 @@ function ProfilePageContent() {
           supportDescription: 'Akkaunt, buyurtma yoki eʼlon joylash bo‘yicha yordam kerak bo‘lsa qo‘ng‘iroq qiling.',
           exportTitle: "Ma'lumotlarimni yuklab olish",
           exportDescription: "Eʼlonlaringizni JSON ko‘rinishida shaxsiy arxiv uchun saqlab oling.",
+          exportSharedTitle: 'Fayl tayyor',
+          exportSharedDescription: 'JSON faylni ulashish oynasi orqali saqlang yoki yuboring.',
+          exportCopiedTitle: "Ma'lumotlar nusxalandi",
+          exportCopiedDescription: "Eʼlonlaringiz JSON ko‘rinishida clipboardga ko‘chirildi.",
+          exportErrorTitle: "Ma'lumotlarni yuklab bo‘lmadi",
+          exportErrorDescription: 'Bir necha soniyadan keyin yana urinib ko‘ring.',
+          signOutDescription: 'Shu qurilmada akkauntdan chiqasiz, eʼlonlaringiz saqlanib qoladi.',
           dangerTitle: 'Xavfli bo‘lim',
           dangerDescription: 'Akkauntni o‘chirish profilingizni, eʼlonlaringizni va bog‘liq so‘rovlarni butunlay olib tashlaydi.',
         };
@@ -461,6 +484,59 @@ function ProfilePageContent() {
     };
   }, [isReady, user?.id]);
 
+  // iOS klaviaturasi WebView'ni qayta o'lchamaydi, u faqat visual viewport'ni
+  // kichraytiradi. Shu sababli tahrirlash oynasi tugmalari klaviatura ostida
+  // qolib ketardi — bu yerda klaviatura balandligini o'lchab, joy qo'shamiz.
+  useEffect(() => {
+    const viewport = typeof window === 'undefined' ? null : window.visualViewport;
+
+    if (!viewport || !isEditProfileOpen) {
+      return;
+    }
+
+    let frameId = 0;
+
+    const syncKeyboardInset = () => {
+      // Layout viewport (documentElement) o'lchami o'zgarmaydi, faqat ko'rinadigan
+      // qism kichrayadi — shu ikkisining farqi klaviatura egallagan balandlik.
+      const layoutHeight = document.documentElement.clientHeight;
+      setKeyboardInset(Math.max(0, layoutHeight - viewport.height - viewport.offsetTop));
+    };
+
+    // Klaviatura animatsiya bilan ochiladi va WebKit oxirgi o'lchamni har doim
+    // resize hodisasi orqali bermaydi, shuning uchun fokus o'zgargach bir necha
+    // kadr davomida o'lchab turamiz.
+    const trackKeyboardAnimation = () => {
+      const startedAt = Date.now();
+
+      const step = () => {
+        syncKeyboardInset();
+
+        if (Date.now() - startedAt < 700) {
+          frameId = window.requestAnimationFrame(step);
+        }
+      };
+
+      window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(step);
+    };
+
+    syncKeyboardInset();
+    viewport.addEventListener('resize', syncKeyboardInset);
+    viewport.addEventListener('scroll', syncKeyboardInset);
+    document.addEventListener('focusin', trackKeyboardAnimation);
+    document.addEventListener('focusout', trackKeyboardAnimation);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      viewport.removeEventListener('resize', syncKeyboardInset);
+      viewport.removeEventListener('scroll', syncKeyboardInset);
+      document.removeEventListener('focusin', trackKeyboardAnimation);
+      document.removeEventListener('focusout', trackKeyboardAnimation);
+      setKeyboardInset(0);
+    };
+  }, [isEditProfileOpen]);
+
   useEffect(() => {
     if (!user || !isEditProfileOpen) {
       return;
@@ -571,7 +647,7 @@ function ProfilePageContent() {
     setFavoriteAds((previous) => previous.map((ad) => (ad.id === updatedAd.id ? updatedAd : ad)));
   };
 
-  const handleDownloadData = () => {
+  const handleDownloadData = async () => {
     const localizedListings = myAds.map((ad) => ({
       id: ad.id,
       title: getLocalizedText(ad.title, locale),
@@ -589,11 +665,54 @@ function ProfilePageContent() {
       status: ad.status,
     }));
 
-    const dataStr =
-      'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(localizedListings, null, 2));
+    const fileName = `birjoy-listings-${locale}.json`;
+    const fileBody = JSON.stringify(localizedListings, null, 2);
+
+    // Ilova ichidagi WebView `download` atributini umuman bajarmaydi: eski kod
+    // faylni saqlamasa ham "saqlandi" deb xabar berardi. Shuning uchun mobil
+    // ilovada fayl tizimning ulashish oynasi orqali beriladi.
+    if (isNativeApp()) {
+      try {
+        const exportFile = new File([fileBody], fileName, { type: 'application/json' });
+
+        if (navigator.canShare?.({ files: [exportFile] })) {
+          await navigator.share({ files: [exportFile], title: fileName });
+          toast({
+            title: settingsCopy.exportSharedTitle,
+            description: settingsCopy.exportSharedDescription,
+          });
+          return;
+        }
+
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(fileBody);
+          toast({
+            title: settingsCopy.exportCopiedTitle,
+            description: settingsCopy.exportCopiedDescription,
+          });
+          return;
+        }
+
+        throw new Error('Export is not supported on this device.');
+      } catch (error) {
+        // Foydalanuvchi ulashish oynasini yopgan bo'lsa bu xato emas.
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+
+        toast({
+          title: settingsCopy.exportErrorTitle,
+          description: settingsCopy.exportErrorDescription,
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(fileBody);
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute('href', dataStr);
-    downloadAnchorNode.setAttribute('download', `birjoy-listings-${locale}.json`);
+    downloadAnchorNode.setAttribute('download', fileName);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -743,11 +862,14 @@ function ProfilePageContent() {
               .marketplace-top-nav dagi safe-area padding ham yo'q. Bu sarlavha
               ekranning eng tepasida turadi va o'zi status bar uchun joy ajratadi. */}
           <section
-            className="phone-nav-only min-[769px]:hidden mx-[calc(var(--page-gutter)*-1)] px-[var(--page-gutter)] pb-28 pt-[calc(env(safe-area-inset-top)+0.75rem)] text-foreground"
+            className="phone-nav-only min-[769px]:hidden mx-[calc(var(--page-gutter)*-1)] -mt-[clamp(0.8rem,1.8vw,1.35rem)] pb-4 text-foreground"
           >
-            <div className="space-y-6">
-              <header className="space-y-3">
-                <div className="flex items-start justify-between gap-4">
+            <div className="w-full">
+              {/* Profil sahifasida yuqori navbar yo'q, shuning uchun sarlavha
+                  o'zi status bar uchun joy ajratadi va sahifa aylanganda kontent
+                  soat/batareya ustiga chiqib ketmasligi uchun yopishib turadi. */}
+              <header className="sticky top-0 z-30 border-b border-border/45 bg-background/85 px-[var(--page-gutter)] pb-3 pt-[calc(env(safe-area-inset-top)+0.5rem)] backdrop-blur-xl">
+                <div className="flex items-center justify-between gap-4">
                   <div className="min-w-0">
                     {profileHandle ? (
                       <p className="truncate text-[1.5rem] font-black leading-none tracking-[-0.04em] sm:text-[1.7rem]">
@@ -761,7 +883,7 @@ function ProfilePageContent() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <button
                       type="button"
                       className={MOBILE_PROFILE_ICON_BUTTON}
@@ -780,141 +902,221 @@ function ProfilePageContent() {
                     </button>
                   </div>
                 </div>
-
-                <p className="text-sm text-muted-foreground">{mobileCopy.tabHint}</p>
               </header>
 
-              <section className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-24 w-24 shrink-0 border-2 border-primary/15 bg-background/60">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className="bg-primary/10 text-xl font-bold text-foreground">
-                      {user.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 space-y-1">
-                    <h1 className="break-words text-[1.35rem] font-extrabold leading-tight tracking-[-0.03em]">
-                      {user.name}
-                    </h1>
-                    {userLocation ? <p className="text-sm text-muted-foreground">{userLocation}</p> : null}
+              <div className="space-y-5 px-[var(--page-gutter)] pt-4">
+                <section className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-20 w-20 shrink-0 border-2 border-primary/15 bg-background/60">
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback className="bg-primary/10 text-xl font-bold text-foreground">
+                        {user.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 space-y-1">
+                      <h1 className="break-words text-[1.35rem] font-extrabold leading-tight tracking-[-0.03em]">
+                        {user.name}
+                      </h1>
+                      {userLocation ? <p className="text-sm text-muted-foreground">{userLocation}</p> : null}
+                    </div>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  {mobileStats.map((item) => {
-                    const Icon = item.icon;
+                  {/* Statistika bitta ixcham qatorda: avval to'rtta katta karta
+                      ekranning yarmini egallab, eʼlonlar pastga tushib ketardi. */}
+                  <div className={cn(MOBILE_PROFILE_CARD, 'grid grid-cols-4 divide-x divide-border/50 p-0')}>
+                    {mobileStats.map((item) => {
+                      const Icon = item.icon;
 
-                    return (
-                      <div key={item.label} className={cn(MOBILE_PROFILE_CARD, 'p-3')}>
-                        <div className="flex items-start justify-between gap-2">
-                          <span className="text-[2rem] font-black tracking-[-0.05em]">
+                      return (
+                        <div key={item.label} className="flex flex-col items-center gap-0.5 px-1 py-3">
+                          <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                          <span className="text-[1.35rem] font-black leading-none tracking-[-0.04em]">
                             {isLoadingAds ? '...' : statsFormatter.format(item.value)}
                           </span>
-                          <Icon className="mt-1 h-5 w-5 text-muted-foreground" />
+                          <p className="w-full truncate text-center text-[0.68rem] text-muted-foreground">
+                            {item.label}
+                          </p>
                         </div>
-                        <p className="mt-3 text-[1.05rem] text-muted-foreground">{item.label}</p>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4 border-b border-border/60">
+                    {[
+                      { value: 'ads', label: mobileCopy.adsTab, icon: Building2 },
+                      { value: 'services', label: mobileCopy.servicesTab, icon: WalletCards },
+                      { value: 'favorites', label: mobileCopy.favoritesTab, icon: Heart },
+                    ].map((tab) => {
+                      const Icon = tab.icon;
+                      const isActive = activeMobileTab === tab.value;
+
+                      return (
+                        <button
+                          key={tab.value}
+                          type="button"
+                          className={cn(
+                            'flex flex-col items-center gap-2 border-b-2 px-1 pb-3 pt-1 text-center transition-colors',
+                            isActive ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground'
+                          )}
+                          onClick={() => setActiveMobileTab(tab.value as MobileProfileTab)}
+                        >
+                          <Icon className="h-5 w-5" />
+                          <span className="text-xs font-medium">{tab.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {activeMobileTab === 'ads' ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as AdStatusFilter)}>
+                          <SelectTrigger className={MOBILE_PROFILE_SELECT_TRIGGER}>
+                            <SelectValue placeholder={mobileCopy.status} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">{mobileCopy.allStatuses}</SelectItem>
+                            <SelectItem value="active">{mobileCopy.activeStatus}</SelectItem>
+                            <SelectItem value="sold">{mobileCopy.soldStatus}</SelectItem>
+                            <SelectItem value="pending">{mobileCopy.pendingStatus}</SelectItem>
+                            <SelectItem value="flagged">{mobileCopy.flaggedStatus}</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <Select value={sortFilter} onValueChange={(value) => setSortFilter(value as AdSortFilter)}>
+                          <SelectTrigger className={MOBILE_PROFILE_SELECT_TRIGGER}>
+                            <SelectValue placeholder={mobileCopy.sort} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="newest">{mobileCopy.newest}</SelectItem>
+                            <SelectItem value="oldest">{mobileCopy.oldest}</SelectItem>
+                            <SelectItem value="price-high">{mobileCopy.expensive}</SelectItem>
+                            <SelectItem value="price-low">{mobileCopy.cheap}</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        {/* Bitta variantli filtr foydasiz joy egallaydi, shuning uchun
+                            u faqat tanlash imkoni bo'lgandagina ko'rsatiladi. */}
+                        {availableVerticals.length > 1 ? (
+                          <Select value={verticalFilter} onValueChange={(value) => setVerticalFilter(value as VerticalFilter)}>
+                            <SelectTrigger className={MOBILE_PROFILE_SELECT_TRIGGER}>
+                              <SelectValue placeholder={mobileCopy.vertical} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">{mobileCopy.allVerticals}</SelectItem>
+                              {availableVerticals.map((vertical) => (
+                                <SelectItem key={vertical} value={vertical}>
+                                  {getLocalizedText(getVerticalById(vertical)?.name ?? { uz: '', ru: '', en: '' }, locale)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+
+                        {availablePropertyTypes.length > 1 ? (
+                          <Select
+                            value={propertyTypeFilter}
+                            onValueChange={(value) => setPropertyTypeFilter(value as PropertyTypeFilter)}
+                          >
+                            <SelectTrigger className={MOBILE_PROFILE_SELECT_TRIGGER}>
+                              <SelectValue placeholder={mobileCopy.propertyType} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">{mobileCopy.allPropertyTypes}</SelectItem>
+                              {availablePropertyTypes.map((propertyType) => (
+                                <SelectItem key={propertyType} value={propertyType}>
+                                  {propertyTypeLabels[propertyType]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
                       </div>
-                    );
-                  })}
-                </div>
-              </section>
 
-              <section className="space-y-4">
-                <div className="grid grid-cols-3 gap-4 border-b border-border/60">
-                  {[
-                    { value: 'ads', label: mobileCopy.adsTab, icon: Building2 },
-                    { value: 'services', label: mobileCopy.servicesTab, icon: WalletCards },
-                    { value: 'favorites', label: mobileCopy.favoritesTab, icon: Heart },
-                  ].map((tab) => {
-                    const Icon = tab.icon;
-                    const isActive = activeMobileTab === tab.value;
-
-                    return (
-                      <button
-                        key={tab.value}
-                        type="button"
-                        className={cn(
-                          'flex flex-col items-center gap-2 border-b-2 px-1 pb-3 pt-1 text-center transition-colors',
-                          isActive ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground'
+                      <div className="grid grid-cols-2 gap-3">
+                        {isLoadingAds ? (
+                          <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full py-16 text-center')}>
+                            <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                            <h3 className="text-lg font-semibold">{messages.profile.loadingListings}</h3>
+                          </div>
+                        ) : adsError ? (
+                          <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full py-16 text-center')}>
+                            <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                            <p className="mx-auto max-w-sm text-sm text-muted-foreground">{adsError}</p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className={cn('mt-6', MOBILE_PROFILE_OUTLINE_BUTTON)}
+                              onClick={handleRetryAds}
+                            >
+                              <RefreshCcw className="h-4 w-4" />
+                              {retryAdsLabel}
+                            </Button>
+                          </div>
+                        ) : filteredMyAds.length > 0 ? (
+                          filteredMyAds.map((ad) => (
+                            <AdCard
+                              key={ad.id}
+                              ad={ad}
+                              isFavorite={isFavorite(ad.id)}
+                              canDelete={isAdmin}
+                              variant="mobile"
+                              onDeleted={handleAdDeleted}
+                              onUpdated={handleAdUpdated}
+                            />
+                          ))
+                        ) : (
+                          <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full px-5 py-10 text-center')}>
+                            <div className="relative mx-auto mb-8 flex h-28 w-28 items-center justify-center">
+                              <span className="absolute left-4 top-5 h-4 w-4 rounded-full bg-[#ffd84e]" />
+                              <span className="absolute right-6 top-3 h-2 w-2 rounded-full bg-[#ffd84e]" />
+                              <span className="absolute right-2 top-16 h-4 w-4 rounded-full bg-[#ffd84e]" />
+                              <span className="absolute bottom-3 left-7 h-3 w-3 rounded-full bg-[#ffd84e]" />
+                              <span className="absolute bottom-0 right-9 h-2.5 w-2.5 rounded-full bg-[#ffd84e]" />
+                              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#ffd84e]/10 text-[#ffd84e]">
+                                <Building2 className="h-10 w-10" />
+                              </div>
+                            </div>
+                            <h3 className="text-[1.65rem] font-bold leading-tight">
+                              {myAds.length > 0 ? mobileCopy.filtersEmptyTitle : messages.profile.noAdsYet}
+                            </h3>
+                            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
+                              {myAds.length > 0 ? mobileCopy.filtersEmptyDescription : messages.profile.noAdsDescription}
+                            </p>
+                            <div className="mt-6 flex justify-center">
+                              {myAds.length > 0 ? (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className={MOBILE_PROFILE_OUTLINE_BUTTON}
+                                  onClick={resetMobileFilters}
+                                >
+                                  {mobileCopy.clearFilters}
+                                </Button>
+                              ) : (
+                                <Button asChild className="min-h-12 rounded-full px-6">
+                                  <Link href="/ads/create">{messages.profile.postFirstAd}</Link>
+                                </Button>
+                              )}
+                            </div>
+                          </div>
                         )}
-                        onClick={() => setActiveMobileTab(tab.value as MobileProfileTab)}
-                      >
-                        <Icon className="h-5 w-5" />
-                        <span className="text-xs font-medium">{tab.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {activeMobileTab === 'ads' ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as AdStatusFilter)}>
-                        <SelectTrigger className={MOBILE_PROFILE_SELECT_TRIGGER}>
-                          <SelectValue placeholder={mobileCopy.status} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">{mobileCopy.allStatuses}</SelectItem>
-                          <SelectItem value="active">{mobileCopy.activeStatus}</SelectItem>
-                          <SelectItem value="sold">{mobileCopy.soldStatus}</SelectItem>
-                          <SelectItem value="pending">{mobileCopy.pendingStatus}</SelectItem>
-                          <SelectItem value="flagged">{mobileCopy.flaggedStatus}</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Select value={sortFilter} onValueChange={(value) => setSortFilter(value as AdSortFilter)}>
-                        <SelectTrigger className={MOBILE_PROFILE_SELECT_TRIGGER}>
-                          <SelectValue placeholder={mobileCopy.sort} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="newest">{mobileCopy.newest}</SelectItem>
-                          <SelectItem value="oldest">{mobileCopy.oldest}</SelectItem>
-                          <SelectItem value="price-high">{mobileCopy.expensive}</SelectItem>
-                          <SelectItem value="price-low">{mobileCopy.cheap}</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Select value={verticalFilter} onValueChange={(value) => setVerticalFilter(value as VerticalFilter)}>
-                        <SelectTrigger className={MOBILE_PROFILE_SELECT_TRIGGER}>
-                          <SelectValue placeholder={mobileCopy.vertical} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">{mobileCopy.allVerticals}</SelectItem>
-                          {availableVerticals.map((vertical) => (
-                            <SelectItem key={vertical} value={vertical}>
-                              {getLocalizedText(getVerticalById(vertical)?.name ?? { uz: '', ru: '', en: '' }, locale)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Select
-                        value={propertyTypeFilter}
-                        onValueChange={(value) => setPropertyTypeFilter(value as PropertyTypeFilter)}
-                      >
-                        <SelectTrigger className={MOBILE_PROFILE_SELECT_TRIGGER}>
-                          <SelectValue placeholder={mobileCopy.propertyType} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">{mobileCopy.allPropertyTypes}</SelectItem>
-                          {availablePropertyTypes.map((propertyType) => (
-                            <SelectItem key={propertyType} value={propertyType}>
-                              {propertyTypeLabels[propertyType]}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      </div>
                     </div>
+                  ) : null}
 
+                  {activeMobileTab === 'favorites' ? (
                     <div className="grid grid-cols-2 gap-3">
                       {isLoadingAds ? (
                         <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full py-16 text-center')}>
-                          <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                          <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                           <h3 className="text-lg font-semibold">{messages.profile.loadingListings}</h3>
                         </div>
                       ) : adsError ? (
                         <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full py-16 text-center')}>
-                          <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                          <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                           <p className="mx-auto max-w-sm text-sm text-muted-foreground">{adsError}</p>
                           <Button
                             type="button"
@@ -926,8 +1128,8 @@ function ProfilePageContent() {
                             {retryAdsLabel}
                           </Button>
                         </div>
-                      ) : filteredMyAds.length > 0 ? (
-                        filteredMyAds.map((ad) => (
+                      ) : favoriteAds.length > 0 ? (
+                        favoriteAds.map((ad) => (
                           <AdCard
                             key={ad.id}
                             ad={ad}
@@ -940,252 +1142,180 @@ function ProfilePageContent() {
                         ))
                       ) : (
                         <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full px-5 py-10 text-center')}>
-                          <div className="relative mx-auto mb-8 flex h-28 w-28 items-center justify-center">
-                            <span className="absolute left-4 top-5 h-4 w-4 rounded-full bg-[#ffd84e]" />
-                            <span className="absolute right-6 top-3 h-2 w-2 rounded-full bg-[#ffd84e]" />
-                            <span className="absolute right-2 top-16 h-4 w-4 rounded-full bg-[#ffd84e]" />
-                            <span className="absolute bottom-3 left-7 h-3 w-3 rounded-full bg-[#ffd84e]" />
-                            <span className="absolute bottom-0 right-9 h-2.5 w-2.5 rounded-full bg-[#ffd84e]" />
-                            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#ffd84e]/10 text-[#ffd84e]">
-                              <Building2 className="h-10 w-10" />
-                            </div>
+                          <div className="relative mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-[#ffd84e]">
+                            <Heart className="h-10 w-10" />
                           </div>
-                          <h3 className="text-[1.65rem] font-bold leading-tight">
-                            {myAds.length > 0 ? mobileCopy.filtersEmptyTitle : messages.profile.noAdsYet}
-                          </h3>
+                          <h3 className="text-[1.65rem] font-bold leading-tight">{messages.profile.emptyFavorites}</h3>
                           <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
-                            {myAds.length > 0 ? mobileCopy.filtersEmptyDescription : messages.profile.noAdsDescription}
+                            {messages.profile.emptyFavoritesDescription}
                           </p>
                           <div className="mt-6 flex justify-center">
-                            {myAds.length > 0 ? (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className={MOBILE_PROFILE_OUTLINE_BUTTON}
-                                onClick={resetMobileFilters}
-                              >
-                                {mobileCopy.clearFilters}
-                              </Button>
-                            ) : (
-                              <Button asChild className="min-h-12 rounded-full px-6">
-                                <Link href="/ads/create">{messages.profile.postFirstAd}</Link>
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-
-                {activeMobileTab === 'favorites' ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    {isLoadingAds ? (
-                      <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full py-16 text-center')}>
-                        <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                        <h3 className="text-lg font-semibold">{messages.profile.loadingListings}</h3>
-                      </div>
-                    ) : adsError ? (
-                      <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full py-16 text-center')}>
-                        <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                        <p className="mx-auto max-w-sm text-sm text-muted-foreground">{adsError}</p>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className={cn('mt-6', MOBILE_PROFILE_OUTLINE_BUTTON)}
-                          onClick={handleRetryAds}
-                        >
-                          <RefreshCcw className="h-4 w-4" />
-                          {retryAdsLabel}
-                        </Button>
-                      </div>
-                    ) : favoriteAds.length > 0 ? (
-                      favoriteAds.map((ad) => (
-                        <AdCard
-                          key={ad.id}
-                          ad={ad}
-                          isFavorite={isFavorite(ad.id)}
-                          canDelete={isAdmin}
-                          variant="mobile"
-                          onDeleted={handleAdDeleted}
-                          onUpdated={handleAdUpdated}
-                        />
-                      ))
-                    ) : (
-                      <div className={cn(MOBILE_PROFILE_CARD, 'col-span-full px-5 py-10 text-center')}>
-                        <div className="relative mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-[#ffd84e]">
-                          <Heart className="h-10 w-10" />
-                        </div>
-                        <h3 className="text-[1.65rem] font-bold leading-tight">{messages.profile.emptyFavorites}</h3>
-                        <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
-                          {messages.profile.emptyFavoritesDescription}
-                        </p>
-                        <div className="mt-6 flex justify-center">
-                          <Button
-                            asChild
-                            variant="outline"
-                            className={MOBILE_PROFILE_OUTLINE_BUTTON}
-                          >
-                            <Link href="/">{messages.profile.exploreMarket}</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : null}
-
-                {activeMobileTab === 'services' ? (
-                  <div className="space-y-4">
-                    <div className={cn(MOBILE_PROFILE_CARD, 'p-4')}>
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-primary/10 p-3 text-primary">
-                          <Mail className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-foreground">{mobileCopy.contacts}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">{mobileCopy.contactsDescription}</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 space-y-3 rounded-[1.35rem] border border-border/60 bg-background/55 p-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2 break-all">
-                          <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
-                          <span>{user.email}</span>
-                        </div>
-                        {user.phone ? (
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
-                            <span>{user.phone}</span>
-                          </div>
-                        ) : null}
-                        {userLocation ? (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
-                            <span>{userLocation}</span>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div className={cn(MOBILE_PROFILE_CARD, 'p-4')}>
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-primary/10 p-3 text-primary">
-                          <Globe2 className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-foreground">{settingsCopy.languageTitle}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">{settingsCopy.languageDescription}</p>
-                        </div>
-                      </div>
-
-                      <Select value={locale} onValueChange={handleLocaleChange}>
-                        <SelectTrigger className="mt-4 h-12 rounded-[1.1rem] border-border/70 bg-card/78 text-foreground shadow-none">
-                          <SelectValue placeholder={messages.navbar.language} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {languages.map((language) => (
-                            <SelectItem key={language} value={language}>
-                              {languageMeta[language].label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <a
-                      href="tel:+998332580404"
-                      className={cn(MOBILE_PROFILE_CARD, 'block p-4 transition-colors hover:bg-primary/5')}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-primary/10 p-3 text-primary">
-                          <Headphones className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-foreground">{settingsCopy.supportTitle}</p>
-                          <p className="mt-1 text-sm leading-6 text-muted-foreground">{settingsCopy.supportDescription}</p>
-                        </div>
-                      </div>
-                    </a>
-
-                    <button
-                      type="button"
-                      className={cn(MOBILE_PROFILE_CARD, 'block w-full p-4 text-left transition-colors hover:bg-primary/5')}
-                      onClick={handleDownloadData}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-primary/10 p-3 text-primary">
-                          <Download className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-foreground">{settingsCopy.exportTitle}</p>
-                          <p className="mt-1 text-sm leading-6 text-muted-foreground">{settingsCopy.exportDescription}</p>
-                        </div>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      className={cn(
-                        MOBILE_PROFILE_CARD,
-                        'block w-full p-4 text-left transition-colors hover:bg-primary/5'
-                      )}
-                      onClick={handleSignOut}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-primary/10 p-3 text-primary">
-                          <LogOut className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-foreground">{messages.navbar.logOut}</p>
-                          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                            {messages.auth.signOutSuccessDescription}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-
-                    <div className="rounded-[1.75rem] border border-red-500/20 bg-red-500/10 p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-full bg-red-500/10 p-3 text-red-300">
-                          <ShieldAlert className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-foreground">{settingsCopy.dangerTitle}</p>
-                          <p className="mt-1 text-sm leading-6 text-muted-foreground">{settingsCopy.dangerDescription}</p>
-                        </div>
-                      </div>
-
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <button
-                            type="button"
-                            className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-red-500/90 px-4 text-sm font-semibold text-white"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            {messages.profile.deleteAccount}
-                          </button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{deleteAccountCopy[locale].title}</AlertDialogTitle>
-                            <AlertDialogDescription>{deleteAccountCopy[locale].description}</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{deleteAccountCopy[locale].cancel}</AlertDialogCancel>
-                            <AlertDialogAction
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              disabled={isDeletingAccount}
-                              onClick={() => void handleDeleteAccount()}
+                            <Button
+                              asChild
+                              variant="outline"
+                              className={MOBILE_PROFILE_OUTLINE_BUTTON}
                             >
-                              {deleteAccountCopy[locale].confirm}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                              <Link href="/">{messages.profile.exploreMarket}</Link>
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ) : null}
-              </section>
+                  ) : null}
+
+                  {activeMobileTab === 'services' ? (
+                    <div className="space-y-4">
+                      <div className={cn(MOBILE_PROFILE_CARD, 'p-4')}>
+                        <div className="flex items-start gap-3">
+                          <div className="rounded-full bg-primary/10 p-3 text-primary">
+                            <Mail className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-foreground">{mobileCopy.contacts}</p>
+                            <p className="mt-1 text-sm text-muted-foreground">{mobileCopy.contactsDescription}</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 space-y-3 rounded-[1.35rem] border border-border/60 bg-background/55 p-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2 break-all">
+                            <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <span>{user.email}</span>
+                          </div>
+                          {user.phone ? (
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
+                              <span>{user.phone}</span>
+                            </div>
+                          ) : null}
+                          {userLocation ? (
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                              <span>{userLocation}</span>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className={cn(MOBILE_PROFILE_CARD, 'p-4')}>
+                        <div className="flex items-start gap-3">
+                          <div className="rounded-full bg-primary/10 p-3 text-primary">
+                            <Globe2 className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-foreground">{settingsCopy.languageTitle}</p>
+                            <p className="mt-1 text-sm text-muted-foreground">{settingsCopy.languageDescription}</p>
+                          </div>
+                        </div>
+
+                        <Select value={locale} onValueChange={handleLocaleChange}>
+                          <SelectTrigger className="mt-4 h-12 rounded-[1.1rem] border-border/70 bg-card/78 text-foreground shadow-none">
+                            <SelectValue placeholder={messages.navbar.language} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {languages.map((language) => (
+                              <SelectItem key={language} value={language}>
+                                {languageMeta[language].label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <a
+                        href="tel:+998332580404"
+                        className={cn(MOBILE_PROFILE_CARD, 'block p-4 transition-colors hover:bg-primary/5')}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="rounded-full bg-primary/10 p-3 text-primary">
+                            <Headphones className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-foreground">{settingsCopy.supportTitle}</p>
+                            <p className="mt-1 text-sm leading-6 text-muted-foreground">{settingsCopy.supportDescription}</p>
+                          </div>
+                        </div>
+                      </a>
+
+                      <button
+                        type="button"
+                        className={cn(MOBILE_PROFILE_CARD, 'block w-full p-4 text-left transition-colors hover:bg-primary/5')}
+                        onClick={() => void handleDownloadData()}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="rounded-full bg-primary/10 p-3 text-primary">
+                            <Download className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-foreground">{settingsCopy.exportTitle}</p>
+                            <p className="mt-1 text-sm leading-6 text-muted-foreground">{settingsCopy.exportDescription}</p>
+                          </div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        className={cn(
+                          MOBILE_PROFILE_CARD,
+                          'block w-full p-4 text-left transition-colors hover:bg-primary/5'
+                        )}
+                        onClick={handleSignOut}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="rounded-full bg-primary/10 p-3 text-primary">
+                            <LogOut className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-foreground">{messages.navbar.logOut}</p>
+                            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                              {settingsCopy.signOutDescription}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+
+                      <div className="rounded-[1.75rem] border border-red-500/20 bg-red-500/10 p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="rounded-full bg-red-500/10 p-3 text-red-300">
+                            <ShieldAlert className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-foreground">{settingsCopy.dangerTitle}</p>
+                            <p className="mt-1 text-sm leading-6 text-muted-foreground">{settingsCopy.dangerDescription}</p>
+                          </div>
+                        </div>
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button
+                              type="button"
+                              className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-red-500/90 px-4 text-sm font-semibold text-white"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              {messages.profile.deleteAccount}
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{deleteAccountCopy[locale].title}</AlertDialogTitle>
+                              <AlertDialogDescription>{deleteAccountCopy[locale].description}</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{deleteAccountCopy[locale].cancel}</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                disabled={isDeletingAccount}
+                                onClick={() => void handleDeleteAccount()}
+                              >
+                                {deleteAccountCopy[locale].confirm}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  ) : null}
+                </section>
+              </div>
             </div>
           </section>
 
@@ -1198,7 +1328,7 @@ function ProfilePageContent() {
               </div>
             </div> */}
 
-          <div className="hidden min-[769px]:grid page-grid profile-grid">
+          <div className="hidden min-[769px]:grid page-grid profile-grid pt-[env(safe-area-inset-top)]">
             <div className="page-stack">
               <Card className="surface-card rounded-[1.9rem] border-none shadow-none">
                 <CardContent className="flex flex-col items-center p-5 pt-8 text-center sm:p-6 sm:pt-8">
@@ -1297,7 +1427,7 @@ function ProfilePageContent() {
                   <button
                     type="button"
                     className="soft-panel block w-full rounded-[1.4rem] text-left transition-colors hover:bg-primary/5"
-                    onClick={handleDownloadData}
+                    onClick={() => void handleDownloadData()}
                   >
                     <div className="flex items-start gap-3">
                       <div className="rounded-full bg-primary/10 p-2.5 text-primary">
@@ -1469,46 +1599,62 @@ function ProfilePageContent() {
         <Sheet open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
           <SheetContent
             side="bottom"
-            className="mx-auto w-full max-w-2xl rounded-t-[2rem] border border-border/70 px-4 pb-6 pt-10 sm:px-6"
+            className="mx-auto flex w-full max-w-2xl flex-col rounded-t-[2rem] border border-border/70 px-4 pt-8 sm:px-6"
+            style={{
+              // Klaviatura oynani to'sib qo'ymasligi uchun uning balandligi pastdan
+              // bo'sh joy sifatida qo'shiladi: maydonlar ichkarida scroll bo'ladi,
+              // tugmalar esa klaviatura ustida ko'rinib turadi.
+              maxHeight: 'calc(100dvh - env(safe-area-inset-top) - 1rem)',
+              paddingBottom:
+                keyboardInset > 0
+                  ? `${keyboardInset + 12}px`
+                  : 'calc(env(safe-area-inset-bottom) + 1.5rem)',
+            }}
           >
             <SheetHeader className="text-left">
               <SheetTitle>{editProfileCopy.title}</SheetTitle>
               <SheetDescription>{editProfileCopy.description}</SheetDescription>
             </SheetHeader>
 
-            <form className="mt-6 space-y-4" onSubmit={(event) => void handleSaveProfile(event)}>
-              <div className="space-y-2">
-                <Label htmlFor="profile-name">{editProfileCopy.name}</Label>
-                <Input
-                  id="profile-name"
-                  value={profileForm.name}
-                  onChange={(event) => handleProfileFieldChange('name', event.target.value)}
-                  maxLength={80}
-                  required
-                />
+            <form
+              className="mt-6 flex min-h-0 flex-1 flex-col"
+              onSubmit={(event) => void handleSaveProfile(event)}
+            >
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pb-1">
+                <div className="space-y-2">
+                  <Label htmlFor="profile-name">{editProfileCopy.name}</Label>
+                  <Input
+                    id="profile-name"
+                    value={profileForm.name}
+                    onChange={(event) => handleProfileFieldChange('name', event.target.value)}
+                    maxLength={80}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="profile-phone">{editProfileCopy.phone}</Label>
+                  <Input
+                    id="profile-phone"
+                    value={profileForm.phone}
+                    onChange={(event) => handleProfileFieldChange('phone', event.target.value)}
+                    maxLength={40}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="profile-location">{editProfileCopy.location}</Label>
+                  <Input
+                    id="profile-location"
+                    value={profileForm.location}
+                    onChange={(event) => handleProfileFieldChange('location', event.target.value)}
+                    maxLength={240}
+                  />
+                </div>
+
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="profile-phone">{editProfileCopy.phone}</Label>
-                <Input
-                  id="profile-phone"
-                  value={profileForm.phone}
-                  onChange={(event) => handleProfileFieldChange('phone', event.target.value)}
-                  maxLength={40}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="profile-location">{editProfileCopy.location}</Label>
-                <Input
-                  id="profile-location"
-                  value={profileForm.location}
-                  onChange={(event) => handleProfileFieldChange('location', event.target.value)}
-                  maxLength={240}
-                />
-              </div>
-
-              <SheetFooter className="gap-3 pt-2">
+              <SheetFooter className="gap-3 pt-4">
                 <Button
                   type="button"
                   variant="outline"

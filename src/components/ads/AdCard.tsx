@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BedDouble, ChevronLeft, ChevronRight, Clock, Heart, Loader2, MapPin, Phone, Ruler, Trash2 } from 'lucide-react';
+import { BadgeCheck, BedDouble, ChevronLeft, ChevronRight, Clock, Heart, ImageOff, Loader2, MapPin, MoreHorizontal, PencilLine, Phone, RotateCcw, Ruler, Trash2 } from 'lucide-react';
 import { AdShareActions } from '@/components/ads/AdShareActions';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -95,15 +95,19 @@ export function AdCard({
   const manageCopy =
     locale === 'ru'
       ? {
-        action: 'Удалить',
+        action: 'Управление объявлением',
         title: 'Что сделать с объявлением?',
         description:
-          'Вы можете отметить объявление как проданное или удалить его навсегда.',
+          'Объявление можно отредактировать, отметить проданным или удалить навсегда.',
+        editAction: 'Редактировать',
         soldAction: 'Продано',
+        activateAction: 'Вернуть в продажу',
         deleteAction: 'Удалить',
         cancel: 'Отмена',
         soldSuccessTitle: 'Объявление отмечено как проданное',
         soldSuccessDescription: 'Объявление снято с активной витрины.',
+        activatedSuccessTitle: 'Объявление снова активно',
+        activatedSuccessDescription: 'Объявление вернулось в активную витрину.',
         deleteSuccessTitle: 'Объявление удалено',
         deleteSuccessDescription: 'Объявление было успешно удалено.',
         errorTitle: 'Не удалось выполнить действие',
@@ -111,30 +115,38 @@ export function AdCard({
       }
       : locale === 'en'
         ? {
-          action: 'Delete',
+          action: 'Manage listing',
           title: 'What would you like to do with this listing?',
           description:
-            'You can mark the listing as sold or delete it permanently.',
+            'You can edit the listing, mark it as sold, or delete it permanently.',
+          editAction: 'Edit listing',
           soldAction: 'Mark sold',
+          activateAction: 'Put back on sale',
           deleteAction: 'Delete',
           cancel: 'Cancel',
           soldSuccessTitle: 'Listing marked as sold',
           soldSuccessDescription: 'The listing was removed from active browsing.',
+          activatedSuccessTitle: 'Listing is active again',
+          activatedSuccessDescription: 'The listing is back in active browsing.',
           deleteSuccessTitle: 'Listing deleted',
           deleteSuccessDescription: 'The listing was removed successfully.',
           errorTitle: 'The action could not be completed',
           soldStatus: 'Sold',
         }
         : {
-          action: "O‘chirish",
+          action: "Eʼlonni boshqarish",
           title: 'Eʼlon bilan nima qilmoqchisiz?',
           description:
-            'Uni sotildi deb belgilab aktiv ro‘yxatdan yashirishingiz yoki butunlay o‘chirishingiz mumkin.',
+            'Eʼlonni tahrirlashingiz, sotildi deb belgilashingiz yoki butunlay o‘chirishingiz mumkin.',
+          editAction: 'Tahrirlash',
           soldAction: 'Sotildi',
+          activateAction: 'Qayta sotuvga qo‘yish',
           deleteAction: "O‘chirish",
           cancel: 'Bekor qilish',
           soldSuccessTitle: 'Eʼlon sotildi deb belgilandi',
           soldSuccessDescription: 'Eʼlon aktiv ro‘yxatdan olib tashlandi.',
+          activatedSuccessTitle: 'Eʼlon yana faol',
+          activatedSuccessDescription: 'Eʼlon aktiv ro‘yxatga qaytarildi.',
           deleteSuccessTitle: "Eʼlon o‘chirildi",
           deleteSuccessDescription: 'Eʼlon muvaffaqiyatli o‘chirildi.',
           errorTitle: 'Amal bajarilmadi',
@@ -150,8 +162,10 @@ export function AdCard({
   const mobileRibbonLabel =
     featuredLabel || (ad.isFeatured ? messages.adCard.featured : '');
   const hasLocation = localizedLocation.trim().length > 0;
+  const hasImages = ad.images.length > 0;
   const hasMultipleImages = ad.images.length > 1;
   const isOwner = user?.id === ad.userId;
+  const isSoldListing = ad.status === 'sold';
   const canManageAd = showManageActions && (canDelete || isAdmin || isOwner);
   const shouldDeleteAsAdmin = canDelete || (isAdmin && !isOwner);
   const postedAtLabel = mounted
@@ -184,11 +198,11 @@ export function AdCard({
     };
   }, [carouselApi]);
 
-  const handleMarkAsSold = async () => {
+  const handleUpdateStatus = async (nextStatus: 'active' | 'sold') => {
     setIsDeleting(true);
 
     try {
-      const updatedAd = await updateAdStatus(ad.id, 'sold');
+      const updatedAd = await updateAdStatus(ad.id, nextStatus);
 
       if (onUpdated) {
         onUpdated(updatedAd);
@@ -197,8 +211,9 @@ export function AdCard({
       }
 
       toast({
-        title: manageCopy.soldSuccessTitle,
-        description: manageCopy.soldSuccessDescription,
+        title: nextStatus === 'sold' ? manageCopy.soldSuccessTitle : manageCopy.activatedSuccessTitle,
+        description:
+          nextStatus === 'sold' ? manageCopy.soldSuccessDescription : manageCopy.activatedSuccessDescription,
       });
     } catch (error) {
       toast({
@@ -237,13 +252,66 @@ export function AdCard({
     }
   };
 
+  // Boshqaruv oynasi ikkala ko'rinishda ham bir xil bo'lishi uchun bitta joydan
+  // chiziladi, faqat tugma (trigger) ko'rinishga qarab farq qiladi.
+  const renderManageDialog = (trigger: React.ReactNode) => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{manageCopy.title}</AlertDialogTitle>
+          <AlertDialogDescription>{manageCopy.description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        {/* Mobil ko'rinishda footer teskari tartibda chiziladi, shuning uchun
+            eng xavfli amal ("o'chirish") ekranda pastda, "tahrirlash" esa
+            tepada turadi. */}
+        <AlertDialogFooter className="gap-2 sm:gap-0">
+          <AlertDialogCancel className="mt-0">{manageCopy.cancel}</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={(event) => {
+              event.preventDefault();
+              void handleDeleteAd();
+            }}
+            disabled={isDeleting}
+          >
+            <Trash2 className="h-4 w-4" />
+            {manageCopy.deleteAction}
+          </AlertDialogAction>
+          <AlertDialogAction
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            onClick={(event) => {
+              event.preventDefault();
+              void handleUpdateStatus(isSoldListing ? 'active' : 'sold');
+            }}
+            disabled={isDeleting}
+          >
+            {isSoldListing ? <RotateCcw className="h-4 w-4" /> : <BadgeCheck className="h-4 w-4" />}
+            {isSoldListing ? manageCopy.activateAction : manageCopy.soldAction}
+          </AlertDialogAction>
+          {isOwner ? (
+            <AlertDialogAction asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Link href={`/ads/${ad.id}/edit`}>
+                <PencilLine className="h-4 w-4" />
+                {manageCopy.editAction}
+              </Link>
+            </AlertDialogAction>
+          ) : null}
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   if (variant !== 'default') {
     const isCompactVariant = variant === 'mobile_compact' || variant === 'real_estate_mobile_compact';
-    const mobileOverlayPaddingClass = isCompactVariant ? 'px-2.5 pb-2 pt-2.5' : 'px-3 pb-2.25 pt-2.75';
-    const mobilePriceClass = isCompactVariant ? 'text-[0.88rem]' : 'text-[0.94rem]';
-    const mobileTitleClass = isCompactVariant ? 'text-[0.76rem] leading-[1.16]' : 'text-[0.82rem] leading-[1.18]';
-    const mobileMetaClass = isCompactVariant ? 'text-[0.62rem]' : 'text-[0.65rem]';
-    const mobileBadgeClass = isCompactVariant ? 'px-1.25 py-0.5 text-[0.58rem]' : 'px-1.25 py-0.5 text-[0.6rem]';
+    // Diqqat: Tailwind masshtabida 2.25 / 2.75 / 1.25 qadamlari yo'q — eski
+    // `pb-2.25` kabi klasslar umuman CSS bermagani uchun karta matni pastki
+    // chetga yopishib turardi.
+    const mobileOverlayPaddingClass = isCompactVariant ? 'px-3 pb-3 pt-6' : 'px-3.5 pb-3.5 pt-7';
+    const mobilePriceClass = isCompactVariant ? 'text-[0.92rem]' : 'text-[1rem]';
+    const mobileTitleClass = isCompactVariant ? 'text-[0.76rem] leading-[1.2]' : 'text-[0.82rem] leading-[1.25]';
+    const mobileMetaClass = isCompactVariant ? 'text-[0.64rem]' : 'text-[0.68rem]';
+    const mobileBadgeClass = isCompactVariant ? 'px-1.5 py-0.5 text-[0.58rem]' : 'px-2 py-0.5 text-[0.6rem]';
 
     return (
       <article
@@ -256,6 +324,16 @@ export function AdCard({
           href={adHref}
           className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
         >
+          {!hasImages ? (
+            // Belgi rasm maydonining faqat yuqori qismida turadi: pastki qismni
+            // narx va sarlavha egallaydi, ilgari ular ustma-ust tushardi.
+            <div className={cn('relative bg-muted', isCompactVariant ? 'aspect-[92/100]' : 'aspect-[94/100]')}>
+              <div className="absolute inset-x-0 top-0 flex h-[58%] flex-col items-center justify-center gap-1.5 text-muted-foreground">
+                <ImageOff className="h-7 w-7 opacity-40" aria-hidden="true" />
+                <span className="text-[0.66rem] font-medium opacity-60">{messages.adCard.noPhoto}</span>
+              </div>
+            </div>
+          ) : (
           <Carousel
             setApi={(api) => {
               setCarouselApi(api);
@@ -295,8 +373,37 @@ export function AdCard({
               })}
             </CarouselContent>
           </Carousel>
+          )}
 
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent" />
+          {/* Gradient faqat matn turgan pastki qismni qoraytiradi, aks holda
+              butun rasm xira ko'rinardi. */}
+          <div
+            className={cn('pointer-events-none absolute inset-x-0 bottom-0', hasImages ? 'h-3/5' : 'h-full')}
+            style={{
+              // Rasmsiz kartaning foni och: matn o'qilishi uchun gradient butun
+              // kartaga yumshoq yoyiladi, aks holda o'rtada keskin chegara chiqadi.
+              backgroundImage: hasImages
+                ? 'linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.58) 45%, rgba(0, 0, 0, 0) 100%)'
+                : 'linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.68) 30%, rgba(0, 0, 0, 0.28) 62%, rgba(0, 0, 0, 0.06) 100%)',
+            }}
+          />
+
+          {/* Status va rasm hisoblagichi bitta qatorda: ilgari hisoblagich pastki
+              o'ng burchakda matn ustiga tushib qolardi. */}
+          {isSoldListing || hasMultipleImages ? (
+            <div className="absolute left-3 top-3 z-10 flex items-center gap-1.5">
+              {isSoldListing ? (
+                <span className="rounded-full bg-black/60 px-2 py-[3px] text-[0.58rem] font-bold uppercase tracking-[0.08em] text-white backdrop-blur-sm">
+                  {manageCopy.soldStatus}
+                </span>
+              ) : null}
+              {hasMultipleImages ? (
+                <span className="rounded-full bg-black/45 px-2 py-[3px] text-[0.6rem] font-semibold text-white backdrop-blur-sm">
+                  {selectedImageIndex + 1}/{ad.images.length}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
 
           {mobileRibbonLabel ? (
             <div className="absolute -right-9 top-4 z-10 rotate-45 bg-[#FFD028] px-10 py-1 text-[0.72rem] font-black uppercase tracking-[0.16em] text-black shadow-[0_8px_18px_rgba(0,0,0,0.26)]">
@@ -304,14 +411,8 @@ export function AdCard({
             </div>
           ) : null}
 
-          {hasMultipleImages ? (
-            <div className="absolute bottom-3 right-3 z-10 rounded-full bg-black/55 px-2 py-1 text-[0.66rem] font-semibold text-white backdrop-blur-sm">
-              {selectedImageIndex + 1}/{ad.images.length}
-            </div>
-          ) : null}
-
           <div className={cn('absolute inset-x-0 bottom-0 z-10 text-white', mobileOverlayPaddingClass)}>
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               <p
                 className={cn(
                   'font-black leading-none tracking-[-0.03em] !text-white',
@@ -330,7 +431,7 @@ export function AdCard({
               </h3>
             </div>
 
-            <div className={cn('mt-1 flex items-center gap-1 text-white/84', mobileMetaClass)}>
+            <div className={cn('mt-2 flex items-center gap-1.5 text-white/84', mobileMetaClass)}>
               <div className="flex min-w-0 flex-1 items-center gap-1">
                 <MapPin className="h-3 w-3 shrink-0 !text-white/92" />
                 <span className="truncate !text-white/84">{hasLocation ? localizedLocation : localizedCategory}</span>
@@ -343,7 +444,7 @@ export function AdCard({
             </div>
 
             {ad.vertical === 'real_estate' && (ad.rooms || ad.area) ? (
-              <div className={cn('mt-1 flex flex-wrap items-center gap-2 text-white/84', mobileMetaClass)}>
+              <div className={cn('mt-1.5 flex flex-wrap items-center gap-2.5 text-white/84', mobileMetaClass)}>
                 {ad.rooms ? (
                   <span className="inline-flex items-center gap-1 !text-white/84">
                     <BedDouble className="h-3 w-3 shrink-0 !text-white/92" />
@@ -360,13 +461,13 @@ export function AdCard({
             ) : null}
 
             {ad.vertical === 'auto' && autoMetaSummary ? (
-              <div className={cn('mt-1 flex items-center gap-1 !text-white/72', isCompactVariant ? 'text-[0.6rem]' : 'text-[0.62rem]')}>
+              <div className={cn('mt-1.5 flex items-center gap-1 !text-white/72', isCompactVariant ? 'text-[0.6rem]' : 'text-[0.64rem]')}>
                 <span className="truncate !text-white/72">{autoMetaSummary}</span>
               </div>
             ) : null}
 
             {ad.vertical !== 'real_estate' ? (
-              <div className={cn('mt-1 flex items-center gap-1 !text-white/72', isCompactVariant ? 'text-[0.6rem]' : 'text-[0.62rem]')}>
+              <div className={cn('mt-1.5 flex items-center gap-1 !text-white/72', isCompactVariant ? 'text-[0.6rem]' : 'text-[0.64rem]')}>
                 <Clock className="h-3 w-3 shrink-0 !text-white/88" />
                 <span className="truncate !text-white/72">{postedAtLabel}</span>
               </div>
@@ -374,57 +475,25 @@ export function AdCard({
           </div>
         </Link>
 
-        {canManageAd ? (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  'touch-target absolute right-3 z-20 h-12 w-12 rounded-full border border-white/10 bg-black/45 text-white shadow-sm backdrop-blur-md hover:bg-black/60 hover:text-white sm:h-10 sm:w-10',
-                  mobileRibbonLabel ? 'top-14' : 'top-3'
-                )}
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                }}
-                disabled={isDeleting}
-                aria-label={manageCopy.action}
-              >
-                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{manageCopy.title}</AlertDialogTitle>
-                <AlertDialogDescription>{manageCopy.description}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{manageCopy.cancel}</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    void handleMarkAsSold();
-                  }}
-                  disabled={isDeleting}
-                >
-                  {manageCopy.soldAction}
-                </AlertDialogAction>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    void handleDeleteAd();
-                  }}
-                  disabled={isDeleting}
-                >
-                  {manageCopy.deleteAction}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        ) : null}
+        {canManageAd
+          ? renderManageDialog(
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "absolute right-3 z-20 h-9 w-9 rounded-full border border-white/15 bg-black/45 text-white shadow-sm backdrop-blur-md after:absolute after:-inset-2 after:content-[''] hover:bg-black/60 hover:text-white",
+                mobileRibbonLabel ? 'top-14' : 'top-3'
+              )}
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+              disabled={isDeleting}
+              aria-label={manageCopy.action}
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
+            </Button>
+          )
+          : null}
       </article>
     );
   }
@@ -437,6 +506,12 @@ export function AdCard({
       )}
     >
       <div className="relative overflow-hidden bg-muted/70">
+        {!hasImages ? (
+          <div className="flex aspect-[4/5] flex-col items-center justify-center gap-2 bg-muted text-muted-foreground sm:aspect-[4/3]">
+            <ImageOff className="h-8 w-8 opacity-45" aria-hidden="true" />
+            <span className="text-xs font-medium opacity-70">{messages.adCard.noPhoto}</span>
+          </div>
+        ) : (
         <Carousel
           setApi={(api) => {
             setCarouselApi(api);
@@ -471,6 +546,7 @@ export function AdCard({
             })}
           </CarouselContent>
         </Carousel>
+        )}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/45 via-slate-950/10 to-transparent" />
         <div className="absolute left-2 top-2 z-20 flex flex-wrap items-center gap-2">
           {ad.status === 'sold' ? (
@@ -485,54 +561,22 @@ export function AdCard({
           ) : null}
         </div>
         <div className="absolute right-2 top-2 z-20 flex items-center gap-2 sm:right-3 sm:top-3">
-          {canManageAd ? (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="touch-target h-12 w-12 rounded-full border border-border/60 bg-background/88 text-destructive shadow-sm backdrop-blur-sm transition-colors hover:bg-background sm:h-10 sm:w-10"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                  }}
-                  disabled={isDeleting}
-                  aria-label={manageCopy.action}
-                >
-                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{manageCopy.title}</AlertDialogTitle>
-                  <AlertDialogDescription>{manageCopy.description}</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{manageCopy.cancel}</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      void handleMarkAsSold();
-                    }}
-                    disabled={isDeleting}
-                  >
-                    {manageCopy.soldAction}
-                  </AlertDialogAction>
-                  <AlertDialogAction
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      void handleDeleteAd();
-                    }}
-                    disabled={isDeleting}
-                  >
-                    {manageCopy.deleteAction}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          ) : null}
+          {canManageAd
+            ? renderManageDialog(
+              <Button
+                variant="ghost"
+                size="icon"
+                className="touch-target h-11 w-11 rounded-full border border-border/60 bg-background/88 text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-background sm:h-10 sm:w-10"
+                onClick={(event) => {
+                  event.stopPropagation();
+                }}
+                disabled={isDeleting}
+                aria-label={manageCopy.action}
+              >
+                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-5 w-5" />}
+              </Button>
+            )
+            : null}
 
           <AdShareActions
             ad={ad}

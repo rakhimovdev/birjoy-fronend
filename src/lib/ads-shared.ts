@@ -1,5 +1,4 @@
 import type { LocalizedText } from '@/lib/i18n';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type {
   Ad,
   AdVertical,
@@ -164,10 +163,6 @@ function normalizeStatus(value: string | undefined): Ad['status'] {
   return 'active';
 }
 
-function getFallbackImage() {
-  return PlaceHolderImages[1]?.imageUrl || PlaceHolderImages[0]?.imageUrl || '';
-}
-
 function normalizeNullableNumber(value: number | null | undefined) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
@@ -268,7 +263,7 @@ export function normalizeRemoteAd(ad: RemoteAd): Ad {
     rooms: normalizeNullableNumber(ad.rooms),
     area: normalizeNullableNumber(ad.area),
     floor: normalizeNullableNumber(ad.floor),
-    images: imageUrls.length > 0 ? imageUrls : [getFallbackImage()],
+    images: imageUrls,
     userId: ad.userId || '',
     userName: ad.userName || ad.sellerName || '',
     sellerPhone: ad.sellerPhone || ad.contactPhone || '',

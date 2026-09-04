@@ -10,6 +10,12 @@ import {
 
 const mutationTestsEnabled = process.env.PLAYWRIGHT_ENABLE_MUTATION_TESTS === '1';
 const isLocalRun = process.env.PLAYWRIGHT_USE_LOCAL === '1';
+// These flows sign up real accounts and publish real listings. A failed cleanup
+// leaves "[QA TEST]" content visible to the public (and to App Store review), so
+// they stay local-only unless someone explicitly opts in to writing to a live
+// environment.
+const prodWritesAllowed = process.env.PLAYWRIGHT_ALLOW_PROD_WRITES === '1';
+const mutationTargetIsSafe = isLocalRun || prodWritesAllowed;
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -17,6 +23,10 @@ function escapeRegExp(value: string) {
 
 test.describe.serial('auth and listing regression', () => {
   test.skip(!mutationTestsEnabled, 'Mutation QA flows are enabled only when requested.');
+  test.skip(
+    !mutationTargetIsSafe,
+    'Mutation QA flows write real accounts and listings; run with PLAYWRIGHT_USE_LOCAL=1, or set PLAYWRIGHT_ALLOW_PROD_WRITES=1 to target a live environment on purpose.'
+  );
 
   const qaUser = createQaUser('listing-owner');
   let createdAdId = '';

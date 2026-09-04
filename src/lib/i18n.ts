@@ -173,6 +173,7 @@ export const dictionaries = {
       featured: 'TOP',
       loadingTime: 'Yuklanmoqda...',
       categoryFallback: 'Kategoriya',
+      noPhoto: 'Rasm yo‘q',
     },
     profile: {
       memberSince: '2024-yil martdan beri a’zo',
@@ -476,6 +477,7 @@ export const dictionaries = {
       featured: 'ТОП',
       loadingTime: 'Загрузка...',
       categoryFallback: 'Категория',
+      noPhoto: 'Без фото',
     },
     profile: {
       memberSince: 'На платформе с марта 2024',
@@ -779,6 +781,7 @@ export const dictionaries = {
       featured: 'FEATURED',
       loadingTime: 'Loading...',
       categoryFallback: 'Category',
+      noPhoto: 'No photo',
     },
     profile: {
       memberSince: 'Member since March 2024',

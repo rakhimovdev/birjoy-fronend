@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Clock,
   Heart,
+  ImageOff,
   Info,
   Loader2,
   MapPin,
@@ -904,6 +905,12 @@ export function AdDetailsView({
 
         <section className="phone-nav-only mx-[calc(var(--page-gutter)*-1)] flex-col overflow-hidden text-foreground">
           <div className="relative">
+            {ad.images.length === 0 ? (
+            <div className="flex aspect-[4/3] flex-col items-center justify-center gap-2 bg-muted text-muted-foreground">
+              <ImageOff className="h-9 w-9 opacity-45" aria-hidden="true" />
+              <span className="text-sm font-medium opacity-70">{messages.adCard.noPhoto}</span>
+            </div>
+            ) : (
             <Carousel
               setApi={(api) => {
                 setMobileDetailCarouselApi(api);
@@ -939,6 +946,7 @@ export function AdDetailsView({
                 ))}
               </CarouselContent>
             </Carousel>
+            )}
 
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black via-black/35 to-transparent" />
 
@@ -1143,6 +1151,13 @@ export function AdDetailsView({
         <div className="detail-grid">
           <div className="hidden min-[769px]:block space-y-6">
             <div className="surface-card relative overflow-hidden rounded-[1.9rem] shadow-[0_24px_56px_rgba(7,28,85,0.16)] sm:rounded-[2rem]">
+              {ad.images.length === 0 ? (
+              <div className="flex aspect-[4/3] flex-col items-center justify-center gap-2 bg-muted text-muted-foreground sm:aspect-[16/10]">
+                <ImageOff className="h-10 w-10 opacity-45" aria-hidden="true" />
+                <span className="text-sm font-medium opacity-70">{messages.adCard.noPhoto}</span>
+              </div>
+              ) : (
+              <>
               <Carousel
                 setApi={(api) => {
                   setDesktopDetailCarouselApi(api);
@@ -1182,6 +1197,8 @@ export function AdDetailsView({
               <div className="absolute bottom-4 right-4 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
                 {selectedImageIndex + 1}/{ad.images.length}
               </div>
+              </>
+              )}
             </div>
             {ad.images.length > 1 ? (
               <div className="grid grid-cols-3 gap-3 min-[481px]:grid-cols-4 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5">
