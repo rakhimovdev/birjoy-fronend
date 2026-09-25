@@ -91,6 +91,16 @@ const nextConfig: NextConfig = {
         : []),
     ],
   },
+  async headers() {
+    return [
+      {
+        // iOS fetches this to open bir-joy.uz links in the app. The file has
+        // no extension, so without this it would go out as octet-stream.
+        source: '/.well-known/apple-app-site-association',
+        headers: [{ key: 'Content-Type', value: 'application/json' }],
+      },
+    ];
+  },
   env: {
     NEXT_PUBLIC_SITE_URL: frontendUrl,
     NEXT_PUBLIC_BACKEND_URL: backendUrl,

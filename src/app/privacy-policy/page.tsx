@@ -3,7 +3,7 @@ import { ArrowLeft, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
 
-const lastUpdated = 'June 22, 2026';
+const lastUpdated = 'September 25, 2026';
 
 const sections = [
   {
@@ -14,55 +14,60 @@ const sections = [
   {
     title: '2. Data We Collect',
     body:
-      'We may collect your name, email address, phone number, location coordinates or manually entered city/district when you choose a listing location, Google account identifier for Google sign-in, profile image, favorites, listings you publish, uploaded listing photos, moderation results, order requests, device diagnostics, crash and connectivity data needed to operate the mobile applications, and support messages you send to BirJoy.',
+      'We may collect your name, email address, phone number, location coordinates or manually entered city/district when you choose a listing location, your Google or Apple account identifier when you sign in with them, profile image, favorites, listings you publish, uploaded listing photos, moderation results, order requests, messages you exchange with other users in chat, reports you submit, the users you block, and support messages you send to BirJoy. We do not use crash-reporting, analytics or advertising SDKs.',
   },
   {
     title: '3. How We Use Data',
     body:
-      'BirJoy uses your data to create and secure your account, publish and moderate listings, show location-aware marketplace results, process order requests, prevent abuse and fraud, improve app stability, respond to support inquiries, and comply with legal obligations.',
+      'BirJoy uses your data to create and secure your account, publish and moderate listings, deliver chat messages between buyers and sellers, review reports and enforce blocks, show location-aware marketplace results, process order requests, prevent abuse and fraud, respond to support inquiries, and comply with legal obligations.',
   },
   {
-    title: '4. Google Sign-In',
+    title: '4. Google and Apple Sign-In',
     body:
-      'If you choose Google sign-in, BirJoy receives the verified Google identity token and basic account profile data required to authenticate you. We do not collect your Google password.',
+      'If you choose Google or Apple sign-in, BirJoy receives the verified identity token and the basic profile data you agree to share (name and email address; with Apple this may be a private relay address). We never receive your Google or Apple password.',
   },
   {
     title: '5. Photos, Camera, and Files',
     body:
-      'On Android, BirJoy requests access to the camera or photo picker only when you intentionally add listing images. Uploaded photos are used only to create or edit your marketplace listing.',
+      'On Android and iOS, BirJoy requests access to the camera or photo library only when you intentionally add listing images. Uploaded photos are used only to create or edit your marketplace listing.',
   },
   {
     title: '6. Location Data',
     body:
-      'BirJoy requests location only when you use the current-location action in the listing location picker. The location is used to select an address and coordinates for a listing or to show relevant nearby properties; you can deny access and choose a point manually.',
+      'BirJoy requests location only to show listings near you on the map and when you use the current-location action in the listing location picker. Your current location used for nearby results stays on your device and is not sent to BirJoy. When you place a listing, its chosen point is stored and shown to other users; you can deny access and choose a point manually.',
   },
   {
-    title: '7. Sharing',
+    title: '7. Messaging, Reports and Blocking',
     body:
-      'BirJoy shares listing data, seller display name, listing images, and contact details that you explicitly publish to marketplace viewers. We may also share data with hosting, database, analytics, authentication, security, and content moderation providers strictly to operate the service.',
+      'Chat messages are stored on our servers so that both participants can read them. If you report a conversation, the report, your reason and comment, and the most recent messages of that conversation are made available to BirJoy moderators so they can review it. If you block a user, neither of you can send messages in your conversations; the list of users you block is stored with your account.',
   },
   {
-    title: '8. Retention',
+    title: '8. Sharing',
     body:
-      'Account and listing data are retained while your account is active. If you delete your account, BirJoy deletes your profile, your listings, and orders linked to your account from the operational system, except where retention is required by law or for narrowly tailored fraud-prevention records.',
+      'BirJoy shares listing data, seller display name, listing images, and contact details that you explicitly publish to marketplace viewers. We also use service providers strictly to operate the service: hosting and database providers, ImageKit for listing photos, Yandex Maps for maps and address search, and Google and Apple for sign-in.',
   },
   {
-    title: '9. Your Controls',
+    title: '9. Retention',
+    body:
+      'Account and listing data are retained while your account is active. If you delete your account, BirJoy deletes your profile, your listings, your conversations and orders linked to your account from the operational system, except where retention is required by law or for narrowly tailored fraud-prevention records.',
+  },
+  {
+    title: '10. Your Controls',
     body:
       'You can update your profile information, manage favorites, publish or remove listings, and delete your account from the BirJoy profile page inside the app. If you cannot access your account, use the public account deletion page for manual assistance.',
   },
   {
-    title: '10. Security',
+    title: '11. Security',
     body:
-      'BirJoy uses authentication tokens, access controls, transport encryption on production endpoints, and least-privilege Android permissions to reduce risk. No internet-connected system can be guaranteed 100% secure, so please protect your account credentials and contact BirJoy immediately if you suspect misuse.',
+      'BirJoy uses authentication tokens, access controls, transport encryption on production endpoints, and least-privilege app permissions to reduce risk. No internet-connected system can be guaranteed 100% secure, so please protect your account credentials and contact BirJoy immediately if you suspect misuse.',
   },
   {
-    title: '11. Children',
+    title: '12. Children',
     body:
       'BirJoy is not intended for children under 13, and marketplace transactions should only be conducted by users legally able to enter into such arrangements under local law.',
   },
   {
-    title: '12. Contact',
+    title: '13. Contact',
     body:
       'For privacy or data deletion questions, contact BirJoy via phone at +998 33 258 04 04 or Telegram at @bir_joyuz.',
   },
@@ -85,8 +90,7 @@ export default function PrivacyPolicyPage() {
                 Privacy and data handling for the BirJoy marketplace
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-8 text-white/82 md:text-lg">
-                This template is suitable for the live website and the Android application package
-                `uz.birjoy.app`.
+                This policy covers the BirJoy website and the BirJoy apps for iOS and Android.
               </p>
             </div>
             <div className="rounded-3xl border border-white/15 bg-white/10 p-5 text-sm backdrop-blur">
@@ -100,7 +104,7 @@ export default function PrivacyPolicyPage() {
           <div className="mb-8 flex items-center gap-3 text-foreground">
             <ShieldCheck className="h-5 w-5" />
             <p className="text-sm font-semibold uppercase tracking-[0.22em]">
-              Recommended public privacy URL for Play Console
+              How BirJoy handles your data
             </p>
           </div>
 
