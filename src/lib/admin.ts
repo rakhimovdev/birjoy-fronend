@@ -305,3 +305,45 @@ export async function updateAdminUserPostingPermissions(
 
   return normalizeAdminUser(data.user);
 }
+
+export type AdminReportStatus = 'open' | 'reviewed' | 'dismissed';
+
+export type AdminReport = {
+  id: string;
+  reason: string;
+  text: string;
+  status: AdminReportStatus;
+  createdAt: string;
+  targetUser: { id: string; name: string; suspended: boolean } | null;
+  ad: { id: string; title: string; status: string } | null;
+  conversation: {
+    id: string;
+    adTitle: string;
+    sellerName: string;
+    buyerName: string;
+    messages: { id: string; text: string; senderRole: string; createdAt: string }[];
+  } | null;
+};
+
+export async function fetchAdminReports(status: AdminReportStatus = 'open') {
+  const data = (await requestAdminApi(`/admin/reports?status=${status}&limit=50`, undefined, {
+    requiresAuth: true,
+  })) as AdminApiResponse & { reports?: AdminReport[] };
+  return Array.isArray(data.reports) ? data.reports : [];
+}
+
+export async function updateAdminReportStatus(reportId: string, status: AdminReportStatus) {
+  await requestAdminApi(
+    `/admin/reports/${reportId}`,
+    { method: 'PATCH', body: JSON.stringify({ status }) },
+    { requiresAuth: true }
+  );
+}
+
+export async function setAdminUserSuspension(userId: string, suspended: boolean) {
+  await requestAdminApi(
+    `/admin/users/${userId}/suspension`,
+    { method: 'PATCH', body: JSON.stringify({ suspended }) },
+    { requiresAuth: true }
+  );
+}

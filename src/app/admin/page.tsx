@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { AdminReportsPanel } from '@/components/admin/AdminReportsPanel';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -631,6 +632,9 @@ export default function AdminPage() {
                 </Button>
               </div>
             </div>
+
+            {/* Reports first: the terms promise an answer within 24 hours. */}
+            <AdminReportsPanel locale={locale} />
 
             <section className="grid grid-cols-1 gap-4 min-[481px]:grid-cols-2 xl:grid-cols-4">
               <Card className="border-none shadow-sm">
